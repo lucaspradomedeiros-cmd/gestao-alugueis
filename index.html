@@ -6,6 +6,125 @@
 <title>Gestão de Aluguéis — Lucas Prado</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #F5F3EE;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+}
+#login-screen.hidden { display: none; }
+.login-box {
+  background: #FDFCF9;
+  border: 1px solid #E2DDD6;
+  border-radius: 16px;
+  padding: 48px 40px 40px;
+  width: 100%; max-width: 380px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.08);
+  text-align: center;
+}
+.login-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; letter-spacing: -0.5px;
+  color: #1C1A17; margin-bottom: 4px;
+}
+.login-sub {
+  font-size: 12px; color: #7A7268; margin-bottom: 32px;
+}
+.login-label {
+  display: block; text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: #7A7268; text-transform: uppercase;
+  letter-spacing: .6px; margin-bottom: 6px;
+}
+.login-input {
+  width: 100%; padding: 11px 14px;
+  border: 1px solid #E2DDD6; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: #1C1A17; background: #F5F3EE;
+  margin-bottom: 16px; outline: none;
+  transition: border-color .15s;
+}
+.login-input:focus { border-color: #2D6A4F; }
+.login-input.error { border-color: #9B2226; background: #FCEEED; }
+.login-btn {
+  width: 100%; padding: 12px;
+  background: #2D6A4F; color: #fff;
+  border: none; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background .15s;
+}
+.login-btn:hover { background: #235A41; }
+.login-error {
+  font-size: 12px; color: #9B2226;
+  margin-top: 10px; min-height: 16px;
+}
+.login-footer {
+  font-size: 11px; color: #B0A99F; margin-top: 28px;
+}
+</style>
+<script>
+// ── AUTH ─────────────────────────────────────────────────────
+const PASS_HASH = '3928a0d0aa4278d86016a7ef568939ec2f7d3eafc77713e6cc5186884f917a33';
+const SESSION_KEY = 'ga_auth_v1';
+const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 horas
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function isAuthenticated() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const { hash, expires } = JSON.parse(raw);
+    return hash === PASS_HASH && Date.now() < expires;
+  } catch { return false; }
+}
+
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    hash: PASS_HASH,
+    expires: Date.now() + SESSION_TTL
+  }));
+}
+
+async function doLogin() {
+  const inp = document.getElementById('login-pass');
+  const err = document.getElementById('login-err');
+  const val = inp.value;
+  if (!val) { inp.classList.add('error'); err.textContent = 'Digite a senha.'; return; }
+  const h = await sha256(val);
+  if (h === PASS_HASH) {
+    saveSession();
+    document.getElementById('login-screen').classList.add('hidden');
+    inp.value = '';
+    err.textContent = '';
+  } else {
+    inp.classList.add('error');
+    err.textContent = 'Senha incorreta. Tente novamente.';
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+function checkAuth() {
+  if (!isAuthenticated()) {
+    document.getElementById('login-screen').classList.remove('hidden');
+    setTimeout(() => {
+      const inp = document.getElementById('login-pass');
+      if (inp) inp.focus();
+    }, 100);
+  } else {
+    document.getElementById('login-screen').classList.add('hidden');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', checkAuth);
+</script>
 :root{
   --bg:#F5F3EE;--surface:#FDFCF9;--border:#E2DDD6;--border-strong:#C8C1B7;
   --text:#1C1A17;--text-muted:#7A7268;--text-faint:#B0A99F;
@@ -289,6 +408,22 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Gestão de Aluguéis</div>
+    <div class="login-sub">Lucas Prado Medeiros Perin</div>
+    <label class="login-label" for="login-pass">Senha de acesso</label>
+    <input class="login-input" type="password" id="login-pass" placeholder="••••••••••••"
+      onkeydown="if(event.key==='Enter')doLogin()"
+      oninput="this.classList.remove('error');document.getElementById('login-err').textContent=''">
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-err"></div>
+    <div class="login-footer">vpadvogados.com.br</div>
+  </div>
+</div>
+
 <div class="app">
 <!-- SIDEBAR -->
 <nav class="sidebar">
