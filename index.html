@@ -445,6 +445,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   <div style="margin-top:auto;padding:14px 12px;border-top:1px solid var(--border);">
     <div class="nav-label" style="margin-bottom:8px;">Dados</div>
     <div id="save-status" style="font-size:11px;color:var(--text-faint);padding:0 8px;margin-bottom:8px;min-height:14px;"></div>
+    <button class="nav-item" onclick="connectDrive()" id="btn-drive-connect" style="color:var(--blue);font-weight:500;"><span class="icon">☁</span> Conectar Drive</button>
     <button class="nav-item" onclick="exportBackup()" style="color:var(--green);font-weight:500;"><span class="icon">⬇</span> Exportar backup</button>
     <button class="nav-item" onclick="document.getElementById('import-file').click()"><span class="icon">⬆</span> Importar backup</button>
     <button class="nav-item" style="color:var(--red);" onclick="confirmClearData()"><span class="icon">⊘</span> Limpar dados</button>
@@ -4087,48 +4088,65 @@ function printRecibo(){
 }
 
 // ============================================================
-// PERSISTÊNCIA — localStorage + backup JSON
+// PERSISTÊNCIA — localStorage + Google Drive
 // ============================================================
 const STORAGE_KEY = 'gestao_alugueis_v1';
+const DRIVE_FILE_NAME = 'gestao_alugueis_dados.json';
+const GAPI_CLIENT_ID = '267608598510-h5f83cjjqe20qc8n9gqtrltvq5n1lb6o.apps.googleusercontent.com';
+const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
-function saveToStorage(){
+let driveFileId = null;
+let driveConnected = false;
+let gapiReady = false;
+let gisReady = false;
+let tokenClient = null;
+
+// ── localStorage ──────────────────────────────────────────────
+function getPayload(){
+  condoHistories[activeCondoId] = [...condoHistory];
+  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, savedAt: new Date().toISOString(), version: 3 };
+}
+
+function applyPayload(data){
+  if(!data || !data.tenants) return false;
+  tenants = data.tenants;
+  if(data.condoHistory) condoHistory = data.condoHistory;
+  if(data.imoveis) imoveis = data.imoveis;
+  if(data.condominios && data.condominios.length) condominios = data.condominios;
+  if(data.condoHistories){
+    condoHistories = data.condoHistories;
+    const actId = data.activeCondoId||condominios[0]?.id||'c1';
+    activeCondoId = actId;
+    condoHistory = condoHistories[actId]||condoHistory;
+    const c = condominios.find(x=>x.id===actId)||condominios[0];
+    if(c){ CONDO_UNITS.length=0; c.units.forEach(u=>CONDO_UNITS.push(u)); }
+  }
+  return true;
+}
+
+function updateSaveStatus(msg, color='var(--text-faint)'){
+  const el = document.getElementById('save-status');
+  if(el){ el.textContent = msg; el.style.color = color; }
+}
+
+function saveToLocalStorage(){
   try {
-    // Sync active condo history before saving
-    condoHistories[activeCondoId] = [...condoHistory];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, savedAt: new Date().toISOString() }));
-    const el = document.getElementById('save-status');
-    if(el){
-      const now = new Date();
-      el.textContent = `💾 Salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      el.style.color = 'var(--green)';
-      setTimeout(()=>{ el.style.color='var(--text-faint)'; }, 3000);
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(getPayload()));
+    const now = new Date();
+    updateSaveStatus(`💾 Salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--green)');
+    setTimeout(()=>updateSaveStatus(driveConnected?'☁ Drive conectado':'💾 Local', driveConnected?'var(--blue)':'var(--text-faint)'), 3000);
   } catch(e){ console.warn('localStorage indisponível:', e); }
 }
 
-function loadFromStorage(){
+function loadFromLocalStorage(){
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
     const data = JSON.parse(raw);
-    if(data.tenants && data.tenants.length){
-      // merge: preserve structure, update data
-      tenants = data.tenants;
-      if(data.condoHistory) condoHistory = data.condoHistory;
-      if(data.imoveis) imoveis = data.imoveis;
-      if(data.condominios && data.condominios.length) condominios = data.condominios;
-      if(data.condoHistories) {
-        condoHistories = data.condoHistories;
-        const actId = data.activeCondoId||condominios[0]?.id||'c1';
-        activeCondoId = actId;
-        condoHistory = condoHistories[actId]||condoHistory;
-        const c = condominios.find(x=>x.id===actId)||condominios[0];
-        if(c){ CONDO_UNITS.length=0; c.units.forEach(u=>CONDO_UNITS.push(u)); }
-      }
-      const el = document.getElementById('save-status');
-      if(el && data.savedAt){
+    if(applyPayload(data)){
+      if(data.savedAt){
         const d = new Date(data.savedAt);
-        el.textContent = `Último save: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        updateSaveStatus(`Último save: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);
       }
       return true;
     }
@@ -4136,9 +4154,106 @@ function loadFromStorage(){
   return false;
 }
 
+// ── Google Drive ──────────────────────────────────────────────
+function saveToStorage(){ saveToLocalStorage(); if(driveConnected) saveToDrive(); }
+function loadFromStorage(){ return loadFromLocalStorage(); }
+
+async function findDriveFile(){
+  const res = await gapi.client.drive.files.list({
+    spaces: 'appDataFolder',
+    fields: 'files(id,name)',
+    q: `name='${DRIVE_FILE_NAME}'`
+  });
+  const files = res.result.files;
+  return files && files.length ? files[0].id : null;
+}
+
+async function saveToDrive(){
+  if(!driveConnected) return;
+  try {
+    updateSaveStatus('☁ Salvando no Drive…', 'var(--blue)');
+    const payload = JSON.stringify(getPayload());
+    const metadata = { name: DRIVE_FILE_NAME, parents: driveFileId ? undefined : ['appDataFolder'] };
+    const boundary = '-------314159265358979323846';
+    const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${boundary}--`;
+    const method = driveFileId ? 'PATCH' : 'POST';
+    const url = driveFileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const res = await gapi.client.request({ method, path: url,
+      headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` }, body });
+    if(!driveFileId) driveFileId = res.result.id;
+    const now = new Date();
+    updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+  } catch(e){ console.warn('Erro ao salvar no Drive:', e); updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)'); }
+}
+
+async function loadFromDrive(){
+  try {
+    driveFileId = await findDriveFile();
+    if(!driveFileId){ console.log('Nenhum arquivo no Drive ainda.'); return false; }
+    const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+    const data = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+    if(applyPayload(data)){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if(data.savedAt){
+        const d = new Date(data.savedAt);
+        updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+      }
+      hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
+      return true;
+    }
+  } catch(e){ console.warn('Erro ao carregar do Drive:', e); }
+  return false;
+}
+
+function onDriveConnected(){
+  driveConnected = true;
+  updateSaveStatus('☁ Drive conectado', 'var(--blue)');
+  const btn = document.getElementById('btn-drive-connect');
+  if(btn){ btn.textContent = '☁ Drive conectado'; btn.style.color='var(--blue)'; btn.style.background='var(--blue-bg)'; }
+  loadFromDrive();
+}
+
+function connectDrive(){
+  if(!gapiReady || !gisReady){ alert('Aguarde o carregamento das APIs Google.'); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function gapiLoaded(){
+  gapi.load('client', async ()=>{
+    await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    gapiReady = true;
+  });
+}
+
+function gisLoaded(){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GAPI_CLIENT_ID,
+    scope: GAPI_SCOPES,
+    callback: (resp)=>{
+      if(resp.error){ console.warn('Erro OAuth:', resp); return; }
+      onDriveConnected();
+    }
+  });
+  gisReady = true;
+  // Auto-reconecta se já tinha token salvo
+  const saved = localStorage.getItem('ga_drive_token');
+  if(saved){
+    try {
+      const t = JSON.parse(saved);
+      if(t.expires_at > Date.now()){
+        gapi.client.setToken(t);
+        onDriveConnected();
+      }
+    } catch(e){}
+  }
+}
+
+// ── Backup manual ─────────────────────────────────────────────
 function exportBackup(){
   condoHistories[activeCondoId] = [...condoHistory];
-  const data = { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, exportedAt: new Date().toISOString(), version: 3 };
+  const data = getPayload();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4156,50 +4271,35 @@ function importBackup(event){
       const data = JSON.parse(e.target.result);
       if(!data.tenants) { alert('Arquivo inválido — não contém dados de locatários.'); return; }
       if(!confirm(`Importar backup de ${data.exportedAt ? new Date(data.exportedAt).toLocaleString('pt-BR') : 'data desconhecida'}?\n\nIsso substituirá todos os dados atuais.`)) return;
-      tenants = data.tenants;
-      if(data.condoHistory) condoHistory = data.condoHistory;
-      if(data.imoveis) imoveis = data.imoveis;
-      if(data.condominios && data.condominios.length) condominios = data.condominios;
-      if(data.condoHistories) {
-        condoHistories = data.condoHistories;
-        activeCondoId = data.activeCondoId||condominios[0]?.id||'c1';
-        condoHistory = condoHistories[activeCondoId]||condoHistory;
-        const c = condominios.find(x=>x.id===activeCondoId)||condominios[0];
-        if(c){ CONDO_UNITS.length=0; c.units.forEach(u=>CONDO_UNITS.push(u)); }
-      }
-      hydrateEntries();
-      saveToStorage();
-      renderDashboard();
-      renderCondoSwitcher();
-      renderCondoInfoBar();
+      applyPayload(data);
+      hydrateEntries(); saveToStorage(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
       alert('✓ Backup importado com sucesso!');
     } catch(err) { alert('Erro ao ler o arquivo. Verifique se é um backup válido.'); }
   };
   reader.readAsText(file);
-  event.target.value = ''; // reset so same file can be re-imported
+  event.target.value = '';
 }
 
 function confirmClearData(){
   if(!confirm('⚠ Limpar todos os dados salvos no navegador?\n\nOs dados da sessão atual continuarão visíveis até você recarregar a página.\n\nEsta ação não pode ser desfeita.')) return;
   localStorage.removeItem(STORAGE_KEY);
-  const el = document.getElementById('save-status');
-  if(el){ el.textContent = 'Dados limpos'; el.style.color = 'var(--red)'; }
+  updateSaveStatus('Dados limpos', 'var(--red)');
 }
 
-// INIT — load saved data if available, otherwise use hardcoded defaults
+// INIT
 const _hadSavedData = loadFromStorage();
-// Init multi-condo: seed condoHistories for default condo
 if(!condoHistories['c1'] || !condoHistories['c1'].length) condoHistories['c1'] = [...condoHistory];
-// Seed condoId for legacy tenants that don't have it yet
 tenants.forEach(t=>{ if(!t.condoId) t.condoId = 'c1'; });
 hydrateEntries();
 renderDashboard();
 renderCondoSwitcher();
 renderCondoInfoBar();
-if(!_hadSavedData){
-  // first run: save the initial data so it persists
-  saveToStorage();
-}
+if(!_hadSavedData) saveToStorage();
 </script>
+
+<!-- Google APIs -->
+<script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+<script src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
 </body>
 </html>
