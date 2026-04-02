@@ -553,7 +553,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
         <div class="res-row"><span>🧹 Limpeza</span><span id="r-limpeza">—</span></div>
         <div class="res-row"><span>➕ Outras</span><span id="r-outras">—</span></div>
         <div class="res-row total"><span>Subtotal rateável</span><span id="r-sub">—</span></div>
-        <div class="res-row tax"><span>Taxa adm. (10%)</span><span id="r-taxa">—</span></div>
+        <div class="res-row tax"><span>Taxa adm. <span id="r-taxa-label" style="font-size:10px;color:var(--text-muted);">(por item)</span></span><span id="r-taxa">—</span></div>
         <div class="res-row blue"><span>Total rateável c/ taxa</span><span id="r-tot">—</span></div>
         <div class="res-big">
           <div class="res-big-lbl">Condomínio por unidade</div>
@@ -840,6 +840,32 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     <div class="mfield">
       <label>Taxa de Limpeza mensal (R$)</label>
       <input type="number" id="cm-limpeza" placeholder="330" step="0.01">
+    </div>
+    <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;">
+      <div style="font-size:12px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Taxa de Administração por Item</div>
+      <div style="display:grid;grid-template-columns:1fr 60px 70px;gap:6px 10px;align-items:center;font-size:12px;">
+        <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;">Item</div>
+        <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;text-align:center;">Cobrar</div>
+        <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;text-align:center;">%</div>
+        <div>🚰 Água</div>
+        <div style="text-align:center;"><input type="checkbox" id="cm-tx-agua-on" checked style="width:16px;height:16px;cursor:pointer;"></div>
+        <input type="number" id="cm-tx-agua-pct" value="10" min="0" max="100" step="0.1" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;">
+        <div>⚡ Energia</div>
+        <div style="text-align:center;"><input type="checkbox" id="cm-tx-energia-on" checked style="width:16px;height:16px;cursor:pointer;"></div>
+        <input type="number" id="cm-tx-energia-pct" value="10" min="0" max="100" step="0.1" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;">
+        <div>🧹 Limpeza</div>
+        <div style="text-align:center;"><input type="checkbox" id="cm-tx-limpeza-on" checked style="width:16px;height:16px;cursor:pointer;"></div>
+        <input type="number" id="cm-tx-limpeza-pct" value="10" min="0" max="100" step="0.1" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;">
+        <div>🏛 IPTU</div>
+        <div style="text-align:center;"><input type="checkbox" id="cm-tx-iptu-on" checked style="width:16px;height:16px;cursor:pointer;"></div>
+        <input type="number" id="cm-tx-iptu-pct" value="10" min="0" max="100" step="0.1" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;">
+        <div>🗑 Taxa de Lixo</div>
+        <div style="text-align:center;"><input type="checkbox" id="cm-tx-lixo-on" checked style="width:16px;height:16px;cursor:pointer;"></div>
+        <input type="number" id="cm-tx-lixo-pct" value="10" min="0" max="100" step="0.1" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;">
+        <div>➕ Outras</div>
+        <div style="text-align:center;"><input type="checkbox" id="cm-tx-outras-on" checked style="width:16px;height:16px;cursor:pointer;"></div>
+        <input type="number" id="cm-tx-outras-pct" value="10" min="0" max="100" step="0.1" style="width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:center;">
+      </div>
     </div>
     <div id="cm-delete-row" style="display:none;padding-top:12px;border-top:1px solid var(--border);margin-top:4px;">
       <button class="btn btn-red" onclick="deleteCondo()" style="font-size:12px;">🗑 Excluir este condomínio</button>
@@ -1462,7 +1488,16 @@ let condominios = [
   { id: 'c1', nome: 'Res. Santa Nonna I', apelido: 'SN1', endereco: 'Campo Grande/MS',
     ucAgua: 'SANESUL UC: 20576293', ucEnergia: 'ENERGISA UC: 10/1207555-2',
     units: ['Apto 1','Apto 2','Apto 3','Apto 4','Apto 5','Apto 6','Apto 7','Apto 8'],
-    limpezaPadrao: 330 }
+    limpezaPadrao: 330,
+    taxas: {
+      agua:    { aplicar: true, pct: 10 },
+      energia: { aplicar: true, pct: 10 },
+      limpeza: { aplicar: true, pct: 10 },
+      lixo:    { aplicar: true, pct: 10 },
+      iptu:    { aplicar: true, pct: 10 },
+      outras:  { aplicar: true, pct: 10 }
+    }
+  }
 ];
 let condoHistories = {}; // id -> array of condo month entries (populated from condoHistory below)
 let activeCondoId = 'c1';
@@ -1530,6 +1565,11 @@ function openEditCondo(){
   document.getElementById('cm-uc-energia').value = c.ucEnergia||'';
   document.getElementById('cm-units').value = c.units.join(', ');
   document.getElementById('cm-limpeza').value = c.limpezaPadrao||330;
+  const tx = getCondoTaxas(c.id);
+  ['agua','energia','limpeza','lixo','iptu','outras'].forEach(item=>{
+    document.getElementById(`cm-tx-${item}-on`).checked = tx[item].aplicar;
+    document.getElementById(`cm-tx-${item}-pct`).value  = tx[item].pct;
+  });
   document.getElementById('cm-delete-row').style.display = condominios.length>1?'block':'none';
   document.getElementById('condo-modal-overlay').classList.add('open');
 }
@@ -1541,6 +1581,14 @@ function saveCondoModal(){
   const units = unitsRaw.split(',').map(u=>u.trim()).filter(Boolean);
   if(!units.length){ alert('Informe ao menos uma unidade.'); return; }
 
+  const taxasFromModal = {};
+  ['agua','energia','limpeza','lixo','iptu','outras'].forEach(item=>{
+    taxasFromModal[item] = {
+      aplicar: document.getElementById(`cm-tx-${item}-on`).checked,
+      pct: parseFloat(document.getElementById(`cm-tx-${item}-pct`).value)||10
+    };
+  });
+
   if(editingCondoId){
     const c = condominios.find(x=>x.id===editingCondoId);
     c.nome = nome;
@@ -1550,6 +1598,7 @@ function saveCondoModal(){
     c.ucEnergia = document.getElementById('cm-uc-energia').value.trim();
     c.units = units;
     c.limpezaPadrao = parseFloat(document.getElementById('cm-limpeza').value)||330;
+    c.taxas = taxasFromModal;
     if(c.id===activeCondoId){
       CONDO_UNITS.length=0; units.forEach(u=>CONDO_UNITS.push(u));
     }
@@ -1561,7 +1610,8 @@ function saveCondoModal(){
       endereco: document.getElementById('cm-end').value.trim(),
       ucAgua: document.getElementById('cm-uc-agua').value.trim(),
       ucEnergia: document.getElementById('cm-uc-energia').value.trim(),
-      units, limpezaPadrao: parseFloat(document.getElementById('cm-limpeza').value)||330
+      units, limpezaPadrao: parseFloat(document.getElementById('cm-limpeza').value)||330,
+      taxas: taxasFromModal
     });
     condoHistories[newId] = [];
     // Switch to new condo
@@ -1637,13 +1687,14 @@ function printCondoReport(){
   const totalOutras  = hist.reduce((s,h)=>s+R(h.outras),0);
   const totalGeral   = totalAgua+totalEnergia+totalLimpeza+totalIptu+totalLixo+totalOutras;
 
+  const tx = getCondoTaxas(c.id);
   // Build month rows
   const detailRows = hist.map(h=>{
     const sub = R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outras);
-    const taxa = R2(sub*TAX);
+    const taxa = applyTaxa(R(h.agua),tx.agua)+applyTaxa(R(h.energia),tx.energia)+applyTaxa(R(h.limpeza),tx.limpeza)+applyTaxa(R(h.outras),tx.outras);
     const porApto = R2((sub+taxa)/numUnits);
-    const iptuComTaxa = R2(R(h.iptu)*(1+TAX));
-    const lixoComTaxa = R2(R(h.lixo)*(1+TAX));
+    const iptuComTaxa = R2(R(h.iptu)+applyTaxa(R(h.iptu),tx.iptu));
+    const lixoComTaxa = R2(R(h.lixo)+applyTaxa(R(h.lixo),tx.lixo));
     const totalPorApto = R2(porApto+iptuComTaxa+lixoComTaxa);
     const obs = h.obs?`<tr><td colspan="7" style="font-size:11px;color:#8B5E0A;padding:4px 6px 8px;font-style:italic;">💬 ${h.obs}</td></tr>`:'';
     return `<tr>
@@ -1665,8 +1716,8 @@ function printCondoReport(){
       <td class="r">${fmtBRL(
         hist.reduce((s,h)=>{
           const sub=R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outras);
-          const taxa=R2(sub*TAX);
-          return s+R2((sub+taxa)/numUnits)+R2(R(h.iptu)*(1+TAX))+R2(R(h.lixo)*(1+TAX));
+          const taxa=applyTaxa(R(h.agua),tx.agua)+applyTaxa(R(h.energia),tx.energia)+applyTaxa(R(h.limpeza),tx.limpeza)+applyTaxa(R(h.outras),tx.outras);
+          return s+R2((sub+taxa)/numUnits)+R2(R(h.iptu)+applyTaxa(R(h.iptu),tx.iptu))+R2(R(h.lixo)+applyTaxa(R(h.lixo),tx.lixo));
         },0)
       )}</td>
     </tr>`).join('');
@@ -1723,18 +1774,18 @@ function printCondoReport(){
         <tfoot>
           <tr style="background:#f5f3ee;font-weight:700;border-top:2px solid #ccc;">
             <td style="padding:7px 8px;">TOTAL GERAL</td>
-            <td style="text-align:right;padding:7px 8px;color:#2D6A4F;">${fmtBRL(totalGeral*(1+TAX))}</td>
+            <td style="text-align:right;padding:7px 8px;color:#2D6A4F;">${fmtBRL(hist.reduce((s,h)=>{const sub=R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outras);const taxa=applyTaxa(R(h.agua),tx.agua)+applyTaxa(R(h.energia),tx.energia)+applyTaxa(R(h.limpeza),tx.limpeza)+applyTaxa(R(h.outras),tx.outras);return s+R2((sub+taxa)/numUnits)+R2(R(h.iptu)+applyTaxa(R(h.iptu),tx.iptu))+R2(R(h.lixo)+applyTaxa(R(h.lixo),tx.lixo));},0)*numUnits)}</td>
           </tr>
         </tfoot>
       </table>
     </div>` : '';
 
   const detailPerMonth = (type==='completo') ? hist.map(h=>{
-    const sub = R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outras);
-    const taxa = R2(sub*TAX);
+    const sub = R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outros);
+    const taxa = applyTaxa(R(h.agua),tx.agua)+applyTaxa(R(h.energia),tx.energia)+applyTaxa(R(h.limpeza),tx.limpeza)+applyTaxa(R(h.outras),tx.outras);
     const porApto = R2((sub+taxa)/numUnits);
-    const iptuComTaxa = R2(R(h.iptu)*(1+TAX));
-    const lixoComTaxa = R2(R(h.lixo)*(1+TAX));
+    const iptuComTaxa = R2(R(h.iptu)+applyTaxa(R(h.iptu),tx.iptu));
+    const lixoComTaxa = R2(R(h.lixo)+applyTaxa(R(h.lixo),tx.lixo));
     return `
       <div style="background:#fafaf8;border:1px solid #e2ddd6;border-radius:8px;padding:14px 16px;margin-bottom:12px;page-break-inside:avoid;">
         <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1c1a17;">${monthName(h.ref)}</div>
@@ -1787,7 +1838,7 @@ function printCondoReport(){
       <div class="sbox"><div class="sbox-label">Total Água</div><div class="sbox-val">${fmtBRL(totalAgua)}</div><div class="sbox-sub">${hist.length} meses</div></div>
       <div class="sbox"><div class="sbox-label">Total Energia</div><div class="sbox-val">${fmtBRL(totalEnergia)}</div><div class="sbox-sub">${hist.length} meses</div></div>
       <div class="sbox"><div class="sbox-label">Total Limpeza</div><div class="sbox-val">${fmtBRL(totalLimpeza)}</div><div class="sbox-sub">${hist.length} meses</div></div>
-      <div class="sbox" style="background:#EAF4EE;border-color:#D8EDDF;"><div class="sbox-label">Total Geral (c/ taxa)</div><div class="sbox-val" style="color:#2D6A4F;">${fmtBRL(totalGeral*(1+TAX))}</div><div class="sbox-sub">${numUnits} unidades</div></div>
+      <div class="sbox" style="background:#EAF4EE;border-color:#D8EDDF;"><div class="sbox-label">Total Geral (c/ taxa)</div><div class="sbox-val" style="color:#2D6A4F;">${fmtBRL(hist.reduce((s,h)=>{const sub=R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outras);const taxa=applyTaxa(R(h.agua),tx.agua)+applyTaxa(R(h.energia),tx.energia)+applyTaxa(R(h.limpeza),tx.limpeza)+applyTaxa(R(h.outras),tx.outras);return s+R2((sub+taxa)/numUnits)+R2(R(h.iptu)+applyTaxa(R(h.iptu),tx.iptu))+R2(R(h.lixo)+applyTaxa(R(h.lixo),tx.lixo));},0)*numUnits)}</div><div class="sbox-sub">${numUnits} unidades</div></div>
     </div>
     ${tableSection}
     ${unitsSection}
@@ -1812,9 +1863,29 @@ function printCondoReport(){
 // ============================================================
 const TODAY      = new Date();
 let CONDO_UNITS= ['Apto 1','Apto 2','Apto 3','Apto 4','Apto 5','Apto 6','Apto 7','Apto 8'];
-const TAX        = 0.10;
+const TAX        = 0.10; // fallback legado
 const MULTA_RATE = 0.10;      // 10% flat
 const JUROS_RATE = 0.01/30;   // 1% ao mês = ~0.0333% ao dia
+
+// Retorna configuração de taxas do condomínio, com defaults de 10% para itens sem config
+function getCondoTaxas(condoId){
+  const c = condominios.find(x=>x.id===(condoId||activeCondoId));
+  const def = { aplicar: true, pct: 10 };
+  const t = c?.taxas || {};
+  return {
+    agua:    { ...def, ...(t.agua||{}) },
+    energia: { ...def, ...(t.energia||{}) },
+    limpeza: { ...def, ...(t.limpeza||{}) },
+    lixo:    { ...def, ...(t.lixo||{}) },
+    iptu:    { ...def, ...(t.iptu||{}) },
+    outras:  { ...def, ...(t.outras||{}) }
+  };
+}
+
+// Aplica taxa sobre um valor conforme config do item
+function applyTaxa(valor, cfg){
+  return cfg.aplicar ? R2(valor * (cfg.pct / 100)) : 0;
+}
 const MN         = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const PIX_NAME   = 'Lucas Prado Medeiros Perin';
 const PIX_KEY    = 'CPF 702.738.471-04';
@@ -2015,11 +2086,13 @@ function hydrateEntries(){
         const condoRef=`${py}-${String(pm).padStart(2,'0')}`;
         const ce=tCondoHistory.find(c=>c.ref===condoRef);
         if(ce){
+          const tCondoId = t.condoId || activeCondoId;
+          const tx=getCondoTaxas(tCondoId);
           const sub=R(ce.agua)+R(ce.energia)+R(ce.limpeza)+R(ce.outras);
-          const taxa=R2(sub*TAX);
-          h.condo = R2((sub+taxa)/tCondoUnits.length);
-          h.iptu  = R2(R(ce.iptu)*(1+TAX));
-          h.lixo  = R2(R(ce.lixo)*(1+TAX));
+          const taxaRat=applyTaxa(R(ce.agua),tx.agua)+applyTaxa(R(ce.energia),tx.energia)+applyTaxa(R(ce.limpeza),tx.limpeza)+applyTaxa(R(ce.outras),tx.outras);
+          h.condo = R2((sub+taxaRat)/tCondoUnits.length);
+          h.iptu  = R2(R(ce.iptu)+applyTaxa(R(ce.iptu),tx.iptu));
+          h.lixo  = R2(R(ce.lixo)+applyTaxa(R(ce.lixo),tx.lixo));
           h.valorCobrado = R2(R(h.aluguel)+h.condo+h.iptu+h.lixo+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+totalExtras(h));
         }
       }
@@ -2124,11 +2197,13 @@ function buildMonthEntry(t, ref){
   const condoEntry = tCondoHistory.find(c=>c.ref===condoRef);
   let condoVal=0, iptuVal=0, lixoVal=0;
   if(condoEntry && tCondoUnits.includes(t.unit)){
+    const tCondoId = t.condoId || activeCondoId;
+    const tx=getCondoTaxas(tCondoId);
     const sub=(R(condoEntry.agua)+R(condoEntry.energia)+R(condoEntry.limpeza)+R(condoEntry.outras));
-    const taxaRateavel=R2(sub*TAX);
+    const taxaRateavel=applyTaxa(R(condoEntry.agua),tx.agua)+applyTaxa(R(condoEntry.energia),tx.energia)+applyTaxa(R(condoEntry.limpeza),tx.limpeza)+applyTaxa(R(condoEntry.outras),tx.outras);
     condoVal = R2((sub+taxaRateavel)/tCondoUnits.length);
-    iptuVal  = R2(R(condoEntry.iptu)*(1+TAX));
-    lixoVal  = R2(R(condoEntry.lixo)*(1+TAX));
+    iptuVal  = R2(R(condoEntry.iptu)+applyTaxa(R(condoEntry.iptu),tx.iptu));
+    lixoVal  = R2(R(condoEntry.lixo)+applyTaxa(R(condoEntry.lixo),tx.lixo));
   }
   const total = R2(R(t.rent)+condoVal+iptuVal+lixoVal);
   return {ref, venc, aluguel:R(t.rent), condo:condoVal, iptu:iptuVal, lixo:lixoVal,
@@ -3323,36 +3398,46 @@ function copyWpp(){
 // CONDOMÍNIO
 // ============================================================
 function condoCalc(){
+  const tx=getCondoTaxas();
   const agua=R(document.getElementById('agua-valor').value);
   const energia=R(document.getElementById('energia-valor').value);
   const limpeza=R(document.getElementById('limpeza-valor').value);
   const lixo=R(document.getElementById('lixo-valor').value);
   const iptu=R(document.getElementById('iptu-valor').value);
   const outras=R(document.getElementById('outras-valor').value);
-  // Rateável ÷ 8 com taxa de adm
+  // Taxas por item
+  const taxaAgua   =applyTaxa(agua,   tx.agua);
+  const taxaEnergia=applyTaxa(energia, tx.energia);
+  const taxaLimpeza=applyTaxa(limpeza, tx.limpeza);
+  const taxaOutras =applyTaxa(outras,  tx.outras);
+  const taxaLixo   =applyTaxa(lixo,   tx.lixo);
+  const taxaIptu   =applyTaxa(iptu,   tx.iptu);
+  // Rateável = água + energia + limpeza + outras (com suas respectivas taxas)
   const subRateavel=agua+energia+limpeza+outras;
-  const taxaRateavel=R2(subRateavel*TAX);
+  const taxaRateavel=R2(taxaAgua+taxaEnergia+taxaLimpeza+taxaOutras);
   const porAptoRateavel=R2((subRateavel+taxaRateavel)/CONDO_UNITS.length);
-  // IPTU e lixo: valor por unidade (informado pelo usuário) + taxa de adm 10%
-  const lixoComTaxa=R2(lixo*(1+TAX));
-  const iptuComTaxa=R2(iptu*(1+TAX));
-  // Totais para exibição
+  // IPTU e lixo: valor por unidade + taxa individual
+  const lixoComTaxa=R2(lixo+taxaLixo);
+  const iptuComTaxa=R2(iptu+taxaIptu);
+  // Totais
   const subTotal=subRateavel+lixo+iptu;
-  const taxaTotal=R2(taxaRateavel+(lixo*TAX)+(iptu*TAX));
+  const taxaTotal=R2(taxaRateavel+taxaLixo+taxaIptu);
   const totGeral=R2(subTotal+taxaTotal);
-  return{agua,energia,limpeza,lixo,iptu,outras,subRateavel,taxaRateavel,porAptoRateavel,lixoComTaxa,iptuComTaxa,subTotal,taxaTotal,totGeral};
+  return{agua,energia,limpeza,lixo,iptu,outras,
+    taxaAgua,taxaEnergia,taxaLimpeza,taxaOutras,taxaLixo,taxaIptu,tx,
+    subRateavel,taxaRateavel,porAptoRateavel,lixoComTaxa,iptuComTaxa,subTotal,taxaTotal,totGeral};
 }
 function calcCondo(){
   const v=condoCalc();
   const ref=document.getElementById('condo-month').value;
-  document.getElementById('r-agua').textContent=fmtBRL(v.agua);
-  document.getElementById('r-energia').textContent=fmtBRL(v.energia);
-  document.getElementById('r-limpeza').textContent=fmtBRL(v.limpeza);
-  document.getElementById('r-lixo').textContent=v.lixo>0?`${fmtBRL(v.lixo)} → ${fmtBRL(v.lixoComTaxa)} c/ taxa`:'—';
-  document.getElementById('r-iptu').textContent=v.iptu>0?`${fmtBRL(v.iptu)} → ${fmtBRL(v.iptuComTaxa)} c/ taxa`:'—';
-  document.getElementById('r-outras').textContent=fmtBRL(v.outras);
+  document.getElementById('r-agua').textContent=v.agua>0?(v.taxaAgua>0?`${fmtBRL(v.agua)} + ${fmtBRL(v.taxaAgua)} taxa`:fmtBRL(v.agua)):'—';
+  document.getElementById('r-energia').textContent=v.energia>0?(v.taxaEnergia>0?`${fmtBRL(v.energia)} + ${fmtBRL(v.taxaEnergia)} taxa`:fmtBRL(v.energia)):'—';
+  document.getElementById('r-limpeza').textContent=v.limpeza>0?(v.taxaLimpeza>0?`${fmtBRL(v.limpeza)} + ${fmtBRL(v.taxaLimpeza)} taxa`:fmtBRL(v.limpeza)):'—';
+  document.getElementById('r-outras').textContent=v.outras>0?(v.taxaOutras>0?`${fmtBRL(v.outras)} + ${fmtBRL(v.taxaOutras)} taxa`:fmtBRL(v.outras)):'—';
+  document.getElementById('r-lixo').textContent=v.lixo>0?(v.taxaLixo>0?`${fmtBRL(v.lixo)} → ${fmtBRL(v.lixoComTaxa)} c/ taxa (${v.tx.lixo.pct}%)`:fmtBRL(v.lixo)):'—';
+  document.getElementById('r-iptu').textContent=v.iptu>0?(v.taxaIptu>0?`${fmtBRL(v.iptu)} → ${fmtBRL(v.iptuComTaxa)} c/ taxa (${v.tx.iptu.pct}%)`:fmtBRL(v.iptu)):'—';
   document.getElementById('r-sub').textContent=fmtBRL(v.subRateavel);
-  document.getElementById('r-taxa').textContent=fmtBRL(v.taxaTotal);
+  document.getElementById('r-taxa').textContent=v.taxaTotal>0?fmtBRL(v.taxaTotal):'—';
   document.getElementById('r-tot').textContent=fmtBRL(v.totGeral);
   document.getElementById('r-por-apto').textContent=fmtBRL(v.porAptoRateavel);
   if(ref){
@@ -3425,15 +3510,18 @@ function saveCondoMonth(){
 
   renderCondoHistory();
   saveToStorage();
-  alert(`✓ Condomínio de ${monthName(ref)} salvo!\n\nCondomínio p/ unidade (água+energia+limpeza): ${fmtBRL(v.porAptoRateavel)}\nIPTU por unidade (c/ taxa 10%): ${iptuPerApto>0?fmtBRL(iptuPerApto):'não informado'}\nTaxa de Lixo por unidade (c/ taxa 10%): ${lixoPerApto>0?fmtBRL(lixoPerApto):'não informada'}\n\n✅ Fichas dos Aptos 1–8 atualizadas para ${monthName(billingRef)}\n   Vencimento: dia ${by}-${bm}-XX (dia fixo de cada inquilino)`);
+  const tx=getCondoTaxas();
+  alert(`✓ Condomínio de ${monthName(ref)} salvo!\n\nCondomínio p/ unidade (rateável): ${fmtBRL(v.porAptoRateavel)}\nIPTU por unidade${tx.iptu.aplicar?` (c/ taxa ${tx.iptu.pct}%)`:' (sem taxa)'}: ${iptuPerApto>0?fmtBRL(iptuPerApto):'não informado'}\nTaxa de Lixo por unidade${tx.lixo.aplicar?` (c/ taxa ${tx.lixo.pct}%)`:' (sem taxa)'}: ${lixoPerApto>0?fmtBRL(lixoPerApto):'não informada'}\n\n✅ Fichas dos Aptos atualizadas para ${monthName(billingRef)}\n   Vencimento: dia ${by}-${bm}-XX (dia fixo de cada inquilino)`);
 }
 function renderCondoHistory(){
   const c=document.getElementById('condo-hist-body');
   if(!condoHistory.length){c.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);">Nenhum lançamento.</div>';return;}
   const hdr=`<div class="rrow rhdr"><div style="flex:1.5">Mês</div><div style="flex:1;text-align:right">Água</div><div style="flex:1;text-align:right">Energia</div><div style="flex:1;text-align:right">IPTU</div><div style="flex:1;text-align:right">Lixo</div><div style="flex:1.2;text-align:right">Por apto</div><div style="flex:.6;text-align:right"></div></div>`;
   const rows=[...condoHistory].reverse().map(h=>{
-    const sub=R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.lixo)+R(h.iptu)+R(h.outras);
-    const por=R2((sub*(1+TAX))/CONDO_UNITS.length);
+    const tx=getCondoTaxas();
+    const subRat=R(h.agua)+R(h.energia)+R(h.limpeza)+R(h.outras);
+    const taxaRat=applyTaxa(R(h.agua),tx.agua)+applyTaxa(R(h.energia),tx.energia)+applyTaxa(R(h.limpeza),tx.limpeza)+applyTaxa(R(h.outras),tx.outras);
+    const por=R2((subRat+taxaRat)/CONDO_UNITS.length);
     return`<div class="rrow" style="cursor:pointer;font-size:13px;" onclick="loadRefAndGo('${h.ref}')">
       <div style="flex:1.5;font-weight:500">${monthName(h.ref)}${h.obs?` <span title="${h.obs}" style="cursor:help;color:var(--amber)">💬</span>`:''}</div>
       <div style="flex:1;text-align:right;color:var(--text-muted)">${fmtBRL(h.agua)}</div>
