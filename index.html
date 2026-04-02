@@ -977,6 +977,34 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   </div>
 </div>
 
+<div class="overlay" id="edit-pay-overlay" onclick="if(event.target===this)closeEditPayModal()">
+  <div class="modal wide">
+    <div class="modal-title">Editar Pagamento</div>
+    <div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--amber);" id="ep-info-box"></div>
+    <div class="mrow">
+      <div class="mfield"><label>Referência</label><input type="month" id="ep-ref" disabled></div>
+      <div class="mfield"><label>Data do Pagamento</label><input type="date" id="ep-date"></div>
+    </div>
+    <div class="mrow">
+      <div class="mfield"><label>Valor Pago (R$)</label><input type="number" id="ep-value" step="0.01"></div>
+      <div class="mfield"><label>Condomínio (R$)</label><input type="number" id="ep-condo" step="0.01" placeholder="0,00"></div>
+    </div>
+    <div class="mrow">
+      <div class="mfield"><label>IPTU (R$)</label><input type="number" id="ep-iptu" step="0.01" placeholder="0,00"></div>
+      <div class="mfield"><label>Taxa de Lixo (R$)</label><input type="number" id="ep-lixo" step="0.01" placeholder="0,00"></div>
+    </div>
+    <div class="mrow">
+      <div class="mfield"><label>Multa (R$)</label><input type="number" id="ep-multa" step="0.01" placeholder="0,00"></div>
+      <div class="mfield"><label>Juros (R$)</label><input type="number" id="ep-juros" step="0.01" placeholder="0,00"></div>
+    </div>
+    <div class="mfield"><label>Observações</label><textarea id="ep-obs" rows="2"></textarea></div>
+    <div class="mfooter">
+      <button class="btn" onclick="closeEditPayModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditPayModal()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // IMÓVEIS — Data model & management
@@ -2183,6 +2211,104 @@ function _rollPenalties(t, ref, base, daysLate){
 }
 
 // ============================================================
+// EDIT / UNDO PAYMENT
+// ============================================================
+let editPayTenantId = null;
+let editPayRef = null;
+
+function _resetPaymentEntry(t, ref){
+  const entry = t.history.find(h=>h.ref===ref);
+  if(!entry) return;
+  const propagatedMulta = R(entry.multa);
+  const propagatedJuros = R(entry.juros);
+
+  entry.valorPago = 0;
+  entry.dataPagamento = null;
+  entry.multa = 0;
+  entry.juros = 0;
+  entry.obs = '';
+  const todayRef = TODAY.toISOString().slice(0,7);
+  entry.status = ref <= todayRef ? 'pendente' : 'futuro';
+
+  // Desfaz carry-over de multa/juros no mês seguinte
+  const nxtRef = nextMonth(ref);
+  const nxt = t.history.find(h=>h.ref===nxtRef);
+  if(nxt && (propagatedMulta>0 || propagatedJuros>0)){
+    nxt.pendingMulta = R2(Math.max(0, R(nxt.pendingMulta) - propagatedMulta));
+    nxt.pendingJuros = R2(Math.max(0, R(nxt.pendingJuros) - propagatedJuros));
+    nxt.valorCobrado = R2(R(nxt.aluguel)+R(nxt.condo)+R(nxt.iptu)+R(nxt.lixo)+R(nxt.multa)+R(nxt.juros)+R(nxt.pendingMulta)+R(nxt.pendingJuros));
+  }
+}
+
+function openEditPayModal(tenantId, ref){
+  const t = tenants.find(x=>x.id===tenantId);
+  if(!t) return;
+  const entry = t.history.find(h=>h.ref===ref);
+  if(!entry) return;
+
+  editPayTenantId = tenantId;
+  editPayRef = ref;
+
+  document.getElementById('ep-ref').value = ref;
+  document.getElementById('ep-date').value = entry.dataPagamento || TODAY.toISOString().split('T')[0];
+  document.getElementById('ep-value').value = entry.valorPago || '';
+  document.getElementById('ep-condo').value = entry.condo || '';
+  document.getElementById('ep-iptu').value = entry.iptu || '';
+  document.getElementById('ep-lixo').value = entry.lixo || '';
+  document.getElementById('ep-multa').value = (R(entry.multa)+R(entry.pendingMulta)) || '';
+  document.getElementById('ep-juros').value = (R(entry.juros)+R(entry.pendingJuros)) || '';
+  document.getElementById('ep-obs').value = entry.obs || '';
+  document.getElementById('ep-info-box').innerHTML =
+    `<strong>${t.unit} — ${t.name}</strong> &nbsp;·&nbsp; ${monthName(ref)} &nbsp;·&nbsp; Cobrado: ${fmtBRL(entry.valorCobrado)} &nbsp;·&nbsp; Pago: ${fmtBRL(entry.valorPago)}`;
+
+  document.getElementById('edit-pay-overlay').classList.add('open');
+}
+
+function closeEditPayModal(){
+  document.getElementById('edit-pay-overlay').classList.remove('open');
+  editPayTenantId = null;
+  editPayRef = null;
+}
+
+function saveEditPayModal(){
+  const tid = editPayTenantId;
+  const ref = editPayRef;
+  if(!tid || !ref) return;
+  const t = tenants.find(x=>x.id===tid);
+  if(!t) return;
+
+  const date = document.getElementById('ep-date').value;
+  const value = document.getElementById('ep-value').value;
+  if(!date || !value){ alert('Preencha Data e Valor Pago.'); return; }
+
+  _resetPaymentEntry(t, ref);
+  applyPayment(tid, ref, date, value,
+    document.getElementById('ep-condo').value,
+    document.getElementById('ep-iptu').value,
+    document.getElementById('ep-lixo').value,
+    document.getElementById('ep-multa').value,
+    document.getElementById('ep-juros').value,
+    document.getElementById('ep-obs').value);
+
+  saveToStorage();
+  closeEditPayModal();
+  renderDet();
+}
+
+function desfazerPagamento(tenantId, ref){
+  const t = tenants.find(x=>x.id===tenantId);
+  if(!t) return;
+  const entry = t.history.find(h=>h.ref===ref);
+  if(!entry || !entry.dataPagamento) return;
+  if(!confirm(`Desfazer pagamento de ${monthName(ref)} — ${t.unit}?\n\nIsso zerará o valor pago e retornará o mês para "Pendente".`)) return;
+
+  _resetPaymentEntry(t, ref);
+  saveToStorage();
+  renderDashboard();
+  renderDet();
+}
+
+// ============================================================
 // TENANT CARDS
 // ============================================================
 function statusOf(t){
@@ -2884,8 +3010,11 @@ function renderDet(){
                 <div style="margin-top:4px;"><span class="pill ${pillCls}">${stTxt}</span></div>
               </div>
             </div>
-            <div style="margin-top:8px;display:flex;gap:6px;">
+            <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
               <button class="btn btn-primary" style="font-size:11px;padding:5px 12px;" onclick="openRegFromDet(${t.id})">+ Registrar pagamento</button>
+              ${h.dataPagamento?`
+              <button class="btn" style="font-size:11px;padding:5px 10px;color:var(--amber);border-color:var(--amber-light);" onclick="openEditPayModal(${t.id},'${h.ref}')">✏️ Editar pagamento</button>
+              <button class="btn" style="font-size:11px;padding:5px 10px;color:var(--red);border-color:var(--red-light);" onclick="desfazerPagamento(${t.id},'${h.ref}')">↩ Desfazer pagamento</button>`:''}
               <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="setDetPeriod('todos')">← Voltar ao extrato completo</button>
             </div>
           </div>
@@ -2903,7 +3032,13 @@ function renderDet(){
       <td class="r" style="font-size:12px;color:${penalties>0?'var(--red)':'var(--text-faint)'};">${penalties>0?fmtBRL(penalties):'—'}</td>
       <td class="r" style="font-size:12px;font-weight:600;">${fmtBRL(h.valorCobrado)}</td>
       <td class="r" style="font-size:12px;">${h.dataPagamento?`<div>${fmtDate(h.dataPagamento)}</div><div style="font-size:10px;color:var(--text-faint);">${fmtBRL(h.valorPago)}</div>`:'—'}</td>
-      <td class="r"><span class="pill ${pillCls}">${stTxt}</span></td>
+      <td class="r" style="white-space:nowrap;">
+        <span class="pill ${pillCls}">${stTxt}</span>
+        ${(st2==='pago'||st2==='parcial')?`<div style="margin-top:4px;display:flex;gap:3px;justify-content:flex-end;">
+          <button onclick="event.stopPropagation();openEditPayModal(${t.id},'${h.ref}')" style="font-size:10px;padding:2px 6px;border:1px solid var(--amber-light);border-radius:4px;background:var(--amber-bg);cursor:pointer;color:var(--amber);" title="Editar pagamento">✏️</button>
+          <button onclick="event.stopPropagation();desfazerPagamento(${t.id},'${h.ref}')" style="font-size:10px;padding:2px 6px;border:1px solid var(--red-light);border-radius:4px;background:var(--red-bg);cursor:pointer;color:var(--red);" title="Desfazer pagamento">↩</button>
+        </div>`:''}
+      </td>
     </tr>`;
   }).join('');
 
