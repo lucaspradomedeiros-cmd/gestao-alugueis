@@ -487,7 +487,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 }
 
 </style>
-<script src="https://unpkg.com/docx@9/build/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
 </head>
 <body>
 
@@ -5563,6 +5563,7 @@ function gdRecalc(){
 }
 
 async function gerarDocAdv(){
+  if(!window.docx||!window.docx.Document){gaToast('Biblioteca docx não carregada. Verifique sua conexão e recarregue a página.','error');return;}
   const c=clientesAdv.find(x=>x.id===_gerarDocClienteId);
   if(!c){gaToast('Cliente não encontrado.','error');return;}
   const tipos=[];
