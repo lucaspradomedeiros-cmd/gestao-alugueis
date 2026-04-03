@@ -2090,24 +2090,27 @@ function hydrateEntries(){
     const tCondoUnits   = getTenantCondoUnits(t);
     t.history.forEach(h=>{
       if(!h.extras) h.extras=[];
-      if(h.status==='futuro' && h.condo===0 && tCondoUnits.includes(t.unit)){
-        const[ry,rm]=h.ref.split('-');
-        let pm=parseInt(rm)-1, py=parseInt(ry);
-        if(pm<1){pm=12;py--;}
-        const condoRef=`${py}-${String(pm).padStart(2,'0')}`;
-        const ce=tCondoHistory.find(c=>c.ref===condoRef);
-        if(ce){
-          const tCondoId = t.condoId || activeCondoId;
-          const tx=getCondoTaxas(tCondoId);
-          const sub=R(ce.agua)+R(ce.energia)+R(ce.limpeza)+R(ce.outras);
-          const taxaRat=applyTaxa(R(ce.agua),tx.agua)+applyTaxa(R(ce.energia),tx.energia)+applyTaxa(R(ce.limpeza),tx.limpeza)+applyTaxa(R(ce.outras),tx.outras);
-          h.condo = R2((sub+taxaRat)/tCondoUnits.length);
-          h.iptu  = R2(R(ce.iptu)+applyTaxa(R(ce.iptu),tx.iptu));
-          h.lixo  = R2(R(ce.lixo)+applyTaxa(R(ce.lixo),tx.lixo));
-          h.valorCobrado = R2(R(h.aluguel)+h.condo+h.iptu+h.lixo+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+totalExtras(h));
-          // Recalcula vencimento conforme config do condo
-          const vencYM = getCondoVencYM(tCondoId, h.ref);
-          h.venc = `${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
+      if(h.status==='futuro' && tCondoUnits.includes(t.unit)){
+        const tCondoId = t.condoId || activeCondoId;
+        // Sempre recalcula vencimento conforme config do condo (para todas as entradas futuras)
+        const vencYM = getCondoVencYM(tCondoId, h.ref);
+        h.venc = `${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
+        // Só atualiza condo/iptu/lixo se ainda não foram calculados
+        if(h.condo===0){
+          const[ry,rm]=h.ref.split('-');
+          let pm=parseInt(rm)-1, py=parseInt(ry);
+          if(pm<1){pm=12;py--;}
+          const condoRef=`${py}-${String(pm).padStart(2,'0')}`;
+          const ce=tCondoHistory.find(c=>c.ref===condoRef);
+          if(ce){
+            const tx=getCondoTaxas(tCondoId);
+            const sub=R(ce.agua)+R(ce.energia)+R(ce.limpeza)+R(ce.outras);
+            const taxaRat=applyTaxa(R(ce.agua),tx.agua)+applyTaxa(R(ce.energia),tx.energia)+applyTaxa(R(ce.limpeza),tx.limpeza)+applyTaxa(R(ce.outras),tx.outras);
+            h.condo = R2((sub+taxaRat)/tCondoUnits.length);
+            h.iptu  = R2(R(ce.iptu)+applyTaxa(R(ce.iptu),tx.iptu));
+            h.lixo  = R2(R(ce.lixo)+applyTaxa(R(ce.lixo),tx.lixo));
+            h.valorCobrado = R2(R(h.aluguel)+h.condo+h.iptu+h.lixo+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+totalExtras(h));
+          }
         }
       }
     });
@@ -3284,8 +3287,9 @@ function openWpp(id){
   const ref   = entry?.ref || `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('wpp-ref').value=ref;
 
-  const[ry,rm]=ref.split('-');
-  document.getElementById('wpp-venc').value=`${ry}-${rm}-${String(t.vencDia).padStart(2,'0')}`;
+  const tCondoId = t.condoId || activeCondoId;
+  const vencYM = getCondoVencYM(tCondoId, ref);
+  document.getElementById('wpp-venc').value=entry?.venc||`${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
   document.getElementById('wpp-aluguel').value=t.rent||'';
 
   const im = t.imovelId ? getImovel(t.imovelId) : null;
