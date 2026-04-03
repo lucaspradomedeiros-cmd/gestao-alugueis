@@ -350,6 +350,19 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .dash-esc-sub{font-size:11px;color:var(--text-muted);}
 .areceber-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:6px;font-size:12px;}
 @media(max-width:600px){.dash-esc-grid{grid-template-columns:1fr;}}
+/* ── Comparativo / Gráfico ── */
+.comp-ctrl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+.comp-chart-wrap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+/* ── Impressão DRE ── */
+@media print{
+  .dre-print-only{display:block!important;}
+  .dre-no-print{display:none!important;}
+  #resultado-mensal .resultado-row{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+.dre-print-only{display:none;}
+/* ── Resultado toggle ── */
+.resultado-detalhe{font-size:11px;color:var(--text-muted);padding:4px 14px 4px 28px;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;}
+.resultado-detalhe:last-child{border-bottom:none;margin-bottom:6px;}
 /* === MÓDULO CLIENTES / ADVOCACIA === */
 .empty-state{text-align:center;padding:44px 20px;color:var(--text-faint);font-size:13px;}
 .empty-state .icon{font-size:36px;margin-bottom:10px;}
@@ -507,6 +520,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -587,6 +601,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
         <div class="dash-esc-label">Receitas do mês</div>
         <div class="dash-esc-value" id="dash-esc-receita" style="color:var(--green);">—</div>
         <div class="dash-esc-sub" id="dash-esc-receita-sub">honorários + outros</div>
+        <div id="dash-esc-areceber-sub" style="font-size:11px;color:var(--blue);margin-top:5px;display:none;">⏳ A receber: —</div>
       </div>
       <div class="dash-esc-card" style="border-color:var(--red-light);background:var(--red-bg);">
         <div class="dash-esc-label">Despesas do mês</div>
@@ -599,7 +614,8 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
         <div class="dash-esc-sub" id="dash-esc-resultado-sub">receitas − despesas</div>
       </div>
     </div>
-    <div id="dash-contas-vencer" style="margin-bottom:20px;"></div>
+    <div id="dash-contas-vencer" style="margin-bottom:12px;"></div>
+    <div id="dash-receitas-vencidas" style="margin-bottom:20px;"></div>
     <div class="section-header"><div class="section-title">Situação atual</div></div>
     <div class="tenants-grid" id="dash-cards"></div>
   </div>
@@ -854,6 +870,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <button class="det-tab" id="ftab-receitas" onclick="showFinTab('receitas')">💰 Receitas</button>
       <button class="det-tab" id="ftab-areceber" onclick="showFinTab('areceber')">📥 A Receber</button>
       <button class="det-tab" id="ftab-resultado" onclick="showFinTab('resultado')">📊 Resultado</button>
+      <button class="det-tab" id="ftab-comparativo" onclick="showFinTab('comparativo')">📈 Comparativo</button>
     </div>
     <!-- Aba: Despesas -->
     <div id="ftab-content-despesas">
@@ -867,11 +884,29 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     </div>
     <!-- Aba: A Receber -->
     <div id="ftab-content-areceber" style="display:none;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <button class="det-tab active" id="arf-todas" onclick="setAReceberFiltro('todas')">Todas</button>
+        <button class="det-tab" id="arf-vencidas" onclick="setAReceberFiltro('vencidas')">⚠️ Vencidas</button>
+        <button class="det-tab" id="arf-mes" onclick="setAReceberFiltro('mes')">Este mês</button>
+        <button class="det-tab" id="arf-30d" onclick="setAReceberFiltro('30d')">Próx. 30 dias</button>
+        <button class="det-tab" id="arf-custom" onclick="setAReceberFiltro('custom')" style="margin-left:auto;">📅 Período</button>
+      </div>
+      <div id="areceber-periodo-custom" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-size:12px;color:var(--text-muted);font-weight:500;">De</span>
+        <input type="month" id="arf-de" onchange="renderAReceber()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);">
+        <span style="font-size:12px;color:var(--text-muted);font-weight:500;">Até</span>
+        <input type="month" id="arf-ate" onchange="renderAReceber()" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);">
+      </div>
+      <div id="areceber-totais" style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;"></div>
       <div id="lista-areceber"></div>
     </div>
     <!-- Aba: Resultado -->
     <div id="ftab-content-resultado" style="display:none;">
       <div id="resultado-mensal"></div>
+    </div>
+    <!-- Aba: Comparativo -->
+    <div id="ftab-content-comparativo" style="display:none;">
+      <div id="comparativo-container"></div>
     </div>
   </div>
 </main>
@@ -6252,6 +6287,10 @@ function renderDespesas(){
 // ============================================================
 let _finTab = 'despesas';
 let _editandoRecId = null;
+let _areceberFiltro = 'todas';
+let _resultadoDetalhado = false;
+let _compAno = new Date().getFullYear();
+let _compChart = null;
 
 function getMesFiltro(){
   const el=document.getElementById('desp-filtro-mes');
@@ -6266,7 +6305,7 @@ function getMesFiltro(){
 
 function showFinTab(tab){
   _finTab=tab;
-  ['despesas','receitas','areceber','resultado'].forEach(t=>{
+  ['despesas','receitas','areceber','resultado','comparativo'].forEach(t=>{
     const btn=document.getElementById('ftab-'+t);
     const cnt=document.getElementById('ftab-content-'+t);
     if(btn) btn.classList.toggle('active',t===tab);
@@ -6283,6 +6322,7 @@ function showFinTab(tab){
   else if(tab==='receitas') renderReceitas();
   else if(tab==='areceber') renderAReceber();
   else if(tab==='resultado') renderResultado();
+  else if(tab==='comparativo') renderComparativo();
 }
 
 function renderFinanceiro(){
@@ -6396,12 +6436,19 @@ function renderReceitas(){
 }
 
 // ── A RECEBER (honorários de clientes) ─────────────────────
-function renderAReceber(){
-  const el=document.getElementById('lista-areceber');
-  if(!el) return;
-  const hoje=new Date();
-  const mesF=getMesFiltro();
-  // Coletar todas as parcelas não pagas de clientesAdv
+function setAReceberFiltro(f){
+  _areceberFiltro=f;
+  ['todas','vencidas','mes','30d','custom'].forEach(x=>{
+    const b=document.getElementById('arf-'+x);
+    if(b) b.classList.toggle('active',x===f);
+  });
+  const cp=document.getElementById('areceber-periodo-custom');
+  if(cp) cp.style.display=f==='custom'?'flex':'none';
+  renderAReceber();
+}
+
+function _coletarPendentes(){
+  const hojeStr=new Date().toISOString().split('T')[0];
   const pendentes=[];
   clientesAdv.forEach(c=>{
     const blocos=[];
@@ -6410,26 +6457,64 @@ function renderAReceber(){
     blocos.forEach(b=>{
       b.parcelas.forEach((p,i)=>{
         if(!p.pago && p.vencimento){
-          const venc=new Date(p.vencimento+'T12:00:00');
-          const vencStr=p.vencimento;
           pendentes.push({
             clienteNome:c.nome,clienteId:c.id,
             blocoNome:b.nome,parcelaLabel:`${i+1}ª parcela`,
-            valor:parseFloat(p.valor||0),vencimento:vencStr,vencDate:venc,
-            atrasada:venc<hoje,
+            valor:parseFloat(p.valor||0),vencimento:p.vencimento,
+            atrasada:p.vencimento<hojeStr,
           });
         }
       });
     });
   });
   pendentes.sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
-  if(!pendentes.length){el.innerHTML='<div class="desp-empty">Nenhum honorário pendente. Todos os clientes em dia! ✅</div>';return;}
-  const total=pendentes.reduce((s,p)=>s+p.valor,0);
-  const totalAtras=pendentes.filter(p=>p.atrasada).reduce((s,p)=>s+p.valor,0);
-  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-    <span class="desp-total-chip" style="background:var(--blue-bg);border-color:#B3D4F8;color:var(--blue);">${pendentes.length} parcelas — ${fmtBRL(total)}</span>
-    ${totalAtras?`<span class="desp-total-chip" style="background:var(--red-bg);border-color:var(--red-light);color:var(--red);">⚠️ Atrasadas: ${fmtBRL(totalAtras)}</span>`:''}
-  </div>`+pendentes.map(p=>{
+  return pendentes;
+}
+
+function renderAReceber(){
+  const el=document.getElementById('lista-areceber');
+  if(!el) return;
+  const hojeStr=new Date().toISOString().split('T')[0];
+  const pendentes=_coletarPendentes();
+
+  // Aplicar filtro
+  const em30=new Date(); em30.setDate(em30.getDate()+30);
+  const em30Str=em30.toISOString().split('T')[0];
+  const mesAtual=hojeStr.substring(0,7);
+  const f=_areceberFiltro||'todas';
+  let filtrados=pendentes;
+  if(f==='vencidas') filtrados=pendentes.filter(p=>p.atrasada);
+  else if(f==='mes') filtrados=pendentes.filter(p=>p.vencimento.startsWith(mesAtual));
+  else if(f==='30d') filtrados=pendentes.filter(p=>p.vencimento>=hojeStr&&p.vencimento<=em30Str);
+  else if(f==='custom'){
+    const de=document.getElementById('arf-de')?.value;
+    const ate=document.getElementById('arf-ate')?.value;
+    if(de) filtrados=filtrados.filter(p=>p.vencimento>=de+'-01');
+    if(ate){
+      const [ay,am]=ate.split('-').map(Number);
+      const ultimo=String(new Date(ay,am,0).getDate()).padStart(2,'0');
+      filtrados=filtrados.filter(p=>p.vencimento<=ate+'-'+ultimo);
+    }
+  }
+
+  // Totalizadores
+  const total=filtrados.reduce((s,p)=>s+p.valor,0);
+  const totalAtras=filtrados.filter(p=>p.atrasada).reduce((s,p)=>s+p.valor,0);
+  const totalAVencer=total-totalAtras;
+  const totEl=document.getElementById('areceber-totais');
+  if(totEl){
+    totEl.innerHTML=filtrados.length?[
+      `<span class="desp-total-chip" style="background:var(--blue-bg);border-color:#B3D4F8;color:var(--blue);">${filtrados.length} parcela${filtrados.length!==1?'s':''} — ${fmtBRL(total)}</span>`,
+      totalAtras?`<span class="desp-total-chip" style="background:var(--red-bg);border-color:var(--red-light);color:var(--red);">⚠️ Atrasadas: ${fmtBRL(totalAtras)}</span>`:'',
+      (totalAVencer&&totalAtras)?`<span class="desp-total-chip" style="background:var(--surface);border-color:var(--border-strong);">A vencer: ${fmtBRL(totalAVencer)}</span>`:'',
+    ].filter(Boolean).join(''):'';
+  }
+
+  if(!filtrados.length){
+    el.innerHTML=`<div class="desp-empty">${pendentes.length?'Nenhum resultado para este filtro.':'Nenhum honorário pendente. Todos os clientes em dia! ✅'}</div>`;
+    return;
+  }
+  el.innerHTML=filtrados.map(p=>{
     const vencFmt=new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR');
     return `<div class="areceber-item" style="${p.atrasada?'border-color:var(--red-light);background:var(--red-bg);':''}">
       <div style="flex:1;">
@@ -6444,6 +6529,42 @@ function renderAReceber(){
 }
 
 // ── RESULTADO MENSAL ─────────────────────────────────────────
+function _calcResultadoMes(mesF){
+  const despsDoMes=despesasEscritorio.filter(d=>(d.dataVencimento||d.data||'').startsWith(mesF));
+  const totDesp=despsDoMes.reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const totDespPago=despsDoMes.filter(d=>(d.status||'pago')==='pago').reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const totDespApagar=despsDoMes.filter(d=>(d.status||'pago')==='a_pagar').reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const recsDoMes=receitasEscritorio.filter(r=>r.data&&r.data.startsWith(mesF));
+  const recsRecebidas=recsDoMes.filter(r=>(r.status||'recebido')==='recebido');
+  const recsAReceber=recsDoMes.filter(r=>(r.status||'recebido')==='a_receber');
+  const totRecRecebido=recsRecebidas.reduce((s,r)=>s+parseFloat(r.valor||0),0);
+  const totRecAReceber=recsAReceber.reduce((s,r)=>s+parseFloat(r.valor||0),0);
+  // Honorários de clientes recebidos no mês
+  const honDetalhes=[];
+  let totHonClientes=0;
+  clientesAdv.forEach(c=>{
+    if(c.contrato){
+      (c.contrato.parcelas||[]).forEach((p,i)=>{
+        if(p.pago&&p.dataPagamento&&p.dataPagamento.startsWith(mesF)){
+          const v=parseFloat(p.valorPago||p.valor||0);
+          totHonClientes+=v;
+          honDetalhes.push({nome:c.nome,tipo:'Contrato de Honorários',parcela:`${i+1}ª parcela`,valor:v});
+        }
+      });
+    }
+    (c.servicos||[]).forEach(sv=>{
+      (sv.parcelas||[]).forEach((p,i)=>{
+        if(p.pago&&p.dataPagamento&&p.dataPagamento.startsWith(mesF)){
+          const v=parseFloat(p.valorPago||p.valor||0);
+          totHonClientes+=v;
+          honDetalhes.push({nome:c.nome,tipo:sv.tipo||'Serviço',parcela:`${i+1}ª parcela`,valor:v});
+        }
+      });
+    });
+  });
+  return {despsDoMes,totDesp,totDespPago,totDespApagar,recsRecebidas,recsAReceber,totRecRecebido,totRecAReceber,honDetalhes,totHonClientes};
+}
+
 function renderResultado(){
   const el=document.getElementById('resultado-mensal');
   if(!el) return;
@@ -6451,40 +6572,12 @@ function renderResultado(){
   const [ano,mes]=mesF.split('-').map(Number);
   const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const mesNome=`${meses[mes-1]}/${ano}`;
+  const {despsDoMes,totDesp,totDespPago,totDespApagar,recsRecebidas,recsAReceber,totRecRecebido,totRecAReceber,honDetalhes,totHonClientes}=_calcResultadoMes(mesF);
 
-  // Despesas pagas no mês
-  const despsDoMes=despesasEscritorio.filter(d=>{
-    const ref=d.dataVencimento||d.data||'';
-    return ref.startsWith(mesF);
-  });
-  const totDesp=despsDoMes.reduce((s,d)=>s+parseFloat(d.valor||0),0);
-  const totDespPago=despsDoMes.filter(d=>(d.status||'pago')==='pago').reduce((s,d)=>s+parseFloat(d.valor||0),0);
-  const totDespApagar=despsDoMes.filter(d=>(d.status||'pago')==='a_pagar').reduce((s,d)=>s+parseFloat(d.valor||0),0);
-
-  // Receitas do mês (manuais)
-  const recsDoMes=receitasEscritorio.filter(r=>r.data&&r.data.startsWith(mesF));
-  const totRecRecebido=recsDoMes.filter(r=>(r.status||'recebido')==='recebido').reduce((s,r)=>s+parseFloat(r.valor||0),0);
-  const totRecAReceber=recsDoMes.filter(r=>(r.status||'recebido')==='a_receber').reduce((s,r)=>s+parseFloat(r.valor||0),0);
-  const totRec=totRecRecebido+totRecAReceber;
-
-  // Honorários recebidos de clientes no mês (pagos na ficha)
-  let totHonClientes=0;
-  clientesAdv.forEach(c=>{
-    const blocos=[];
-    if(c.contrato) blocos.push(c.contrato.parcelas||[]);
-    (c.servicos||[]).forEach(sv=>blocos.push(sv.parcelas||[]));
-    blocos.forEach(parcelas=>{
-      parcelas.forEach(p=>{
-        if(p.pago && p.dataPagamento && p.dataPagamento.startsWith(mesF)){
-          totHonClientes+=parseFloat(p.valorPago||p.valor||0);
-        }
-      });
-    });
-  });
-
-  const saldoPrevisto=totRec+totHonClientes-totDesp;
+  const saldoPrevisto=totRecRecebido+totRecAReceber+totHonClientes-totDesp;
   const saldoRealizado=totRecRecebido+totHonClientes-totDespPago;
   const cor=v=>v>=0?'var(--green)':'var(--red)';
+  const det=_resultadoDetalhado;
 
   // Despesas por categoria
   const porCat={};
@@ -6493,13 +6586,34 @@ function renderResultado(){
     `<div class="resultado-row" style="background:var(--bg);padding:7px 14px;"><span>${k}</span><span style="color:var(--red);">−${fmtBRL(v)}</span></div>`
   ).join('');
 
+  // Detalhes de receitas manuais recebidas
+  const recDetalheRows=det?recsRecebidas.map(r=>{
+    const label=`${REC_TIPO_LABEL[r.tipo]||r.tipo}${r.descricao?' — '+r.descricao:''}`;
+    const sub=r.clienteNome?` · ${r.clienteNome}`:'';
+    return `<div class="resultado-detalhe"><span>${label}${sub}</span><span style="color:var(--green);">+${fmtBRL(parseFloat(r.valor||0))}</span></div>`;
+  }).join(''):'';
+  const recAReceberRows=det?recsAReceber.map(r=>{
+    const label=`${REC_TIPO_LABEL[r.tipo]||r.tipo}${r.descricao?' — '+r.descricao:''}`;
+    const sub=r.clienteNome?` · ${r.clienteNome}`:'';
+    return `<div class="resultado-detalhe" style="opacity:.7;"><span>⏳ ${label}${sub}</span><span style="color:var(--green);">+${fmtBRL(parseFloat(r.valor||0))}</span></div>`;
+  }).join(''):'';
+  const honDetalheRows=det?honDetalhes.map(h=>
+    `<div class="resultado-detalhe"><span>${h.nome} — ${h.tipo} (${h.parcela})</span><span style="color:var(--green);">+${fmtBRL(h.valor)}</span></div>`
+  ).join(''):'';
+
   el.innerHTML=`
-    <div style="font-size:16px;font-weight:700;margin-bottom:16px;">📊 Resultado — ${mesNome}</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;" class="dre-no-print">
+      <div style="font-size:16px;font-weight:700;">📊 Resultado — ${mesNome}</div>
+      <button class="btn" style="font-size:11px;padding:5px 12px;margin-left:auto;" onclick="_resultadoDetalhado=!_resultadoDetalhado;renderResultado();">${det?'📋 Resumido':'🔍 Detalhado'}</button>
+      <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="imprimirDRE()">🖨 Imprimir</button>
+    </div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;display:none;" class="dre-print-only">📊 Resultado — ${mesNome}</div>
 
     <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Receitas</div>
     <div class="resultado-row receita"><span>💰 Receitas manuais (recebidas)</span><span style="color:var(--green);">+${fmtBRL(totRecRecebido)}</span></div>
-    ${totRecAReceber?`<div class="resultado-row receita" style="opacity:.7;"><span>💰 Receitas manuais (a receber)</span><span style="color:var(--green);">+${fmtBRL(totRecAReceber)}</span></div>`:''}
-    ${totHonClientes?`<div class="resultado-row receita"><span>⚖️ Honorários de clientes (recebidos)</span><span style="color:var(--green);">+${fmtBRL(totHonClientes)}</span></div>`:''}
+    ${recDetalheRows}
+    ${totRecAReceber?`<div class="resultado-row receita" style="opacity:.7;"><span>💰 Receitas manuais (a receber)</span><span style="color:var(--green);">+${fmtBRL(totRecAReceber)}</span></div>${recAReceberRows}`:''}
+    ${totHonClientes?`<div class="resultado-row receita"><span>⚖️ Honorários de clientes (recebidos)</span><span style="color:var(--green);">+${fmtBRL(totHonClientes)}</span></div>${honDetalheRows}`:''}
 
     <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;margin-top:16px;">Despesas</div>
     ${catRows||'<div class="desp-empty" style="padding:12px;">Nenhuma despesa neste mês.</div>'}
@@ -6508,11 +6622,134 @@ function renderResultado(){
       <div class="resultado-row saldo"><span>Saldo realizado (pago vs. recebido)</span><span style="color:${cor(saldoRealizado)};">${saldoRealizado>=0?'+':''}${fmtBRL(saldoRealizado)}</span></div>
       ${totDespApagar||totRecAReceber?`<div class="resultado-row" style="background:var(--bg);border:1px dashed var(--border);"><span style="color:var(--text-muted);">Saldo previsto (incluindo pendentes)</span><span style="color:${cor(saldoPrevisto)};font-weight:600;">${saldoPrevisto>=0?'+':''}${fmtBRL(saldoPrevisto)}</span></div>`:''}
     </div>
-
     <div style="font-size:11px;color:var(--text-faint);margin-top:12px;">
-      * Receitas de clientes são computadas automaticamente a partir dos pagamentos confirmados nas fichas.
+      * Honorários de clientes computados a partir dos pagamentos confirmados nas fichas.
     </div>
   `;
+}
+
+function imprimirDRE(){
+  const mesF=getMesFiltro();
+  const [ano,mes]=mesF.split('-').map(Number);
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesNome=`${meses[mes-1]} de ${ano}`;
+  const {totRecRecebido,totRecAReceber,recsRecebidas,recsAReceber,honDetalhes,totHonClientes,despsDoMes,totDespPago,totDespApagar}=_calcResultadoMes(mesF);
+  const saldoRealizado=totRecRecebido+totHonClientes-totDespPago;
+  const saldoPrevisto=totRecRecebido+totRecAReceber+totHonClientes-(totDespPago+totDespApagar);
+  const fmtV=v=>(v>=0?'+ ':'− ')+fmtBRL(Math.abs(v));
+  const porCat={};
+  despsDoMes.forEach(d=>{porCat[d.categoria]=(porCat[d.categoria]||0)+parseFloat(d.valor||0);});
+
+  const linhasRec=[
+    ...recsRecebidas.map(r=>`<tr><td>${REC_TIPO_LABEL[r.tipo]||r.tipo}${r.descricao?' — '+r.descricao:''}${r.clienteNome?' ('+r.clienteNome+')':''}</td><td class="val verde">+ ${fmtBRL(parseFloat(r.valor||0))}</td></tr>`),
+    ...honDetalhes.map(h=>`<tr><td>${h.nome} — ${h.tipo} (${h.parcela})</td><td class="val verde">+ ${fmtBRL(h.valor)}</td></tr>`),
+    ...recsAReceber.map(r=>`<tr style="opacity:.65"><td>⏳ ${REC_TIPO_LABEL[r.tipo]||r.tipo}${r.descricao?' — '+r.descricao:''}${r.clienteNome?' ('+r.clienteNome+')':''} [a receber]</td><td class="val verde">+ ${fmtBRL(parseFloat(r.valor||0))}</td></tr>`),
+  ].join('');
+  const linhasDesp=Object.entries(porCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+    `<tr><td>${k}</td><td class="val vermelho">− ${fmtBRL(v)}</td></tr>`
+  ).join('');
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>DRE — ${mesNome}</title>
+  <style>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#1C1A17;margin:0;padding:32px;}
+    h1{font-size:18px;margin:0 0 4px;}
+    .sub{color:#888;font-size:12px;margin-bottom:24px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#F5F3EE;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#666;}
+    td{padding:8px 12px;border-bottom:1px solid #EEE;}
+    .val{text-align:right;font-weight:600;}
+    .verde{color:#2A9D3A;}.vermelho{color:#D93025;}
+    .saldo-box{background:#F5F3EE;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;font-weight:700;font-size:14px;}
+    .saldo-prev{border:1px dashed #CCC;border-radius:8px;padding:10px 16px;display:flex;justify-content:space-between;font-size:13px;margin-top:8px;color:#555;}
+    @media print{body{padding:16px;}}
+  </style></head><body>
+  <h1>📊 DRE — Resultado Financeiro</h1>
+  <div class="sub">${mesNome} · Escritório Lucas Prado Medeiros</div>
+  <table><thead><tr><th>Receita</th><th style="text-align:right;">Valor</th></tr></thead><tbody>${linhasRec||'<tr><td colspan="2" style="color:#AAA;">Nenhuma receita registrada.</td></tr>'}</tbody></table>
+  <table><thead><tr><th>Despesa</th><th style="text-align:right;">Valor</th></tr></thead><tbody>${linhasDesp||'<tr><td colspan="2" style="color:#AAA;">Nenhuma despesa registrada.</td></tr>'}</tbody></table>
+  <div class="saldo-box"><span>Saldo realizado</span><span class="${saldoRealizado>=0?'verde':'vermelho'}">${fmtV(saldoRealizado)}</span></div>
+  ${totDespApagar||totRecAReceber?`<div class="saldo-prev"><span>Saldo previsto (incluindo pendentes)</span><span>${fmtV(saldoPrevisto)}</span></div>`:''}
+  <p style="font-size:11px;color:#AAA;margin-top:24px;">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+  <scr`+`ipt>window.onload=()=>window.print();</scr`+`ipt></body></html>`;
+
+  const w=window.open('','_blank','width=820,height=700');
+  if(w){w.document.write(html);w.document.close();}
+}
+
+// ── COMPARATIVO MÊS A MÊS ────────────────────────────────────
+function renderComparativo(){
+  const el=document.getElementById('comparativo-container');
+  if(!el) return;
+  const anoAtual=new Date().getFullYear();
+  const anos=[anoAtual-1,anoAtual,anoAtual+1].filter(a=>a>=2020);
+  const mesesLabel=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  // Montar dados para o ano selecionado
+  const dadosPorMes=mesesLabel.map((_,i)=>{
+    const m=String(i+1).padStart(2,'0');
+    const mesF=`${_compAno}-${m}`;
+    const r=_calcResultadoMes(mesF);
+    return {
+      receita:r.totRecRecebido+r.totHonClientes,
+      receitaPrevista:r.totRecRecebido+r.totRecAReceber+r.totHonClientes,
+      despesa:r.totDespPago,
+      despesaPrevista:r.totDesp,
+      resultado:r.totRecRecebido+r.totHonClientes-r.totDespPago,
+    };
+  });
+
+  const receitas=dadosPorMes.map(d=>+(d.receita.toFixed(2)));
+  const despesas=dadosPorMes.map(d=>+(d.despesa.toFixed(2)));
+  const resultados=dadosPorMes.map(d=>+(d.resultado.toFixed(2)));
+  const totalRec=receitas.reduce((a,b)=>a+b,0);
+  const totalDesp=despesas.reduce((a,b)=>a+b,0);
+  const totalRes=totalRec-totalDesp;
+  const corRes=totalRes>=0?'#2A9D3A':'#D93025';
+
+  el.innerHTML=`
+    <div class="comp-ctrl">
+      <div style="font-size:14px;font-weight:700;">📈 Comparativo Anual</div>
+      <div style="display:flex;gap:4px;margin-left:auto;">
+        ${anos.map(a=>`<button class="det-tab${a===_compAno?' active':''}" onclick="_compAno=${a};renderComparativo();">${a}</button>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+      <span class="desp-total-chip" style="background:var(--green-bg);border-color:var(--green-light);color:var(--green);">Receitas ${_compAno}: ${fmtBRL(totalRec)}</span>
+      <span class="desp-total-chip" style="background:var(--red-bg);border-color:var(--red-light);color:var(--red);">Despesas ${_compAno}: ${fmtBRL(totalDesp)}</span>
+      <span class="desp-total-chip" style="background:var(--surface);border-color:var(--border-strong);color:${corRes};font-weight:700;">Resultado: ${totalRes>=0?'+':''}${fmtBRL(totalRes)}</span>
+    </div>
+    <div class="comp-chart-wrap"><canvas id="comp-chart-canvas" height="100"></canvas></div>
+    <div style="font-size:11px;color:var(--text-faint);margin-top:4px;">Valores realizados (pagos/recebidos). Passe o cursor sobre as barras para ver o valor.</div>
+  `;
+
+  // Destruir gráfico anterior se existir
+  if(_compChart){_compChart.destroy();_compChart=null;}
+
+  const ctx=document.getElementById('comp-chart-canvas');
+  if(!ctx||!window.Chart) return;
+
+  _compChart=new Chart(ctx,{
+    data:{
+      labels:mesesLabel,
+      datasets:[
+        {type:'bar',label:'Receitas',data:receitas,backgroundColor:'rgba(42,157,58,.7)',borderColor:'rgba(42,157,58,1)',borderWidth:1,borderRadius:4,order:2},
+        {type:'bar',label:'Despesas',data:despesas,backgroundColor:'rgba(217,48,37,.65)',borderColor:'rgba(217,48,37,1)',borderWidth:1,borderRadius:4,order:2},
+        {type:'line',label:'Resultado',data:resultados,borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.12)',pointBackgroundColor:'#2563EB',pointRadius:4,tension:.35,fill:true,order:1},
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:12},boxWidth:14,padding:16}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmtBRL(ctx.parsed.y)}`}},
+      },
+      scales:{
+        y:{ticks:{callback:v=>'R$ '+v.toLocaleString('pt-BR')},grid:{color:'rgba(0,0,0,.05)'}},
+        x:{grid:{display:false}},
+      },
+    }
+  });
 }
 
 // ── DASHBOARD ESCRITÓRIO ─────────────────────────────────────
@@ -6526,12 +6763,18 @@ function renderDashboardEscritorio(){
   // Receitas do mês (manual recebidas + honorários clientes)
   const recsDoMes=receitasEscritorio.filter(r=>r.data&&r.data.startsWith(mesF)&&(r.status||'recebido')==='recebido');
   let totRec=recsDoMes.reduce((s,r)=>s+parseFloat(r.valor||0),0);
+  // A receber do mês (receitas manuais)
+  const recsAReceberMes=receitasEscritorio.filter(r=>r.data&&r.data.startsWith(mesF)&&(r.status||'recebido')==='a_receber');
+  let totAReceberMes=recsAReceberMes.reduce((s,r)=>s+parseFloat(r.valor||0),0);
+  // Honorários de clientes
   clientesAdv.forEach(c=>{
     const blocos=[];
     if(c.contrato) blocos.push(c.contrato.parcelas||[]);
     (c.servicos||[]).forEach(sv=>blocos.push(sv.parcelas||[]));
     blocos.forEach(parcelas=>parcelas.forEach(p=>{
       if(p.pago&&p.dataPagamento&&p.dataPagamento.startsWith(mesF)) totRec+=parseFloat(p.valorPago||p.valor||0);
+      // parcelas com vencimento no mês e não pagas = a receber
+      if(!p.pago&&p.vencimento&&p.vencimento.startsWith(mesF)) totAReceberMes+=parseFloat(p.valor||0);
     }));
   });
 
@@ -6549,6 +6792,13 @@ function renderDashboardEscritorio(){
   const rsEl=document.getElementById('dash-esc-receita-sub');
   if(rsEl) rsEl.textContent='honorários + receitas';
 
+  // Sub-linha "a receber"
+  const arEl=document.getElementById('dash-esc-areceber-sub');
+  if(arEl){
+    if(totAReceberMes>0){arEl.textContent=`⏳ A receber: ${fmtBRL(totAReceberMes)}`;arEl.style.display='block';}
+    else arEl.style.display='none';
+  }
+
   const dEl=document.getElementById('dash-esc-desp');
   if(dEl) dEl.textContent=fmtBRL(totDesp);
   const dsEl=document.getElementById('dash-esc-desp-sub');
@@ -6559,10 +6809,11 @@ function renderDashboardEscritorio(){
   const rCard=document.getElementById('dash-esc-resultado-card');
   if(rCard) rCard.style.borderColor=resultado>=0?'var(--green-light)':'var(--red-light)';
 
+  const hojeStr=hoje.toISOString().split('T')[0];
+
   // Contas a vencer em 7 dias
   const em7=new Date(hoje); em7.setDate(hoje.getDate()+7);
   const em7Str=em7.toISOString().split('T')[0];
-  const hojeStr=hoje.toISOString().split('T')[0];
   const vencer=despesasEscritorio.filter(d=>{
     if((d.status||'pago')!=='a_pagar') return false;
     const v=d.dataVencimento||d.data||'';
@@ -6570,8 +6821,7 @@ function renderDashboardEscritorio(){
   });
   const cvEl=document.getElementById('dash-contas-vencer');
   if(cvEl){
-    if(!vencer.length){cvEl.innerHTML='';return;}
-    cvEl.innerHTML=`<div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:14px 18px;">
+    cvEl.innerHTML=vencer.length?`<div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:14px 18px;">
       <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:10px;">⏰ Contas a vencer nos próximos 7 dias</div>
       ${vencer.map(d=>{
         const vFmt=new Date((d.dataVencimento||d.data)+'T12:00:00').toLocaleDateString('pt-BR');
@@ -6580,6 +6830,25 @@ function renderDashboardEscritorio(){
           <span style="display:flex;gap:12px;align-items:center;"><span style="color:var(--amber);">${vFmt}</span><strong>${fmtBRL(parseFloat(d.valor||0))}</strong><button class="btn" style="font-size:10px;padding:3px 8px;" onclick="marcarDespesaPaga('${d.id}')">✓ Pagar</button></span>
         </div>`;
       }).join('')}
+    </div>`:'';
+  }
+
+  // Receitas vencidas (honorários de clientes com vencimento passado e não pagos)
+  const recVencidas=_coletarPendentes().filter(p=>p.atrasada);
+  const rvEl=document.getElementById('dash-receitas-vencidas');
+  if(rvEl){
+    if(!recVencidas.length){rvEl.innerHTML='';return;}
+    const totVenc=recVencidas.reduce((s,p)=>s+p.valor,0);
+    rvEl.innerHTML=`<div style="background:var(--red-bg);border:1px solid var(--red-light);border-radius:var(--radius);padding:14px 18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px;">⚠️ Honorários vencidos a receber — ${fmtBRL(totVenc)}</div>
+      ${recVencidas.slice(0,5).map(p=>{
+        const vFmt=new Date(p.vencimento+'T12:00:00').toLocaleDateString('pt-BR');
+        return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid var(--red-light);">
+          <span>${p.clienteNome} <span style="color:var(--text-muted);">— ${p.blocoNome}</span></span>
+          <span style="display:flex;gap:12px;align-items:center;"><span style="color:var(--red);">Venceu ${vFmt}</span><strong>${fmtBRL(p.valor)}</strong><button class="btn" style="font-size:10px;padding:3px 8px;" onclick="showPage('clientes');setTimeout(()=>abrirFichaAdv('${p.clienteId}'),100)">Ver ficha</button></span>
+        </div>`;
+      }).join('')}
+      ${recVencidas.length>5?`<div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:right;">+ ${recVencidas.length-5} outros · <a href="#" onclick="showPage('despesas');setTimeout(()=>showFinTab('areceber'),100);setTimeout(()=>setAReceberFiltro('vencidas'),200);return false;" style="color:var(--red);">Ver todos na aba A Receber</a></div>`:''}
     </div>`;
   }
 }
