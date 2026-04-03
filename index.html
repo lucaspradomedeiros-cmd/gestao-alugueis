@@ -320,6 +320,20 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .aptos-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;}
 .apto-chip{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 9px;display:flex;justify-content:space-between;font-size:11px;}
 .badge-saved{background:var(--green-bg);color:var(--green);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;}
+/* DESPESAS DO ESCRITÓRIO */
+.desp-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:8px;transition:border .15s;}
+.desp-item:hover{border-color:var(--border-strong);}
+.desp-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;text-transform:uppercase;letter-spacing:.4px;}
+.desp-badge.fixa{background:#F0EFEA;color:#555;}
+.desp-badge.variavel{background:var(--red-bg);color:var(--red);}
+.desp-badge.pessoal{background:var(--blue-bg);color:var(--blue);}
+.desp-badge.outra{background:#FFF8E7;color:#B8790A;}
+.desp-totais{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.desp-total-chip{font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid var(--border);}
+.desp-empty{text-align:center;padding:48px 20px;color:var(--text-faint);font-size:13px;}
+/* TOAST */
+#ga-toast{position:fixed;bottom:28px;right:28px;background:#1C1A17;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s;max-width:320px;}
+#ga-toast.show{opacity:1;}
 /* WPP */
 .btn-wpp{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#25D366;color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s;text-decoration:none;}
 .btn-wpp:hover{background:#1DA851;}
@@ -449,6 +463,10 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     <button class="nav-item" onclick="showPage('alerts')"><span class="icon">◈</span> Alertas <span class="nav-badge" id="alert-count">0</span></button>
     <button class="nav-item" onclick="showPage('reajustes')"><span class="icon">◷</span> Reajustes</button>
     <button class="nav-item" onclick="showPage('report')"><span class="icon">◱</span> Receitas</button>
+  </div>
+  <div class="nav-section" style="margin-top:12px;">
+    <div class="nav-label">Escritório</div>
+    <button class="nav-item" onclick="showPage('despesas')"><span class="icon">💸</span> Despesas</button>
   </div>
   <div style="margin-top:auto;padding:14px 12px;border-top:1px solid var(--border);">
     <div class="nav-label" style="margin-bottom:8px;">Dados</div>
@@ -631,6 +649,25 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     <div id="report-tab-receitas"><div class="rtable-wrap" id="report-table"></div></div>
     <div id="report-tab-imovel" style="display:none;"></div>
     <div id="report-tab-repasse" style="display:none;"></div>
+  </div>
+
+  <!-- DESPESAS DO ESCRITÓRIO -->
+  <div id="page-despesas" class="page content">
+    <div class="section-header">
+      <div class="section-title">Despesas do Escritório</div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-primary" onclick="abrirDespesaModal()">+ Nova Despesa</button>
+      </div>
+    </div>
+    <!-- Filtro mês + totais -->
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Mês</div>
+        <input type="month" id="desp-filtro-mes" onchange="renderDespesas()" style="padding:7px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);">
+      </div>
+      <div class="desp-totais" id="desp-totais" style="margin-bottom:0;margin-top:18px;"></div>
+    </div>
+    <div id="lista-despesas-escritorio"></div>
   </div>
 </main>
 </div>
@@ -959,6 +996,84 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   </div>
 </div>
 
+<!-- TOAST -->
+<div id="ga-toast"></div>
+
+<!-- MODAL DESPESA DO ESCRITÓRIO -->
+<div class="overlay" id="despesa-modal-overlay" onclick="if(event.target===this)fecharDespesaModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="despesa-modal-titulo">Nova Despesa</div>
+    <div class="mrow">
+      <div class="mfield">
+        <label>Categoria *</label>
+        <select id="dp-categoria">
+          <optgroup label="Fixas Mensais">
+            <option value="Aluguel">Aluguel</option>
+            <option value="Internet">Internet</option>
+            <option value="Telefone">Telefone</option>
+            <option value="Energia Elétrica">Energia Elétrica</option>
+            <option value="Água">Água</option>
+            <option value="Software / Assinatura">Software / Assinatura</option>
+          </optgroup>
+          <optgroup label="Variáveis">
+            <option value="Papelaria">Papelaria</option>
+            <option value="Limpeza">Limpeza</option>
+            <option value="Correios / Cartório">Correios / Cartório</option>
+            <option value="Combustível">Combustível</option>
+            <option value="Refeições / Alimentação">Refeições / Alimentação</option>
+            <option value="Manutenção">Manutenção</option>
+          </optgroup>
+          <optgroup label="Pessoal">
+            <option value="Pró-labore">Pró-labore</option>
+            <option value="Contador">Contador</option>
+            <option value="Estagiário">Estagiário</option>
+          </optgroup>
+          <optgroup label="Outras">
+            <option value="Publicidade">Publicidade</option>
+            <option value="Cursos / Capacitação">Cursos / Capacitação</option>
+            <option value="OAB / Anuidade">OAB / Anuidade</option>
+            <option value="Outra">Outra (descrever abaixo)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="mfield">
+        <label>Tipo</label>
+        <select id="dp-tipo">
+          <option value="fixa">Fixa Mensal</option>
+          <option value="variavel">Variável</option>
+          <option value="pessoal">Pessoal</option>
+          <option value="outra">Outra</option>
+        </select>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Descrição / Detalhamento</label>
+      <input type="text" id="dp-descricao" placeholder="ex: Conta de energia — mês 03/2026">
+    </div>
+    <div class="mrow">
+      <div class="mfield">
+        <label>Valor *</label>
+        <input type="text" id="dp-valor" placeholder="ex: 150,00">
+      </div>
+      <div class="mfield">
+        <label>Data de Pagamento *</label>
+        <input type="date" id="dp-data">
+      </div>
+    </div>
+    <div class="mfield">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;font-size:13px;font-weight:400;letter-spacing:0;">
+        <input type="checkbox" id="dp-recorrente" style="width:15px;height:15px;flex-shrink:0;">
+        Despesa recorrente mensal
+      </label>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-red" id="dp-btn-excluir" onclick="excluirDespesaEscritorio()" style="display:none;margin-right:auto;">🗑 Excluir</button>
+      <button class="btn" onclick="fecharDespesaModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarDespesaEscritorio()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD TENANT MODAL -->
 <div class="overlay" id="add-tenant-overlay">
   <div class="modal">
@@ -1057,6 +1172,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 //                         parcelas?, valorParcela?, inicio, fim?, obs, ativo } ] }
 
 let imoveis = [];
+let despesasEscritorio = [];
 let editingImovelId = null;
 let editingDespId   = null;
 let idetImovelId    = null;
@@ -4014,7 +4130,7 @@ function saveTenant(){
 // ============================================================
 // NAV
 // ============================================================
-const PT={dashboard:'Painel Geral',imoveis:'Imóveis',condominio:'Condomínio',tenants:'Locatários',alerts:'Alertas',reajustes:'Reajustes',report:'Receitas'};
+const PT={dashboard:'Painel Geral',imoveis:'Imóveis',condominio:'Condomínio',tenants:'Locatários',alerts:'Alertas',reajustes:'Reajustes',report:'Receitas',despesas:'Despesas do Escritório'};
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -4027,6 +4143,142 @@ function showPage(id){
   if(id==='reajustes')renderReajustes();
   if(id==='report'){ activeReportTab='receitas'; showReportTab('receitas'); }
   if(id==='condominio')initCondoPage();
+  if(id==='despesas')renderDespesas();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let _gaToastTimer = null;
+function gaToast(msg, tipo='success'){
+  const el = document.getElementById('ga-toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.background = tipo==='error' ? '#C0392B' : '#1C1A17';
+  el.classList.add('show');
+  clearTimeout(_gaToastTimer);
+  _gaToastTimer = setTimeout(()=>el.classList.remove('show'), 3200);
+}
+
+// ============================================================
+// DESPESAS DO ESCRITÓRIO
+// ============================================================
+const DESP_TIPO_LABEL = {fixa:'Fixa',variavel:'Variável',pessoal:'Pessoal',outra:'Outra'};
+let _editandoDespId = null;
+
+function abrirDespesaModal(id){
+  _editandoDespId = id || null;
+  document.getElementById('despesa-modal-titulo').textContent = id ? 'Editar Despesa' : 'Nova Despesa';
+  document.getElementById('dp-btn-excluir').style.display = id ? 'inline-flex' : 'none';
+  if(!id){
+    document.getElementById('dp-categoria').value = 'Aluguel';
+    document.getElementById('dp-tipo').value = 'fixa';
+    document.getElementById('dp-descricao').value = '';
+    document.getElementById('dp-valor').value = '';
+    document.getElementById('dp-data').value = new Date().toISOString().split('T')[0];
+    document.getElementById('dp-recorrente').checked = false;
+  } else {
+    const d = despesasEscritorio.find(x=>x.id===id);
+    if(d){
+      document.getElementById('dp-categoria').value = d.categoria||'Outra';
+      document.getElementById('dp-tipo').value = d.tipo||'outra';
+      document.getElementById('dp-descricao').value = d.descricao||'';
+      document.getElementById('dp-valor').value = d.valor||'';
+      document.getElementById('dp-data').value = d.data||'';
+      document.getElementById('dp-recorrente').checked = d.recorrente||false;
+    }
+  }
+  document.getElementById('despesa-modal-overlay').classList.add('open');
+}
+
+function fecharDespesaModal(){
+  document.getElementById('despesa-modal-overlay').classList.remove('open');
+}
+
+function salvarDespesaEscritorio(){
+  const valor = document.getElementById('dp-valor').value.trim();
+  const data  = document.getElementById('dp-data').value;
+  if(!valor){ gaToast('Informe o valor.','error'); return; }
+  if(!data) { gaToast('Informe a data.','error'); return; }
+  const desp = {
+    id: _editandoDespId || ('de_'+Date.now()),
+    categoria: document.getElementById('dp-categoria').value,
+    tipo: document.getElementById('dp-tipo').value,
+    descricao: document.getElementById('dp-descricao').value.trim(),
+    valor: valor.replace(/[^0-9,.]/g,'').replace(',','.'),
+    data,
+    recorrente: document.getElementById('dp-recorrente').checked,
+  };
+  if(_editandoDespId){
+    const idx = despesasEscritorio.findIndex(x=>x.id===_editandoDespId);
+    if(idx>=0){ const orig = despesasEscritorio[idx]; desp.criadoEm = orig.criadoEm; despesasEscritorio[idx]=desp; }
+  } else {
+    desp.criadoEm = Date.now();
+    despesasEscritorio.push(desp);
+  }
+  saveToStorage();
+  fecharDespesaModal();
+  renderDespesas();
+  gaToast(_editandoDespId ? 'Despesa atualizada!' : 'Despesa lançada!');
+}
+
+function excluirDespesaEscritorio(){
+  if(!_editandoDespId) return;
+  if(!confirm('Excluir esta despesa?')) return;
+  despesasEscritorio = despesasEscritorio.filter(x=>x.id!==_editandoDespId);
+  saveToStorage();
+  fecharDespesaModal();
+  renderDespesas();
+  gaToast('Despesa removida.');
+}
+
+function renderDespesas(){
+  const filtroEl = document.getElementById('desp-filtro-mes');
+  if(!filtroEl) return;
+  if(!filtroEl.value){
+    const h = new Date();
+    filtroEl.value = h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0');
+  }
+  const mesF = filtroEl.value;
+  const lista = despesasEscritorio.filter(d=>d.data&&d.data.startsWith(mesF));
+  lista.sort((a,b)=>a.data.localeCompare(b.data));
+
+  // totais
+  const tots = {fixa:0,variavel:0,pessoal:0,outra:0,geral:0};
+  lista.forEach(d=>{ const v=parseFloat(d.valor||0); tots[d.tipo]=(tots[d.tipo]||0)+v; tots.geral+=v; });
+  const totaisEl = document.getElementById('desp-totais');
+  if(totaisEl){
+    const chips = [
+      tots.fixa    ? `<span class="desp-total-chip" style="background:#F0EFEA;border-color:#D5D2CC;">Fixas: ${fmtBRL(tots.fixa)}</span>` : '',
+      tots.variavel? `<span class="desp-total-chip" style="background:var(--red-bg);border-color:var(--red-light);color:var(--red);">Variáveis: ${fmtBRL(tots.variavel)}</span>` : '',
+      tots.pessoal ? `<span class="desp-total-chip" style="background:var(--blue-bg);border-color:var(--blue-light,#b3d4f8);color:var(--blue);">Pessoal: ${fmtBRL(tots.pessoal)}</span>` : '',
+      tots.outra   ? `<span class="desp-total-chip" style="background:#FFF8E7;border-color:#FAEAB1;color:#B8790A;">Outras: ${fmtBRL(tots.outra)}</span>` : '',
+      tots.geral   ? `<span class="desp-total-chip" style="background:var(--surface);border-color:var(--border-strong);font-weight:700;">Total: ${fmtBRL(tots.geral)}</span>` : '',
+    ].filter(Boolean).join('');
+    totaisEl.innerHTML = chips;
+  }
+
+  const el = document.getElementById('lista-despesas-escritorio');
+  if(!el) return;
+  if(!lista.length){
+    el.innerHTML = '<div class="desp-empty">Nenhuma despesa lançada neste mês.</div>';
+    return;
+  }
+  el.innerHTML = lista.map(d=>{
+    const v = parseFloat(d.valor||0);
+    const tipo = d.tipo||'outra';
+    const label = DESP_TIPO_LABEL[tipo]||tipo;
+    const dataFmt = new Date(d.data+'T12:00:00').toLocaleDateString('pt-BR');
+    return `<div class="desp-item">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;">${d.categoria}${d.descricao ? ' <span style="font-weight:400;color:var(--text-muted);">— '+d.descricao+'</span>' : ''}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${dataFmt}${d.recorrente ? ' · <span style="color:var(--blue);">🔄 Recorrente</span>' : ''}</div>
+      </div>
+      <span class="desp-badge ${tipo}">${label}</span>
+      <div style="font-weight:700;font-size:14px;min-width:90px;text-align:right;">${fmtBRL(v)}</div>
+      <button class="btn" style="font-size:12px;padding:6px 10px;" onclick="abrirDespesaModal('${d.id}')">✏️</button>
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
@@ -4271,7 +4523,7 @@ let tokenClient = null;
 // ── localStorage ──────────────────────────────────────────────
 function getPayload(){
   condoHistories[activeCondoId] = [...condoHistory];
-  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, savedAt: new Date().toISOString(), version: 3 };
+  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, despesasEscritorio, savedAt: new Date().toISOString(), version: 3 };
 }
 
 function applyPayload(data){
@@ -4279,6 +4531,7 @@ function applyPayload(data){
   tenants = data.tenants;
   if(data.condoHistory) condoHistory = data.condoHistory;
   if(data.imoveis) imoveis = data.imoveis;
+  if(data.despesasEscritorio) despesasEscritorio = data.despesasEscritorio;
   if(data.condominios && data.condominios.length) condominios = data.condominios;
   if(data.condoHistories){
     condoHistories = data.condoHistories;

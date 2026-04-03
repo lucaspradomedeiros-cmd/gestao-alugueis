@@ -329,4 +329,160 @@ const STORAGE_KEY = 'gestao_alugueis_v1'; // payload versão 3
 
 ---
 
+## 18. Módulo de Geração de Contrato de Aluguel (Planejado)
+
+> **Status:** Planejado — não iniciado  
+> **Decisão de sessão:** 03/04/2026  
+> **Referência:** módulo equivalente já implementado em `~/Documentos/lp-advocacia/gerar_documentos.js`
+
+---
+
+### 18.1 Visão Geral
+
+Adicionar ao gestao-alugueis a capacidade de gerar contratos de aluguel em formato `.docx` diretamente no browser, sem necessidade de backend ou servidor. A geração ocorre client-side usando a biblioteca `docx` (mesma usada no lp-advocacia), carregada via CDN.
+
+O contrato é gerado a partir dos dados já cadastrados no sistema (imóvel + locatário) complementados pelos novos campos obrigatórios descritos abaixo.
+
+---
+
+### 18.2 Arquitetura Técnica
+
+| Item | Decisão |
+|------|---------|
+| Geração do .docx | `docx` library via CDN (build UMD para browser) |
+| Onde roda | 100% client-side — sem backend, compatível com GitHub Pages |
+| Saída | Download direto de arquivo `.docx` via `Blob` + `URL.createObjectURL` |
+| Integração | Botão "📄 Gerar Contrato" no painel de detalhe do inquilino (`det-overlay`) |
+| Persistência dos novos campos | Junto aos dados existentes no localStorage + Drive |
+
+CDN a usar:
+```html
+<script src="https://unpkg.com/docx@9/build/index.umd.js"></script>
+```
+
+---
+
+### 18.3 Novos Campos Necessários
+
+#### 18.3.1 Formulário de Locatário (`add-tenant-overlay`)
+
+Campos a adicionar ao modal de cadastro/edição de locatário:
+
+| Campo | ID sugerido | Tipo | Obrigatório para contrato |
+|-------|-------------|------|--------------------------|
+| CPF | `f-cpf` | text (máscara) | Sim |
+| RG | `f-rg` | text | Sim |
+| Órgão expedidor do RG | `f-rg-orgao` | text | Sim |
+| Nacionalidade | `f-nacionalidade` | text (default: "brasileiro(a)") | Sim |
+| Estado civil | `f-estado-civil` | select | Sim |
+| Profissão | `f-profissao` | text | Sim |
+| Endereço do locatário | `f-endereco` | text | Sim |
+| Bairro | `f-bairro` | text | Sim |
+| Cidade/UF | `f-cidade-uf` | text | Sim |
+| CEP | `f-cep` | text (máscara) | Sim |
+| E-mail | `f-email` | email | Opcional |
+
+> **Nota:** CPF já era explicitamente excluído por decisão de LGPD anterior. **Revisar essa decisão** antes de implementar, pois CPF é indispensável para o contrato. Alternativa: CPF só é exigido ao gerar o contrato, não fica visível nos cards.
+
+#### 18.3.2 Dados dos Fiadores (quando `garantia === 'Fiadores'`)
+
+Adicionar seção condicional no formulário do locatário para cadastrar até 2 fiadores:
+
+| Campo | Descrição |
+|-------|-----------|
+| Nome completo | Qualificação |
+| CPF | Qualificação |
+| RG + órgão | Qualificação |
+| Nacionalidade, estado civil, profissão | Qualificação |
+| Endereço completo | Qualificação |
+| Telefone | Contato |
+
+#### 18.3.3 Formulário de Imóvel (`imovel-modal-overlay`)
+
+Campos a adicionar ao modal de imóvel:
+
+| Campo | ID sugerido | Tipo | Obrigatório para contrato |
+|-------|-------------|------|--------------------------|
+| CPF do proprietário | `im-prop-cpf` | text (máscara) | Sim |
+| RG do proprietário | `im-prop-rg` | text | Sim |
+| Órgão expedidor (proprietário) | `im-prop-rg-orgao` | text | Sim |
+| Matrícula do imóvel | `im-matricula` | text | Sim |
+| Cartório de Registro | `im-cartorio` | text | Sim |
+| Área do imóvel (m²) | `im-area` | number | Sim |
+| Descrição complementar | `im-descricao` | text | Opcional (ex: "2 quartos, 1 banheiro") |
+
+---
+
+### 18.4 Estrutura do Contrato de Aluguel
+
+O documento `.docx` gerado deve seguir a mesma identidade visual do lp-advocacia:
+- Fonte: **Cambria**, 12pt
+- Cabeçalho: logo + linha dupla (reutilizar padrão do lp-advocacia)
+- Rodapé: endereço + paginação
+- Margens: 2,5 cm todos os lados
+
+**Cláusulas previstas:**
+
+| Cláusula | Conteúdo |
+|----------|----------|
+| I — Das Partes | Qualificação completa do locador (proprietário), locatário e fiadores (se houver) |
+| II — Do Objeto | Identificação do imóvel: endereço, tipo, área, matrícula, cartório |
+| III — Do Prazo | Data de início, término e renovação automática por prazo indeterminado |
+| IV — Do Aluguel | Valor mensal, dia de vencimento, forma de pagamento (PIX/TED) |
+| V — Do Reajuste | Periodicidade (anual), índice (IGPM ou IPCA), data do próximo reajuste |
+| VI — Das Despesas | Responsabilidade por IPTU, condomínio, água, energia, limpeza |
+| VII — Da Garantia | Tipo de garantia conforme cadastro: fiadores (com qualificação) / seguro fiança / pagamento antecipado |
+| VIII — Das Obrigações do Locatário | Conservação, vedação de sublocação, comunicação de danos |
+| IX — Das Obrigações do Locador | Entrega em condições de uso, manutenção estrutural |
+| X — Da Multa e Rescisão | Multa de 3 aluguéis por rescisão antecipada, multa moratória 10% + juros 1%/mês |
+| XI — Do Foro | Foro de eleição: Campo Grande/MS |
+| XII — Da Assinatura | Local, data, assinaturas do locador, locatário e fiadores (se houver) |
+
+---
+
+### 18.5 Função Principal
+
+```js
+// Estrutura da função a implementar
+async function gerarContratoAluguel(tenantId) {
+  const t   = getTenant(tenantId);          // dados do locatário
+  const im  = getImovel(t.imovelId);        // dados do imóvel
+  // monta seções com a lib docx
+  // cria Blob e dispara download
+}
+```
+
+Botão de acionamento — adicionar dentro do `det-overlay`, na aba de dados do locatário:
+```html
+<button class="btn" onclick="gerarContratoAluguel(currentDetTenantId)">
+  📄 Gerar Contrato
+</button>
+```
+
+---
+
+### 18.6 Pré-requisitos antes de Implementar
+
+- [ ] Revisar decisão de LGPD sobre armazenamento de CPF (seção 15)
+- [ ] Atualizar dados dos 8 inquilinos ativos com os novos campos (CPF, RG, etc.) — trabalho manual
+- [ ] Atualizar dados do imóvel (Residencial Santa Nonna I) com matrícula e cartório
+- [ ] Definir dados completos do proprietário (CPF, RG, endereço) para o contrato
+
+---
+
+### 18.7 Impacto no Arquivo e nos Dados
+
+| Item | Estimativa |
+|------|-----------|
+| Linhas de código adicionadas | ~600–800 (função geradora + helpers) |
+| Aumento no tamanho do arquivo | +~50 KB (código) + CDN docx (~500 KB, externo) |
+| Novos campos no objeto `tenant` | +11 campos opcionais (retrocompatível) |
+| Novos campos no objeto `imovel` | +7 campos opcionais (retrocompatível) |
+| Novos campos no objeto `fiador` | Array de até 2 fiadores por locatário |
+| Impacto no Drive/localStorage | Aumento leve no payload JSON (~2–5 KB) |
+
+> Todos os novos campos são **opcionais no cadastro geral** — só se tornam obrigatórios no momento de gerar o contrato. O sistema não quebra para inquilinos que não tenham os dados preenchidos: ao clicar em "Gerar Contrato", exibe aviso dos campos em falta.
+
+---
+
 *Documento mantido com assistência de Claude Code (Anthropic) — Sonnet 4.6*
