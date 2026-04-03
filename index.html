@@ -4322,7 +4322,18 @@ function loadFromLocalStorage(){
 }
 
 // ── Google Drive ──────────────────────────────────────────────
-function saveToStorage(){ saveToLocalStorage(); if(driveConnected) saveToDrive(); }
+// Drive é a fonte principal. localStorage serve como cache local.
+let _driveDebounce = null;
+function saveToStorage(){
+  saveToLocalStorage();
+  if(driveConnected){
+    clearTimeout(_driveDebounce);
+    _driveDebounce = setTimeout(saveToDrive, 3000);
+  } else {
+    updateSaveStatus('⚠ Drive desconectado — dados salvos apenas localmente', 'var(--amber)');
+    setTimeout(()=>updateSaveStatus('Conecte o Drive para salvar na nuvem','var(--amber)'), 4000);
+  }
+}
 function loadFromStorage(){ return loadFromLocalStorage(); }
 
 async function findDriveFile(){
@@ -4357,8 +4368,15 @@ async function saveToDrive(){
 
 async function loadFromDrive(){
   try {
+    updateSaveStatus('☁ Carregando do Drive…', 'var(--blue)');
     driveFileId = await findDriveFile();
-    if(!driveFileId){ console.log('Nenhum arquivo no Drive ainda.'); return false; }
+    if(!driveFileId){
+      // Drive não tem arquivo ainda — envia os dados atuais (importados da planilha)
+      console.log('Nenhum arquivo no Drive. Enviando dados iniciais…');
+      await saveToDrive();
+      updateSaveStatus('☁ Dados enviados ao Drive (primeira vez)', 'var(--green)');
+      return true;
+    }
     const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
     const data = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
     if(applyPayload(data)){
@@ -4370,7 +4388,7 @@ async function loadFromDrive(){
       hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
       return true;
     }
-  } catch(e){ console.warn('Erro ao carregar do Drive:', e); }
+  } catch(e){ console.warn('Erro ao carregar do Drive:', e); updateSaveStatus('⚠ Erro ao carregar do Drive', 'var(--red)'); }
   return false;
 }
 
@@ -4378,8 +4396,12 @@ function onDriveConnected(){
   driveConnected = true;
   updateSaveStatus('☁ Drive conectado', 'var(--blue)');
   const btn = document.getElementById('btn-drive-connect');
-  if(btn){ btn.textContent = '☁ Drive conectado'; btn.style.color='var(--blue)'; btn.style.background='var(--blue-bg)'; }
+  if(btn){ btn.innerHTML = '<span class="icon">☁</span> Drive ativo'; btn.style.color='var(--green)'; btn.style.background='var(--green-bg)'; btn.style.fontWeight='600'; }
   loadFromDrive();
+  // Auto-save periódico a cada 2 minutos
+  setInterval(()=>{ if(driveConnected){ clearTimeout(_driveDebounce); saveToDrive(); } }, 2*60*1000);
+  // Salva ao fechar/recarregar a aba
+  window.addEventListener('beforeunload', ()=>{ if(driveConnected) saveToDrive(); });
 }
 
 function connectDrive(){
@@ -4478,6 +4500,11 @@ renderDashboard();
 renderCondoSwitcher();
 renderCondoInfoBar();
 if(!_hadSavedData) saveToStorage();
+
+// Aviso de Drive desconectado após 5s (tempo para auto-reconectar)
+setTimeout(()=>{
+  if(!driveConnected) updateSaveStatus('⚠ Drive desconectado — clique em "Conectar Drive"', 'var(--amber)');
+}, 5000);
 </script>
 
 <!-- Google APIs -->
