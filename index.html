@@ -3574,10 +3574,36 @@ function renderCondoHistory(){
       <div style="flex:1;text-align:right;color:var(--text-muted)">${h.iptu?fmtBRL(h.iptu):'—'}</div>
       <div style="flex:1;text-align:right;color:var(--text-muted)">${h.lixo?fmtBRL(h.lixo):'—'}</div>
       <div style="flex:1.2;text-align:right;font-weight:600;color:var(--green)">${fmtBRL(por)}</div>
-      <div style="flex:.6;text-align:right"><span class="badge-saved">✓</span></div>
+      <div style="flex:.6;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+        <span class="badge-saved">✓</span>
+        <button onclick="event.stopPropagation();deleteCondoHistory('${h.ref}')" title="Excluir lançamento" style="background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:14px;padding:2px 4px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-faint)'">✕</button>
+      </div>
     </div>`;
   }).join('');
   c.innerHTML=hdr+rows;
+}
+function deleteCondoHistory(ref){
+  if(!confirm(`Excluir lançamento de ${monthName(ref)}?\n\nOs valores de condomínio, IPTU e lixo serão zerados nas fichas dos inquilinos para o mês de cobrança correspondente.`)) return;
+
+  // Remove da lista de histórico do condo ativo
+  const idx = condoHistory.findIndex(c=>c.ref===ref);
+  if(idx<0) return;
+  condoHistory.splice(idx,1);
+
+  // Zera condo/iptu/lixo nos inquilinos cujo billingRef = nextMonth(ref)
+  const billingRef = nextMonth(ref);
+  tenants.forEach(t=>{
+    const tCondoId = t.condoId || activeCondoId;
+    if(tCondoId !== activeCondoId || t.vago) return;
+    const h = t.history.find(e=>e.ref===billingRef);
+    if(!h || h.status==='pago') return;
+    h.condo = 0; h.iptu = 0; h.lixo = 0;
+    h.valorCobrado = R2(R(h.aluguel)+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros));
+  });
+
+  saveToStorage();
+  renderCondoHistory();
+  renderDashboard();
 }
 function loadRefAndGo(ref){document.getElementById('condo-month').value=ref;loadCondoMonth();window.scrollTo(0,0);}
 function initCondoPage(){
