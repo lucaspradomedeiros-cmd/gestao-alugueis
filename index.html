@@ -523,6 +523,8 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <!-- Fase 1: Módulo de carregamento de dados do Google Drive -->
 <script src="drive-loader.js"></script>
+<!-- Fase 2: Motor de sincronização bidirecional -->
+<script src="sync-engine.js"></script>
 </head>
 <body>
 
@@ -567,6 +569,8 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   <div style="margin-top:auto;padding:14px 12px;border-top:1px solid var(--border);">
     <div class="nav-label" style="margin-bottom:8px;">Dados</div>
     <div id="save-status" style="font-size:11px;color:var(--text-faint);padding:0 8px;margin-bottom:8px;min-height:14px;"></div>
+    <!-- Fase 2c: Indicador de status de sincronização -->
+    <div id="sync-status" style="font-size:11px;color:var(--text-faint);padding:0 8px;margin-bottom:8px;min-height:14px;">⏳ Inicializando...</div>
     <button class="nav-item" onclick="connectDrive()" id="btn-drive-connect" style="color:var(--blue);font-weight:500;"><span class="icon">☁</span> Conectar Drive</button>
     <button class="nav-item" onclick="exportBackup()" style="color:var(--green);font-weight:500;"><span class="icon">⬇</span> Exportar backup</button>
     <button class="nav-item" onclick="document.getElementById('import-file').click()"><span class="icon">⬆</span> Importar backup</button>
@@ -2000,6 +2004,19 @@ function saveImovel(){
   }
   document.getElementById('imovel-modal-overlay').classList.remove('open');
   renderImoveis();
+
+  // Fase 2c: Registrar mudança de imóvel com SYNC_ENGINE
+  if(typeof SYNC_ENGINE !== 'undefined'){
+    const imovelIdx = imoveis.findIndex(x => x.id === (editingImovelId || imoveis[imoveis.length-1]?.id));
+    if(imovelIdx >= 0){
+      SYNC_ENGINE.onChange(
+        `imoveis.${imovelIdx}.nome`,
+        '',
+        imoveis[imovelIdx].nome
+      );
+    }
+  }
+
   saveToStorage();
 }
 
@@ -3496,6 +3513,16 @@ function saveCardCobr(id){
 
   // refresh the read-only dashboard cards so they reflect the saved values
   renderDashboard();
+
+  // Fase 2c: Registrar mudança de pagamento com SYNC_ENGINE
+  if(typeof SYNC_ENGINE !== 'undefined' && openEntry){
+    SYNC_ENGINE.onChange(
+      `tenants.${t.id}.history.${t.history.indexOf(openEntry)}.aluguel`,
+      0,
+      openEntry.aluguel
+    );
+  }
+
   saveToStorage();
 }
 
@@ -7220,6 +7247,11 @@ function onDriveConnected(){
   // Fase 1b: Notificar DRIVE_LOADER sobre conectividade
   DRIVE_LOADER.onDriveConnected();
 
+  // Fase 2c: Notificar SYNC_ENGINE sobre conectividade
+  if(typeof SYNC_ENGINE !== 'undefined'){
+    SYNC_ENGINE.onDriveConnected();
+  }
+
   updateSaveStatus('☁ Drive conectado', 'var(--blue)');
   const btn = document.getElementById('btn-drive-connect');
   if(btn){ btn.innerHTML = '<span class="icon">☁</span> Drive ativo'; btn.style.color='var(--green)'; btn.style.background='var(--green-bg)'; btn.style.fontWeight='600'; }
@@ -7228,6 +7260,55 @@ function onDriveConnected(){
   setInterval(()=>{ if(driveConnected){ clearTimeout(_driveDebounce); saveToDrive(); } }, 2*60*1000);
   // Salva ao fechar/recarregar a aba
   window.addEventListener('beforeunload', ()=>{ if(driveConnected) saveToDrive(); });
+}
+
+function onDriveDisconnected(){
+  driveConnected = false;
+  if(typeof SYNC_ENGINE !== 'undefined'){
+    SYNC_ENGINE.onDriveDisconnected();
+  }
+  updateSaveStatus('💾 Desconectado - Dados salvos localmente', 'var(--text-faint)');
+}
+
+// Fase 2c: Atualizar indicador de status de sincronização
+function updateSyncStatus(){
+  if(typeof SYNC_ENGINE === 'undefined') return;
+
+  const status = SYNC_ENGINE.getStatus();
+  const statusEl = document.getElementById('sync-status');
+  if(!statusEl) return;
+
+  let indicator = '⏳';
+  let text = 'Sincronizando...';
+  let color = 'var(--blue)';
+
+  if(status.offline) {
+    indicator = '📱';
+    text = `Offline (${status.queueLength} mudança${status.queueLength !== 1 ? 's' : ''})`;
+    color = 'var(--amber)';
+  } else if(status.synced) {
+    indicator = '✓';
+    const age = SYNC_ENGINE.getLastSyncAge();
+    if(age) {
+      const seconds = Math.floor(age / 1000);
+      if(seconds < 60) {
+        text = `Sincronizado há ${seconds}s`;
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        text = `Sincronizado há ${minutes}m`;
+      }
+    } else {
+      text = 'Sincronizado';
+    }
+    color = 'var(--green)';
+  } else if(status.state === 'ERROR') {
+    indicator = '⚠';
+    text = 'Erro na sincronização';
+    color = 'var(--red)';
+  }
+
+  statusEl.innerHTML = `<span style="font-size: 16px; margin-right: 6px;">${indicator}</span><span>${text}</span>`;
+  statusEl.style.color = color;
 }
 
 function connectDrive(){
@@ -7243,6 +7324,14 @@ function gapiLoaded(){
     console.log('[init] Carregando dados via DRIVE_LOADER...');
     await DRIVE_LOADER.init();
     console.log('[init] Status:', DRIVE_LOADER.getStatus());
+
+    // Fase 2c: Inicializar SYNC_ENGINE após DRIVE_LOADER
+    console.log('[init] Carregando sincronização...');
+    await SYNC_ENGINE.init(DRIVE_LOADER, window.DRIVE_DATA);
+    console.log('[init] Sincronização pronta');
+
+    // Iniciar atualização de status de sincronização a cada segundo
+    setInterval(updateSyncStatus, 1000);
 
     gapiReady = true;
   });
