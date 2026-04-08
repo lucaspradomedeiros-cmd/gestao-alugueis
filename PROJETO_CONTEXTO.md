@@ -282,6 +282,14 @@ const STORAGE_KEY = 'gestao_alugueis_v1'; // payload versão 3
 - [ ] Notificações de vencimento via Web Notifications API (browser nativo)
 - [ ] Log de alterações (auditoria: quem alterou o quê e quando)
 
+### Fase 4 — Inteligência Artificial via Claude API (plano futuro)
+- [ ] **Script Python — Geração de contratos de aluguel** — lê dados do Drive, chama Claude API, gera `.docx` formatado com `python-docx`. Elimina a complexidade de gerar documentos no browser.
+- [ ] **Script Python — Reajuste automático IPCA/IGP-M** — busca índice na API do Banco Central, Claude calcula novo aluguel de cada inquilino e atualiza o JSON do Drive.
+- [ ] **Análise financeira DRE com IA** — botão "Analisar com IA" no módulo financeiro envia dados ao Claude e exibe insights e alertas personalizados.
+- [ ] **WhatsApp em lote com IA** — Claude monta mensagens personalizadas para cada inquilino com base no histórico de pagamentos.
+
+> **Pré-requisito:** Criar conta em console.anthropic.com, adicionar crédito (~$5 USD, pré-pago) e configurar `ANTHROPIC_API_KEY` no Linux (`~/.bashrc`). Custo estimado: centavos por mês para o volume do projeto. Modelo recomendado: `claude-haiku-4-5`.
+
 ---
 
 ## 14. O que NÃO fazer
