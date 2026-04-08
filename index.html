@@ -2100,15 +2100,21 @@ function saveDespesa(){
 
   if(editingDespId){
     const d = im.despesas.find(x=>x.id===editingDespId);
+    const oldDesc = d.desc;
+    const oldValor = d.valor;
     d.desc=desc; d.cat=document.getElementById('dm-cat').value;
     d.valor=valor; d.resp=document.getElementById('dm-resp').value;
     d.recorr=recorr; d.parcelas=parcelas; d.valorParcela=valorParcela;
     d.inicio=document.getElementById('dm-inicio').value;
     d.fim=document.getElementById('dm-fim').value||null;
     d.obs=document.getElementById('dm-obs').value.trim();
+    // Registrar mudança de despesa
+    SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${d.id}.desc`, oldDesc, desc);
+    SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${d.id}.valor`, oldValor, valor);
   } else {
+    const despId = im.despesas.length ? Math.max(...im.despesas.map(x=>x.id))+1 : 1;
     im.despesas.push({
-      id: im.despesas.length ? Math.max(...im.despesas.map(x=>x.id))+1 : 1,
+      id: despId,
       desc, cat: document.getElementById('dm-cat').value,
       valor, resp: document.getElementById('dm-resp').value,
       recorr, parcelas, valorParcela,
@@ -2117,6 +2123,8 @@ function saveDespesa(){
       obs: document.getElementById('dm-obs').value.trim(),
       ativo: true
     });
+    // Registrar nova despesa
+    SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${despId}.desc`, null, desc);
   }
   document.getElementById('desp-modal-overlay').classList.remove('open');
   hydrateEntries();
@@ -2371,6 +2379,8 @@ function saveCondoModal(){
 
   if(editingCondoId){
     const c = condominios.find(x=>x.id===editingCondoId);
+    const oldNome = c.nome;
+    const oldUnits = c.units;
     c.nome = nome;
     c.apelido = document.getElementById('cm-apelido').value.trim()||nome.substring(0,8);
     c.endereco = document.getElementById('cm-end').value.trim();
@@ -2383,6 +2393,9 @@ function saveCondoModal(){
     if(c.id===activeCondoId){
       CONDO_UNITS.length=0; units.forEach(u=>CONDO_UNITS.push(u));
     }
+    // Registrar mudanças do condomínio
+    if(oldNome !== c.nome) SYNC_ENGINE.onChange(`condominios.${c.id}.nome`, oldNome, c.nome);
+    if(JSON.stringify(oldUnits) !== JSON.stringify(c.units)) SYNC_ENGINE.onChange(`condominios.${c.id}.units`, oldUnits, c.units);
   } else {
     const newId = 'c' + Date.now();
     condominios.push({
@@ -2396,6 +2409,8 @@ function saveCondoModal(){
       taxas: taxasFromModal
     });
     condoHistories[newId] = [];
+    // Registrar novo condomínio
+    SYNC_ENGINE.onChange(`condominios.${newId}.nome`, null, nome);
     // Switch to new condo
     document.getElementById('condo-modal-overlay').classList.remove('open');
     switchCondo(newId);
@@ -3031,6 +3046,10 @@ function saveEditPayModal(){
   const value = document.getElementById('ep-value').value;
   if(!date || !value){ alert('Preencha Data e Valor Pago.'); return; }
 
+  const entry = t.history.find(h=>h.ref===ref);
+  const oldStatus = entry ? entry.status : null;
+  const oldValorPago = entry ? entry.valorPago : 0;
+
   _resetPaymentEntry(t, ref);
   applyPayment(tid, ref, date, value,
     document.getElementById('ep-condo').value,
@@ -3039,6 +3058,13 @@ function saveEditPayModal(){
     document.getElementById('ep-multa').value,
     document.getElementById('ep-juros').value,
     document.getElementById('ep-obs').value);
+
+  // Registrar mudança de pagamento
+  const updatedEntry = t.history.find(h=>h.ref===ref);
+  if(updatedEntry && oldStatus){
+    SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.status`, oldStatus, updatedEntry.status);
+    SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.valorPago`, oldValorPago, updatedEntry.valorPago);
+  }
 
   saveToStorage();
   closeEditPayModal();
@@ -3916,6 +3942,11 @@ function saveRegModal(){
   const date=document.getElementById('rm-date').value;
   const value=document.getElementById('rm-value').value;
   if(!ref||!date||!value){alert('Preencha Referência, Data e Valor Pago.');return;}
+  const t=tenants.find(x=>x.id===tid);
+  const entry = t?.history.find(h=>h.ref===ref);
+  const oldStatus = entry ? entry.status : null;
+  const oldValorPago = entry ? entry.valorPago : 0;
+
   applyPayment(tid,ref,date,value,
     document.getElementById('rm-condo').value,
     document.getElementById('rm-iptu').value,
@@ -3923,8 +3954,17 @@ function saveRegModal(){
     document.getElementById('rm-multa').value,
     document.getElementById('rm-juros').value,
     document.getElementById('rm-obs').value);
+
+  // Registrar mudança de pagamento
+  if(t && entry && oldStatus){
+    const updatedEntry = t.history.find(h=>h.ref===ref);
+    if(updatedEntry){
+      SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.status`, oldStatus, updatedEntry.status);
+      SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.valorPago`, oldValorPago, updatedEntry.valorPago);
+    }
+  }
+
   document.getElementById('reg-modal-overlay').classList.remove('open');
-  const t=tenants.find(x=>x.id===tid);
   saveToStorage();
   alert(`✓ Pagamento de ${t?.unit} registrado!\nStatus: ${statusOf(t)}`);
   if(regFromDetId){openDet(regFromDetId);regFromDetId=null;}
@@ -4168,8 +4208,17 @@ function saveCondoMonth(){
     limpeza:v.limpeza,lixo:v.lixo,iptu:v.iptu,outras:v.outras,
     obs:document.getElementById('condo-obs').value};
   const idx=condoHistory.findIndex(c=>c.ref===ref);
+  const oldEntry = idx>=0 ? JSON.parse(JSON.stringify(condoHistory[idx])) : null;
   if(idx>=0) condoHistory[idx]=entry; else condoHistory.push(entry);
   condoHistory.sort((a,b)=>a.ref.localeCompare(b.ref));
+
+  // Registrar mudança de condomínio
+  if(oldEntry){
+    SYNC_ENGINE.onChange(`condoHistories.${activeCondoId}.${ref}.agua`, oldEntry.agua, entry.agua);
+    SYNC_ENGINE.onChange(`condoHistories.${activeCondoId}.${ref}.energia`, oldEntry.energia, entry.energia);
+  } else {
+    SYNC_ENGINE.onChange(`condoHistories.${activeCondoId}.${ref}.agua`, null, entry.agua);
+  }
 
   // Condomínio de ref (ex: fev/26) é cobrado junto com aluguel de billingRef (ex: mar/26)
   // vencimento = dia fixo do próprio mês do aluguel (billingRef)
@@ -4191,11 +4240,16 @@ function saveCondoMonth(){
     }
     // vencimento: mês seguinte ou mês do aluguel, conforme config do condo
     const vencYM = getCondoVencYM(tCondoId, billingRef);
+    const oldCondo = h.condo;
     h.venc  = `${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
     h.condo = R2(v.porAptoRateavel);
     h.iptu  = iptuPerApto;
     h.lixo  = lixoPerApto;
     h.valorCobrado = R2(R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo)+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros));
+    // Registrar mudança de cobrança do inquilino
+    if(oldCondo !== h.condo){
+      SYNC_ENGINE.onChange(`tenants.${t.id}.history.${billingRef}.condo`, oldCondo, h.condo);
+    }
   });
 
   renderCondoHistory();
@@ -4765,6 +4819,8 @@ function saveTenant(){
   if(editingTenantId){
     const t = tenants.find(x=>x.id===editingTenantId);
     if(!t){ closeAddTenant(); return; }
+    const oldName = t.name;
+    const oldRent = t.rent;
     t.condoId   = condoId;
     t.imovelId  = imovelId;
     t.unit      = unit;
@@ -4778,13 +4834,19 @@ function saveTenant(){
     t.vencDia   = parseInt(document.getElementById('f-vencto').value)||5;
     t.cpf=document.getElementById('f-cpf').value||'';t.rg=document.getElementById('f-rg').value||'';t.rgOrgao=document.getElementById('f-rg-orgao').value||'';t.profissao=document.getElementById('f-profissao').value||'';t.endLoc=document.getElementById('f-end-loc').value||'';t.bairroLoc=document.getElementById('f-bairro-loc').value||'';t.cidadeUf=document.getElementById('f-cidade-uf').value||'';t.cepLoc=document.getElementById('f-cep-loc').value||'';t.emailLoc=document.getElementById('f-email-loc').value||'';t.nacionalidade=document.getElementById('f-nacionalidade').value||'brasileiro(a)';t.estadoCivil=document.getElementById('f-estado-civil').value||'solteiro(a)';
     t.fiadores=lerFiadoresForm();
+
+    // Registrar mudanças do inquilino
+    if(oldName !== t.name) SYNC_ENGINE.onChange(`tenants.${t.id}.name`, oldName, t.name);
+    if(oldRent !== t.rent) SYNC_ENGINE.onChange(`tenants.${t.id}.rent`, oldRent, t.rent);
+
     closeAddTenant();
     renderDashboard();
     saveToStorage();
     alert(`✓ ${t.name} atualizado!`);
   } else {
+    const tenantId = tenants.length ? Math.max(...tenants.map(x=>x.id))+1 : 1;
     const t = {
-      id: tenants.length ? Math.max(...tenants.map(x=>x.id))+1 : 1,
+      id: tenantId,
       condoId, imovelId, unit, name,
       tel:      document.getElementById('f-tel').value||'—',
       rent:     R(document.getElementById('f-rent').value),
@@ -4798,6 +4860,10 @@ function saveTenant(){
       history:  []
     };
     tenants.push(t);
+
+    // Registrar novo inquilino
+    SYNC_ENGINE.onChange(`tenants.${tenantId}.name`, null, name);
+
     closeAddTenant();
     renderDashboard();
     saveToStorage();
