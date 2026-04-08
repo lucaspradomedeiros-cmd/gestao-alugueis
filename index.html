@@ -521,6 +521,8 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </style>
 <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<!-- Fase 1: Módulo de carregamento de dados do Google Drive -->
+<script src="drive-loader.js"></script>
 </head>
 <body>
 
@@ -7222,6 +7224,10 @@ async function loadFromDrive(){
 
 function onDriveConnected(){
   driveConnected = true;
+
+  // Fase 1b: Notificar DRIVE_LOADER sobre conectividade
+  DRIVE_LOADER.onDriveConnected();
+
   updateSaveStatus('☁ Drive conectado', 'var(--blue)');
   const btn = document.getElementById('btn-drive-connect');
   if(btn){ btn.innerHTML = '<span class="icon">☁</span> Drive ativo'; btn.style.color='var(--green)'; btn.style.background='var(--green-bg)'; btn.style.fontWeight='600'; }
@@ -7240,6 +7246,12 @@ function connectDrive(){
 function gapiLoaded(){
   gapi.load('client', async ()=>{
     await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+
+    // Fase 1b: Inicializar DRIVE_LOADER após gapi estar pronto
+    console.log('[init] Carregando dados via DRIVE_LOADER...');
+    await DRIVE_LOADER.init();
+    console.log('[init] Status:', DRIVE_LOADER.getStatus());
+
     gapiReady = true;
   });
 }
