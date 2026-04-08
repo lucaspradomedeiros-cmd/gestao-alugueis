@@ -7085,11 +7085,11 @@ function printRecibo(){
 // PERSISTÊNCIA — localStorage + Google Drive
 // ============================================================
 const STORAGE_KEY = 'gestao_alugueis_v1';
-const DRIVE_FILE_NAME = 'gestao_alugueis_dados.json';
+// Fase 1c: DRIVE_FILE_NAME removida (gerenciada por DRIVE_LOADER)
 const GAPI_CLIENT_ID = '267608598510-h5f83cjjqe20qc8n9gqtrltvq5n1lb6o.apps.googleusercontent.com';
 const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
-let driveFileId = null;
+// Fase 1c: driveFileId agora gerenciado por DRIVE_LOADER
 let driveConnected = false;
 let gapiReady = false;
 let gisReady = false;
@@ -7166,59 +7166,51 @@ function saveToStorage(){
 }
 function loadFromStorage(){ return loadFromLocalStorage(); }
 
-async function findDriveFile(){
-  const res = await gapi.client.drive.files.list({
-    spaces: 'appDataFolder',
-    fields: 'files(id,name)',
-    q: `name='${DRIVE_FILE_NAME}'`
-  });
-  const files = res.result.files;
-  return files && files.length ? files[0].id : null;
-}
+// Fase 1c: findDriveFile() removida (agora em DRIVE_LOADER.findFile())
 
 async function saveToDrive(){
   if(!driveConnected) return;
   try {
     updateSaveStatus('☁ Salvando no Drive…', 'var(--blue)');
-    const payload = JSON.stringify(getPayload());
-    const metadata = { name: DRIVE_FILE_NAME, parents: driveFileId ? undefined : ['appDataFolder'] };
-    const boundary = '-------314159265358979323846';
-    const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${boundary}--`;
-    const method = driveFileId ? 'PATCH' : 'POST';
-    const url = driveFileId
-      ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
-      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-    const res = await gapi.client.request({ method, path: url,
-      headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` }, body });
-    if(!driveFileId) driveFileId = res.result.id;
-    const now = new Date();
-    updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+    const payload = getPayload();
+
+    // Fase 1c: Usar DRIVE_LOADER.uploadFile() ao invés de implementação duplicada
+    const success = await DRIVE_LOADER.uploadFile(payload);
+
+    if(success){
+      const now = new Date();
+      updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+    } else {
+      updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)');
+    }
   } catch(e){ console.warn('Erro ao salvar no Drive:', e); updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)'); }
 }
 
 async function loadFromDrive(){
   try {
     updateSaveStatus('☁ Carregando do Drive…', 'var(--blue)');
-    driveFileId = await findDriveFile();
-    if(!driveFileId){
-      // Drive não tem arquivo ainda — envia os dados atuais (importados da planilha)
-      console.log('Nenhum arquivo no Drive. Enviando dados iniciais…');
+
+    // Fase 1c: Usar DRIVE_LOADER.loadFromDrive() ao invés de implementação duplicada
+    const success = await DRIVE_LOADER.loadFromDrive();
+
+    if(success && window.DRIVE_DATA){
+      // Aplicar dados carregados do Drive
+      if(applyPayload(window.DRIVE_DATA)){
+        if(window.DRIVE_DATA.savedAt){
+          const d = new Date(window.DRIVE_DATA.savedAt);
+          updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+        }
+        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
+        return true;
+      }
+    } else if(!success){
+      // Drive não tem arquivo ainda — envia os dados atuais
+      console.log('[loadFromDrive] Nenhum arquivo no Drive. Enviando dados iniciais…');
       await saveToDrive();
       updateSaveStatus('☁ Dados enviados ao Drive (primeira vez)', 'var(--green)');
       return true;
     }
-    const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
-    const data = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
-    if(applyPayload(data)){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      if(data.savedAt){
-        const d = new Date(data.savedAt);
-        updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
-      }
-      hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
-      return true;
-    }
-  } catch(e){ console.warn('Erro ao carregar do Drive:', e); updateSaveStatus('⚠ Erro ao carregar do Drive', 'var(--red)'); }
+  } catch(e){ console.warn('[loadFromDrive] Erro:', e); updateSaveStatus('⚠ Erro ao carregar do Drive', 'var(--red)'); }
   return false;
 }
 
