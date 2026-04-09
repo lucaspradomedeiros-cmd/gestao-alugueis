@@ -964,7 +964,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </div>
 
 <!-- RECIBO MODAL -->
-<div class="overlay" id="recibo-overlay" onclick="if(event.target===this)document.getElementById('recibo-overlay').classList.remove('open')">
+<div class="overlay" id="recibo-overlay" onclick="if(event.target===this)closeOverlay('recibo-overlay')">
   <div class="modal wide" style="max-width:640px;" onclick="event.stopPropagation()">
     <div class="modal-title">🧾 Emitir Recibo de Pagamento</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="recibo-info">—</div>
@@ -983,7 +983,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Prévia do recibo</div>
     <div id="recibo-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:12px;line-height:1.8;font-family:'DM Sans',sans-serif;white-space:pre-wrap;max-height:320px;overflow-y:auto;"></div>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('recibo-overlay').classList.remove('open')">Fechar</button>
+      <button class="btn" onclick="closeOverlay('recibo-overlay')">Fechar</button>
       <button class="btn" onclick="copyRecibo()" id="rb-copy">📋 Copiar texto</button>
       <button class="btn btn-primary" onclick="printRecibo()">🖨 Imprimir / PDF</button>
     </div>
@@ -991,7 +991,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </div>
 
 <!-- ADD/EDIT IMÓVEL MODAL -->
-<div class="overlay" id="imovel-modal-overlay" onclick="if(event.target===this)document.getElementById('imovel-modal-overlay').classList.remove('open')">
+<div class="overlay" id="imovel-modal-overlay" onclick="if(event.target===this)closeOverlay('imovel-modal-overlay')">
   <div class="modal wide" onclick="event.stopPropagation()" style="max-width:600px;">
     <div class="modal-title" id="imovel-modal-title">Novo Imóvel</div>
     <div class="mrow">
@@ -1059,14 +1059,14 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">Esta ação não pode ser desfeita.</span>
     </div>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('imovel-modal-overlay').classList.remove('open')">Cancelar</button>
+      <button class="btn" onclick="closeOverlay('imovel-modal-overlay')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveImovel()">Salvar</button>
     </div>
   </div>
 </div>
 
 <!-- ADD DESPESA IMÓVEL MODAL -->
-<div class="overlay" id="desp-modal-overlay" onclick="if(event.target===this)document.getElementById('desp-modal-overlay').classList.remove('open')">
+<div class="overlay" id="desp-modal-overlay" onclick="if(event.target===this)closeOverlay('desp-modal-overlay')">
   <div class="modal wide" onclick="event.stopPropagation()" style="max-width:580px;">
     <div class="modal-title" id="desp-modal-title">Nova Despesa</div>
     <div class="mrow">
@@ -1114,7 +1114,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     </div>
     <div class="mfield"><label>Observação</label><input type="text" id="dm-obs" placeholder="Opcional"></div>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('desp-modal-overlay').classList.remove('open')">Cancelar</button>
+      <button class="btn" onclick="closeOverlay('desp-modal-overlay')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveDespesa()">Salvar despesa</button>
     </div>
   </div>
@@ -1138,7 +1138,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </div>
 
 <!-- ADD/EDIT CONDOMÍNIO MODAL -->
-<div class="overlay" id="condo-modal-overlay" onclick="if(event.target===this)document.getElementById('condo-modal-overlay').classList.remove('open')">
+<div class="overlay" id="condo-modal-overlay" onclick="if(event.target===this)closeOverlay('condo-modal-overlay')">
   <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-title" id="condo-modal-title">Novo Condomínio</div>
     <div class="mrow">
@@ -1197,14 +1197,14 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <span style="font-size:11px;color:var(--text-muted);margin-left:10px;">Esta ação não pode ser desfeita.</span>
     </div>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('condo-modal-overlay').classList.remove('open')">Cancelar</button>
+      <button class="btn" onclick="closeOverlay('condo-modal-overlay')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveCondoModal()">Salvar</button>
     </div>
   </div>
 </div>
 
 <!-- PRINT REPORT MODAL -->
-<div class="overlay" id="print-report-overlay" onclick="if(event.target===this)document.getElementById('print-report-overlay').classList.remove('open')">
+<div class="overlay" id="print-report-overlay" onclick="if(event.target===this)closeOverlay('print-report-overlay')">
   <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-title">🖨 Relatório de Despesas do Condomínio</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="pr-condo-name">—</div>
@@ -1225,7 +1225,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <div id="pr-preview" style="font-size:13px;color:var(--text-muted);">—</div>
     </div>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('print-report-overlay').classList.remove('open')">Fechar</button>
+      <button class="btn" onclick="closeOverlay('print-report-overlay')">Fechar</button>
       <button class="btn btn-primary" onclick="printCondoReport()">🖨 Gerar e Imprimir</button>
     </div>
   </div>
@@ -1261,7 +1261,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       </div>
     </details>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('wpp-overlay').classList.remove('open')">Fechar</button>
+      <button class="btn" onclick="closeOverlay('wpp-overlay')">Fechar</button>
       <button class="btn" onclick="copyWpp()" id="wpp-copy">📋 Copiar</button>
       <a class="btn-wpp" id="wpp-link" href="#" target="_blank">WhatsApp ↗</a>
     </div>
@@ -1755,7 +1755,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     </div>
     <div class="mfield"><label>Observações</label><textarea id="rm-obs" rows="2"></textarea></div>
     <div class="mfooter">
-      <button class="btn" onclick="document.getElementById('reg-modal-overlay').classList.remove('open')">Cancelar</button>
+      <button class="btn" onclick="closeOverlay('reg-modal-overlay')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveRegModal()">Confirmar</button>
     </div>
   </div>
@@ -1916,7 +1916,7 @@ function openAddImovel(){
   document.getElementById('im-autonomo').checked = true;
   document.getElementById('im-delete-row').style.display = 'none';
   onImovelGestaoChange();
-  document.getElementById('imovel-modal-overlay').classList.add('open');
+  openOverlay('imovel-modal-overlay');
 }
 
 function openEditImovel(id){
@@ -1945,7 +1945,7 @@ function openEditImovel(id){
       setTimeout(()=>{ document.getElementById('im-condo-unit').value = im.condoUnit||''; },0);
     },0);
   }
-  document.getElementById('imovel-modal-overlay').classList.add('open');
+  openOverlay('imovel-modal-overlay');
 }
 
 function onImovelGestaoChange(){
@@ -2002,7 +2002,7 @@ function saveImovel(){
       despesas: []
     });
   }
-  document.getElementById('imovel-modal-overlay').classList.remove('open');
+  closeOverlay('imovel-modal-overlay');
   renderImoveis();
 
   // Fase 2c: Registrar mudança de imóvel com SYNC_ENGINE
@@ -2023,7 +2023,7 @@ function saveImovel(){
 function deleteImovel(){
   if(!confirm('Excluir este imóvel e todas as suas despesas?')) return;
   imoveis = imoveis.filter(x=>x.id!==editingImovelId);
-  document.getElementById('imovel-modal-overlay').classList.remove('open');
+  closeOverlay('imovel-modal-overlay');
   renderImoveis();
   saveToStorage();
 }
@@ -2045,7 +2045,7 @@ function openAddDespesa(imovelId){
   document.getElementById('dm-fim').value = '';
   document.getElementById('dm-obs').value = '';
   onDespRecorrChange();
-  document.getElementById('desp-modal-overlay').classList.add('open');
+  openOverlay('desp-modal-overlay');
 }
 
 function openEditDespesa(imovelId, despId){
@@ -2066,7 +2066,7 @@ function openEditDespesa(imovelId, despId){
   document.getElementById('dm-obs').value      = d.obs||'';
   onDespRecorrChange();
   onDespValorChange();
-  document.getElementById('desp-modal-overlay').classList.add('open');
+  openOverlay('desp-modal-overlay');
 }
 
 function onDespRecorrChange(){
@@ -2126,7 +2126,7 @@ function saveDespesa(){
     // Registrar nova despesa
     SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${despId}.desc`, null, desc);
   }
-  document.getElementById('desp-modal-overlay').classList.remove('open');
+  closeOverlay('desp-modal-overlay');
   hydrateEntries();
   renderImoveis();
   renderDashboard();
@@ -2167,10 +2167,10 @@ function openIdet(id){
     if(el) el.classList.toggle('active', t==='despesas');
   });
   renderIdetBody();
-  document.getElementById('idet-overlay').classList.add('open');
+  openOverlay('idet-overlay');
 }
 
-function closeIdet(){ document.getElementById('idet-overlay').classList.remove('open'); idetImovelId=null; }
+function closeIdet(){ closeOverlay('idet-overlay'); idetImovelId=null; }
 
 function showIdetTab(tab){
   idetTab = tab;
@@ -2325,7 +2325,7 @@ function openAddCondo(){
   document.getElementById('cm-limpeza').value = '330';
   document.getElementById('cm-venc-prox').checked = true;
   document.getElementById('cm-delete-row').style.display = 'none';
-  document.getElementById('condo-modal-overlay').classList.add('open');
+  openOverlay('condo-modal-overlay');
 }
 function openEditCondo(){
   const c = getActiveCondo();
@@ -2345,7 +2345,7 @@ function openEditCondo(){
     document.getElementById(`cm-tx-${item}-pct`).value  = tx[item].pct;
   });
   document.getElementById('cm-delete-row').style.display = condominios.length>1?'block':'none';
-  document.getElementById('condo-modal-overlay').classList.add('open');
+  openOverlay('condo-modal-overlay');
 }
 function saveCondoModal(){
   const nome = document.getElementById('cm-nome').value.trim();
@@ -2398,12 +2398,12 @@ function saveCondoModal(){
     // Registrar novo condomínio
     SYNC_ENGINE.onChange(`condominios.${newId}.nome`, null, nome);
     // Switch to new condo
-    document.getElementById('condo-modal-overlay').classList.remove('open');
+    closeOverlay('condo-modal-overlay');
     switchCondo(newId);
     saveToStorage();
     return;
   }
-  document.getElementById('condo-modal-overlay').classList.remove('open');
+  closeOverlay('condo-modal-overlay');
   renderCondoSwitcher();
   renderCondoInfoBar();
   saveToStorage();
@@ -2413,7 +2413,7 @@ function deleteCondo(){
   if(!confirm('Excluir este condomínio e todo o seu histórico?\n\nEsta ação não pode ser desfeita.')) return;
   condoHistories[editingCondoId] = undefined;
   condominios = condominios.filter(c=>c.id!==editingCondoId);
-  document.getElementById('condo-modal-overlay').classList.remove('open');
+  closeOverlay('condo-modal-overlay');
   switchCondo(condominios[0].id);
   saveToStorage();
 }
@@ -2433,7 +2433,7 @@ function openPrintReport(){
   document.getElementById('pr-to').value = toRef;
   updatePrintPreview();
   ['pr-from','pr-to','pr-type'].forEach(id=>document.getElementById(id).addEventListener('change',updatePrintPreview));
-  document.getElementById('print-report-overlay').classList.add('open');
+  openOverlay('print-report-overlay');
 }
 
 function updatePrintPreview(){
@@ -2638,7 +2638,7 @@ function printCondoReport(){
   const w = window.open('','_blank','width=960,height=800');
   w.document.write(html);
   w.document.close();
-  document.getElementById('print-report-overlay').classList.remove('open');
+  closeOverlay('print-report-overlay');
 }
 
 // ============================================================
@@ -2689,6 +2689,41 @@ const STATUS_LABELS = {
 const LIMPEZA_PADRAO = 330;  // Valor padrão de limpeza em condomínio
 const MULTA_RATE = 0.10;     // 10% de multa por atraso
 const COMISSAO_RATE = 0.10;  // 10% taxa administrativa padrão
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+
+// Renderizar grid de dots coloridos do histórico de pagamento
+function renderHistDots(t){
+  if(!t || !t.history) return '';
+  return t.history.slice(-6).map(h=>{
+    const m = h.ref.split('-')[1];
+    let cls = 'futuro';
+    if(h.status==='pago') cls='pago';
+    else if(h.status==='parcial') cls='parcial';
+    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
+    const tip = `${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
+    return `<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')">${m}</div>`;
+  }).join('');
+}
+
+// Abrir nova janela de impressão com HTML e imprimir automaticamente
+function openPrintWindow(html, title='Relatório'){
+  openPrintWindow(html);
+}
+
+// Abrir overlay (modal/dialog)
+function openOverlay(id){
+  const el = document.getElementById(id);
+  if(el) el.classList.add('open');
+}
+
+// Fechar overlay (modal/dialog)
+function closeOverlay(id){
+  const el = document.getElementById(id);
+  if(el) el.classList.remove('open');
+}
 
 // ============================================================
 // DATA MODEL
@@ -3029,11 +3064,11 @@ function openEditPayModal(tenantId, ref){
   document.getElementById('ep-info-box').innerHTML =
     `<strong>${t.unit} — ${t.name}</strong> &nbsp;·&nbsp; ${monthName(ref)} &nbsp;·&nbsp; Cobrado: ${fmtBRL(entry.valorCobrado)} &nbsp;·&nbsp; Pago: ${fmtBRL(entry.valorPago)}`;
 
-  document.getElementById('edit-pay-overlay').classList.add('open');
+  openOverlay('edit-pay-overlay');
 }
 
 function closeEditPayModal(){
-  document.getElementById('edit-pay-overlay').classList.remove('open');
+  closeOverlay('edit-pay-overlay');
   editPayTenantId = null;
   editPayRef = null;
 }
@@ -3164,15 +3199,7 @@ function renderCardDashboard(t, container){
   })();
 
   // History dots
-  const histHTML = t.history.slice(-6).map(h=>{
-    const m=h.ref.split('-')[1];
-    let cls='futuro';
-    if(h.status==='pago') cls='pago';
-    else if(h.status==='parcial') cls='parcial';
-    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
-    const tip=`${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
-    return`<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')">${m}</div>`;
-  }).join('');
+  const histHTML = renderHistDots(t);
 
   // Penalty bar
   let penaltyBar='';
@@ -3247,15 +3274,7 @@ function renderCard(t, container){
   const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago') || last;
 
   // History dots (last 6) — clickable, show extrato for that month
-  const histHTML = t.history.slice(-6).map(h=>{
-    const m=h.ref.split('-')[1];
-    let cls='futuro';
-    if(h.status==='pago') cls='pago';
-    else if(h.status==='parcial') cls='parcial';
-    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
-    const tip=`${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
-    return`<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')" style="outline:none;">${m}</div>`;
-  }).join('');
+  const histHTML = renderHistDots(t);
 
   // penalty bar
   let penaltyBar='';
@@ -3589,7 +3608,7 @@ function openDet(id, highlightRef){
   detHighRef  = highlightRef || null;
   detPeriod   = highlightRef ? 'single' : 'todos';
   renderDet();
-  document.getElementById('det-overlay').classList.add('open');
+  openOverlay('det-overlay');
 }
 
 function initCustomPickers(){
@@ -3881,7 +3900,7 @@ function renderDet(){
 }
 
 function closeDet(){
-  document.getElementById('det-overlay').classList.remove('open');
+  closeOverlay('det-overlay');
   detHighRef=null; detPeriod='todos';
 }
 
@@ -3898,7 +3917,7 @@ function openRegModal(presetId){
   }
   document.getElementById('rm-date').value=TODAY.toISOString().split('T')[0];
   onRegTenantChange();
-  document.getElementById('reg-modal-overlay').classList.add('open');
+  openOverlay('reg-modal-overlay');
 }
 function openRegFromDet(id){openRegModal(id);}
 function onRegTenantChange(){
@@ -3967,7 +3986,7 @@ function saveRegModal(){
     }
   }
 
-  document.getElementById('reg-modal-overlay').classList.remove('open');
+  closeOverlay('reg-modal-overlay');
   saveToStorage();
   alert(`✓ Pagamento de ${t?.unit} registrado!\nStatus: ${statusOf(t)}`);
   if(regFromDetId){openDet(regFromDetId);regFromDetId=null;}
@@ -4016,7 +4035,7 @@ function openWpp(id){
     document.getElementById('wpp-juros').value='';
   }
   buildWpp();
-  document.getElementById('wpp-overlay').classList.add('open');
+  openOverlay('wpp-overlay');
 }
 function syncWppEdit(){
   document.getElementById('wpp-edit').value=document.getElementById('wpp-preview').textContent;
@@ -4756,7 +4775,7 @@ function openAddTenant(){
   document.getElementById('tenant-contr-fields').style.display='none';
   document.getElementById('tenant-contr-btn').textContent='▶ Dados para Contrato de Aluguel';
   tenantToggleFiadores();
-  document.getElementById('add-tenant-overlay').classList.add('open');
+  openOverlay('add-tenant-overlay');
 }
 
 function openEditTenant(id){
@@ -4787,11 +4806,11 @@ function openEditTenant(id){
   const mapF=[[0,['fi1-nome','nome'],['fi1-cpf','cpf'],['fi1-rg','rg'],['fi1-rg-orgao','rgOrgao'],['fi1-civil','estadoCivil'],['fi1-prof','profissao'],['fi1-tel','tel'],['fi1-end','endereco']],[1,['fi2-nome','nome'],['fi2-cpf','cpf'],['fi2-rg','rg'],['fi2-rg-orgao','rgOrgao'],['fi2-civil','estadoCivil'],['fi2-prof','profissao'],['fi2-tel','tel'],['fi2-end','endereco']]];
   mapF.forEach(([idx,...fields])=>{const f=fi[idx]||{};fields.forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.value=f[k]||'';});});
   tenantToggleFiadores();
-  document.getElementById('add-tenant-overlay').classList.add('open');
+  openOverlay('add-tenant-overlay');
 }
 
 function closeAddTenant(){
-  document.getElementById('add-tenant-overlay').classList.remove('open');
+  closeOverlay('add-tenant-overlay');
   editingTenantId = null;
 }
 
@@ -5230,9 +5249,9 @@ function abrirCliModal(id){
   }
   document.getElementById('hint-cla-cpf').textContent='';
   document.getElementById('hint-cla-cep').textContent='';
-  document.getElementById('cli-modal-overlay').classList.add('open');
+  openOverlay('cli-modal-overlay');
 }
-function fecharCliModal(){ document.getElementById('cli-modal-overlay').classList.remove('open'); }
+function fecharCliModal(){ closeOverlay('cli-modal-overlay'); }
 
 function salvarClienteAdv(){
   const nome=document.getElementById('cla-nome').value.trim().toUpperCase();
@@ -5316,9 +5335,9 @@ function abrirProcModal(id){
     document.getElementById('pra-status').value='em_andamento';
     document.getElementById('pra-data').value=new Date().toISOString().split('T')[0];
   }
-  document.getElementById('proc-modal-overlay').classList.add('open');
+  openOverlay('proc-modal-overlay');
 }
-function fecharProcModal(){ document.getElementById('proc-modal-overlay').classList.remove('open'); }
+function fecharProcModal(){ closeOverlay('proc-modal-overlay'); }
 
 function salvarProcessoAdv(){
   const tipo=document.getElementById('pra-tipo').value.trim();
@@ -5370,9 +5389,9 @@ function abrirContrModal(){
   document.getElementById('ctr-entrada-wrap').style.display='none';
   document.getElementById('ctr-preview').style.display='none';
   document.getElementById('hint-ctr-total').textContent='';
-  document.getElementById('contr-modal-overlay').classList.add('open');
+  openOverlay('contr-modal-overlay');
 }
-function fecharContrModal(){ document.getElementById('contr-modal-overlay').classList.remove('open'); }
+function fecharContrModal(){ closeOverlay('contr-modal-overlay'); }
 
 function recalcContr(){
   const forma=document.getElementById('ctr-forma').value;
@@ -5444,9 +5463,9 @@ function abrirPagModal(blocoId, parcelaIdx){
   document.getElementById('pga-valor').value=parseFloat(p.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
   document.getElementById('pga-data').value=new Date().toISOString().split('T')[0];
   document.getElementById('pga-obs').value='';
-  document.getElementById('pag-modal-overlay').classList.add('open');
+  openOverlay('pag-modal-overlay');
 }
-function fecharPagModal(){ document.getElementById('pag-modal-overlay').classList.remove('open'); }
+function fecharPagModal(){ closeOverlay('pag-modal-overlay'); }
 
 function confirmarPagamentoAdv(){
   const idx=clientesAdv.findIndex(x=>x.id===clienteAdvAtualId);
@@ -5588,9 +5607,9 @@ function abrirSvModal(id){
       recalcSv();
     }
   }
-  document.getElementById('sv-modal-overlay').classList.add('open');
+  openOverlay('sv-modal-overlay');
 }
-function fecharSvModal(){ document.getElementById('sv-modal-overlay').classList.remove('open'); }
+function fecharSvModal(){ closeOverlay('sv-modal-overlay'); }
 
 function salvarServicoAdv(){
   const tipoSel=document.getElementById('sva-tipo').value;
@@ -5790,9 +5809,9 @@ function abrirGerarDocModal(){
   document.getElementById('gd-diaVenc').value='5';
   ['gd-renda','gd-vinculo','gd-imovel-prop','gd-veiculo','gd-dependentes','gd-bens'].forEach(id=>{document.getElementById(id).value='';});
   gdToggleFields();
-  document.getElementById('gerar-doc-modal-overlay').classList.add('open');
+  openOverlay('gerar-doc-modal-overlay');
 }
-function fecharGerarDocModal(){document.getElementById('gerar-doc-modal-overlay').classList.remove('open');}
+function fecharGerarDocModal(){closeOverlay('gerar-doc-modal-overlay');}
 function gdToggleFields(){
   const hon=document.getElementById('gd-chk-hon').checked||document.getElementById('gd-chk-recibo').checked;
   document.getElementById('gd-sec-hon').style.display=hon?'block':'none';
@@ -6267,11 +6286,11 @@ function abrirDespesaModal(id){
     }
   }
   dpStatusChange();
-  document.getElementById('despesa-modal-overlay').classList.add('open');
+  openOverlay('despesa-modal-overlay');
 }
 
 function fecharDespesaModal(){
-  document.getElementById('despesa-modal-overlay').classList.remove('open');
+  closeOverlay('despesa-modal-overlay');
 }
 
 function salvarDespesaEscritorio(){
@@ -6459,9 +6478,9 @@ function abrirReceitaModal(id){
       document.getElementById('rp-data').value=r.data||hoje;
     }
   }
-  document.getElementById('receita-modal-overlay').classList.add('open');
+  openOverlay('receita-modal-overlay');
 }
-function fecharReceitaModal(){document.getElementById('receita-modal-overlay').classList.remove('open');}
+function fecharReceitaModal(){closeOverlay('receita-modal-overlay');}
 function salvarReceita(){
   const valor=document.getElementById('rp-valor').value.trim();
   const data=document.getElementById('rp-data').value;
@@ -6970,7 +6989,7 @@ function openRecibo(id){
   document.getElementById('rb-data').value = pago?.dataPagamento || TODAY.toISOString().split('T')[0];
   document.getElementById('rb-valor').value = pago ? R(pago.valorPago) : '';
   buildRecibo();
-  document.getElementById('recibo-overlay').classList.add('open');
+  openOverlay('recibo-overlay');
 }
 
 function buildRecibo(){
