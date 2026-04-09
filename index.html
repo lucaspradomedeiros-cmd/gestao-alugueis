@@ -2687,7 +2687,6 @@ const STATUS_LABELS = {
 
 // Constantes financeiras
 const LIMPEZA_PADRAO = 330;  // Valor padrão de limpeza em condomínio
-const MULTA_RATE = 0.10;     // 10% de multa por atraso
 const COMISSAO_RATE = 0.10;  // 10% taxa administrativa padrão
 
 // ============================================================
@@ -7219,9 +7218,7 @@ function printRecibo(){
 // PERSISTÊNCIA — localStorage + Google Drive
 // ============================================================
 const STORAGE_KEY = 'gestao_alugueis_v1';
-// Fase 1c: DRIVE_FILE_NAME removida (gerenciada por DRIVE_LOADER)
-const GAPI_CLIENT_ID = '267608598510-h5f83cjjqe20qc8n9gqtrltvq5n1lb6o.apps.googleusercontent.com';
-const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+// GAPI_CLIENT_ID e GAPI_SCOPES movidos para tag <script> com funções Google
 
 // Fase 1c: driveFileId agora gerenciado por DRIVE_LOADER
 let driveConnected = false;
@@ -7375,45 +7372,7 @@ function onDriveDisconnected(){
 }
 
 // Fase 2c: Atualizar indicador de status de sincronização
-function updateSyncStatus(){
-  if(typeof SYNC_ENGINE === 'undefined') return;
-
-  const status = SYNC_ENGINE.getStatus();
-  const statusEl = document.getElementById('sync-status');
-  if(!statusEl) return;
-
-  let indicator = '⏳';
-  let text = 'Sincronizando...';
-  let color = 'var(--blue)';
-
-  if(status.offline) {
-    indicator = '📱';
-    text = `Offline (${status.queueLength} mudança${status.queueLength !== 1 ? 's' : ''})`;
-    color = 'var(--amber)';
-  } else if(status.synced) {
-    indicator = '✓';
-    const age = SYNC_ENGINE.getLastSyncAge();
-    if(age) {
-      const seconds = Math.floor(age / 1000);
-      if(seconds < 60) {
-        text = `Sincronizado há ${seconds}s`;
-      } else {
-        const minutes = Math.floor(seconds / 60);
-        text = `Sincronizado há ${minutes}m`;
-      }
-    } else {
-      text = 'Sincronizado';
-    }
-    color = 'var(--green)';
-  } else if(status.state === 'ERROR') {
-    indicator = '⚠';
-    text = 'Erro na sincronização';
-    color = 'var(--red)';
-  }
-
-  statusEl.innerHTML = `<span style="font-size: 16px; margin-right: 6px;">${indicator}</span><span>${text}</span>`;
-  statusEl.style.color = color;
-}
+// updateSyncStatus movida para tag <script> com funções Google
 
 // ── Backup manual ─────────────────────────────────────────────
 function exportBackup(){
@@ -7485,6 +7444,11 @@ setTimeout(()=>{
 
 <!-- Definir callbacks ANTES de carregar os scripts Google -->
 <script>
+// Constantes Google
+const GAPI_CLIENT_ID = '267608598510-h5f83cjjqe20qc8n9gqtrltvq5n1lb6o.apps.googleusercontent.com';
+const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+
+// Variáveis globais
 let gapiReady = false;
 let gisReady = false;
 let tokenClient = null;
@@ -7528,6 +7492,42 @@ function gisLoaded(){
 function connectDrive(){
   if(!gapiReady || !gisReady){ alert('Aguarde o carregamento das APIs Google.'); return; }
   tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function updateSyncStatus(){
+  if(typeof SYNC_ENGINE === 'undefined') return;
+  const status = SYNC_ENGINE.getStatus();
+  const statusEl = document.getElementById('sync-status');
+  if(!statusEl) return;
+  let indicator = '⏳';
+  let text = 'Sincronizando...';
+  let color = 'var(--blue)';
+  if(status.offline) {
+    indicator = '📱';
+    text = `Offline (${status.queueLength} mudança${status.queueLength !== 1 ? 's' : ''})`;
+    color = 'var(--amber)';
+  } else if(status.synced) {
+    indicator = '✓';
+    const age = SYNC_ENGINE.getLastSyncAge();
+    if(age) {
+      const seconds = Math.floor(age / 1000);
+      if(seconds < 60) {
+        text = `Sincronizado há ${seconds}s`;
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        text = `Sincronizado há ${minutes}m`;
+      }
+    } else {
+      text = 'Sincronizado';
+    }
+    color = 'var(--green)';
+  } else if(status.state === 'ERROR') {
+    indicator = '⚠';
+    text = 'Erro na sincronização';
+    color = 'var(--red)';
+  }
+  statusEl.innerHTML = `<span style="font-size: 16px; margin-right: 6px;">${indicator}</span><span>${text}</span>`;
+  statusEl.style.color = color;
 }
 </script>
 
