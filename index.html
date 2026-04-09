@@ -2829,6 +2829,7 @@ function R2(n){return Math.round(n*100)/100;}
 // Return current status and penalty preview for a tenant's last open entry
 function getTenantFinancials(t){
   if(t.vago) return {status:'vago'};
+  const last = t.history && t.history.length > 0 ? t.history[t.history.length - 1] : null;
   if(!last) return {status:'futuro'};
 
   // Already paid / futuro
