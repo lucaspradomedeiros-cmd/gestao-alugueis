@@ -521,10 +521,6 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </style>
 <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<!-- Fase 1: Módulo de carregamento de dados do Google Drive -->
-<script src="drive-loader.js"></script>
-<!-- Fase 2: Motor de sincronização bidirecional -->
-<script src="sync-engine.js"></script>
 </head>
 <body>
 
@@ -569,8 +565,6 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   <div style="margin-top:auto;padding:14px 12px;border-top:1px solid var(--border);">
     <div class="nav-label" style="margin-bottom:8px;">Dados</div>
     <div id="save-status" style="font-size:11px;color:var(--text-faint);padding:0 8px;margin-bottom:8px;min-height:14px;"></div>
-    <!-- Fase 2c: Indicador de status de sincronização -->
-    <div id="sync-status" style="font-size:11px;color:var(--text-faint);padding:0 8px;margin-bottom:8px;min-height:14px;">⏳ Inicializando...</div>
     <button class="nav-item" onclick="connectDrive()" id="btn-drive-connect" style="color:var(--blue);font-weight:500;"><span class="icon">☁</span> Conectar Drive</button>
     <button class="nav-item" onclick="exportBackup()" style="color:var(--green);font-weight:500;"><span class="icon">⬇</span> Exportar backup</button>
     <button class="nav-item" onclick="document.getElementById('import-file').click()"><span class="icon">⬆</span> Importar backup</button>
@@ -964,7 +958,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </div>
 
 <!-- RECIBO MODAL -->
-<div class="overlay" id="recibo-overlay" onclick="if(event.target===this)closeOverlay('recibo-overlay')">
+<div class="overlay" id="recibo-overlay" onclick="if(event.target===this)document.getElementById('recibo-overlay').classList.remove('open')">
   <div class="modal wide" style="max-width:640px;" onclick="event.stopPropagation()">
     <div class="modal-title">🧾 Emitir Recibo de Pagamento</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="recibo-info">—</div>
@@ -983,7 +977,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Prévia do recibo</div>
     <div id="recibo-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:12px;line-height:1.8;font-family:'DM Sans',sans-serif;white-space:pre-wrap;max-height:320px;overflow-y:auto;"></div>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('recibo-overlay')">Fechar</button>
+      <button class="btn" onclick="document.getElementById('recibo-overlay').classList.remove('open')">Fechar</button>
       <button class="btn" onclick="copyRecibo()" id="rb-copy">📋 Copiar texto</button>
       <button class="btn btn-primary" onclick="printRecibo()">🖨 Imprimir / PDF</button>
     </div>
@@ -991,7 +985,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </div>
 
 <!-- ADD/EDIT IMÓVEL MODAL -->
-<div class="overlay" id="imovel-modal-overlay" onclick="if(event.target===this)closeOverlay('imovel-modal-overlay')">
+<div class="overlay" id="imovel-modal-overlay" onclick="if(event.target===this)document.getElementById('imovel-modal-overlay').classList.remove('open')">
   <div class="modal wide" onclick="event.stopPropagation()" style="max-width:600px;">
     <div class="modal-title" id="imovel-modal-title">Novo Imóvel</div>
     <div class="mrow">
@@ -1059,14 +1053,14 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">Esta ação não pode ser desfeita.</span>
     </div>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('imovel-modal-overlay')">Cancelar</button>
+      <button class="btn" onclick="document.getElementById('imovel-modal-overlay').classList.remove('open')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveImovel()">Salvar</button>
     </div>
   </div>
 </div>
 
 <!-- ADD DESPESA IMÓVEL MODAL -->
-<div class="overlay" id="desp-modal-overlay" onclick="if(event.target===this)closeOverlay('desp-modal-overlay')">
+<div class="overlay" id="desp-modal-overlay" onclick="if(event.target===this)document.getElementById('desp-modal-overlay').classList.remove('open')">
   <div class="modal wide" onclick="event.stopPropagation()" style="max-width:580px;">
     <div class="modal-title" id="desp-modal-title">Nova Despesa</div>
     <div class="mrow">
@@ -1114,7 +1108,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     </div>
     <div class="mfield"><label>Observação</label><input type="text" id="dm-obs" placeholder="Opcional"></div>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('desp-modal-overlay')">Cancelar</button>
+      <button class="btn" onclick="document.getElementById('desp-modal-overlay').classList.remove('open')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveDespesa()">Salvar despesa</button>
     </div>
   </div>
@@ -1138,7 +1132,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 </div>
 
 <!-- ADD/EDIT CONDOMÍNIO MODAL -->
-<div class="overlay" id="condo-modal-overlay" onclick="if(event.target===this)closeOverlay('condo-modal-overlay')">
+<div class="overlay" id="condo-modal-overlay" onclick="if(event.target===this)document.getElementById('condo-modal-overlay').classList.remove('open')">
   <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-title" id="condo-modal-title">Novo Condomínio</div>
     <div class="mrow">
@@ -1197,14 +1191,14 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <span style="font-size:11px;color:var(--text-muted);margin-left:10px;">Esta ação não pode ser desfeita.</span>
     </div>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('condo-modal-overlay')">Cancelar</button>
+      <button class="btn" onclick="document.getElementById('condo-modal-overlay').classList.remove('open')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveCondoModal()">Salvar</button>
     </div>
   </div>
 </div>
 
 <!-- PRINT REPORT MODAL -->
-<div class="overlay" id="print-report-overlay" onclick="if(event.target===this)closeOverlay('print-report-overlay')">
+<div class="overlay" id="print-report-overlay" onclick="if(event.target===this)document.getElementById('print-report-overlay').classList.remove('open')">
   <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-title">🖨 Relatório de Despesas do Condomínio</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="pr-condo-name">—</div>
@@ -1225,7 +1219,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       <div id="pr-preview" style="font-size:13px;color:var(--text-muted);">—</div>
     </div>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('print-report-overlay')">Fechar</button>
+      <button class="btn" onclick="document.getElementById('print-report-overlay').classList.remove('open')">Fechar</button>
       <button class="btn btn-primary" onclick="printCondoReport()">🖨 Gerar e Imprimir</button>
     </div>
   </div>
@@ -1261,7 +1255,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
       </div>
     </details>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('wpp-overlay')">Fechar</button>
+      <button class="btn" onclick="document.getElementById('wpp-overlay').classList.remove('open')">Fechar</button>
       <button class="btn" onclick="copyWpp()" id="wpp-copy">📋 Copiar</button>
       <a class="btn-wpp" id="wpp-link" href="#" target="_blank">WhatsApp ↗</a>
     </div>
@@ -1755,7 +1749,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     </div>
     <div class="mfield"><label>Observações</label><textarea id="rm-obs" rows="2"></textarea></div>
     <div class="mfooter">
-      <button class="btn" onclick="closeOverlay('reg-modal-overlay')">Cancelar</button>
+      <button class="btn" onclick="document.getElementById('reg-modal-overlay').classList.remove('open')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveRegModal()">Confirmar</button>
     </div>
   </div>
@@ -1916,7 +1910,7 @@ function openAddImovel(){
   document.getElementById('im-autonomo').checked = true;
   document.getElementById('im-delete-row').style.display = 'none';
   onImovelGestaoChange();
-  openOverlay('imovel-modal-overlay');
+  document.getElementById('imovel-modal-overlay').classList.add('open');
 }
 
 function openEditImovel(id){
@@ -1945,7 +1939,7 @@ function openEditImovel(id){
       setTimeout(()=>{ document.getElementById('im-condo-unit').value = im.condoUnit||''; },0);
     },0);
   }
-  openOverlay('imovel-modal-overlay');
+  document.getElementById('imovel-modal-overlay').classList.add('open');
 }
 
 function onImovelGestaoChange(){
@@ -2002,28 +1996,15 @@ function saveImovel(){
       despesas: []
     });
   }
-  closeOverlay('imovel-modal-overlay');
+  document.getElementById('imovel-modal-overlay').classList.remove('open');
   renderImoveis();
-
-  // Fase 2c: Registrar mudança de imóvel com SYNC_ENGINE
-  if(typeof SYNC_ENGINE !== 'undefined'){
-    const imovelIdx = imoveis.findIndex(x => x.id === (editingImovelId || imoveis[imoveis.length-1]?.id));
-    if(imovelIdx >= 0){
-      SYNC_ENGINE.onChange(
-        `imoveis.${imovelIdx}.nome`,
-        '',
-        imoveis[imovelIdx].nome
-      );
-    }
-  }
-
   saveToStorage();
 }
 
 function deleteImovel(){
   if(!confirm('Excluir este imóvel e todas as suas despesas?')) return;
   imoveis = imoveis.filter(x=>x.id!==editingImovelId);
-  closeOverlay('imovel-modal-overlay');
+  document.getElementById('imovel-modal-overlay').classList.remove('open');
   renderImoveis();
   saveToStorage();
 }
@@ -2045,7 +2026,7 @@ function openAddDespesa(imovelId){
   document.getElementById('dm-fim').value = '';
   document.getElementById('dm-obs').value = '';
   onDespRecorrChange();
-  openOverlay('desp-modal-overlay');
+  document.getElementById('desp-modal-overlay').classList.add('open');
 }
 
 function openEditDespesa(imovelId, despId){
@@ -2066,7 +2047,7 @@ function openEditDespesa(imovelId, despId){
   document.getElementById('dm-obs').value      = d.obs||'';
   onDespRecorrChange();
   onDespValorChange();
-  openOverlay('desp-modal-overlay');
+  document.getElementById('desp-modal-overlay').classList.add('open');
 }
 
 function onDespRecorrChange(){
@@ -2100,21 +2081,15 @@ function saveDespesa(){
 
   if(editingDespId){
     const d = im.despesas.find(x=>x.id===editingDespId);
-    const oldDesc = d.desc;
-    const oldValor = d.valor;
     d.desc=desc; d.cat=document.getElementById('dm-cat').value;
     d.valor=valor; d.resp=document.getElementById('dm-resp').value;
     d.recorr=recorr; d.parcelas=parcelas; d.valorParcela=valorParcela;
     d.inicio=document.getElementById('dm-inicio').value;
     d.fim=document.getElementById('dm-fim').value||null;
     d.obs=document.getElementById('dm-obs').value.trim();
-    // Registrar mudança de despesa
-    SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${d.id}.desc`, oldDesc, desc);
-    SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${d.id}.valor`, oldValor, valor);
   } else {
-    const despId = im.despesas.length ? Math.max(...im.despesas.map(x=>x.id))+1 : 1;
     im.despesas.push({
-      id: despId,
+      id: im.despesas.length ? Math.max(...im.despesas.map(x=>x.id))+1 : 1,
       desc, cat: document.getElementById('dm-cat').value,
       valor, resp: document.getElementById('dm-resp').value,
       recorr, parcelas, valorParcela,
@@ -2123,10 +2098,8 @@ function saveDespesa(){
       obs: document.getElementById('dm-obs').value.trim(),
       ativo: true
     });
-    // Registrar nova despesa
-    SYNC_ENGINE.onChange(`imoveis.${im.id}.despesas.${despId}.desc`, null, desc);
   }
-  closeOverlay('desp-modal-overlay');
+  document.getElementById('desp-modal-overlay').classList.remove('open');
   hydrateEntries();
   renderImoveis();
   renderDashboard();
@@ -2167,10 +2140,10 @@ function openIdet(id){
     if(el) el.classList.toggle('active', t==='despesas');
   });
   renderIdetBody();
-  openOverlay('idet-overlay');
+  document.getElementById('idet-overlay').classList.add('open');
 }
 
-function closeIdet(){ closeOverlay('idet-overlay'); idetImovelId=null; }
+function closeIdet(){ document.getElementById('idet-overlay').classList.remove('open'); idetImovelId=null; }
 
 function showIdetTab(tab){
   idetTab = tab;
@@ -2270,7 +2243,21 @@ function renderIdetBody(){
 // Each condo has its own condoHistory stored in condoHistories[id]
 // The legacy `condoHistory` and `CONDO_UNITS` remain as the "active" condo's data
 
-let condominios = [];  // Dados carregados via localStorage/Drive via applyPayload()
+let condominios = [
+  { id: 'c1', nome: 'Res. Santa Nonna I', apelido: 'SN1', endereco: 'Campo Grande/MS',
+    ucAgua: 'SANESUL UC: 20576293', ucEnergia: 'ENERGISA UC: 10/1207555-2',
+    units: ['Apto 1','Apto 2','Apto 3','Apto 4','Apto 5','Apto 6','Apto 7','Apto 8'],
+    limpezaPadrao: 330,
+    taxas: {
+      agua:    { aplicar: true, pct: 10 },
+      energia: { aplicar: true, pct: 10 },
+      limpeza: { aplicar: true, pct: 10 },
+      lixo:    { aplicar: true, pct: 10 },
+      iptu:    { aplicar: true, pct: 10 },
+      outras:  { aplicar: true, pct: 10 }
+    }
+  }
+];
 let condoHistories = {}; // id -> array of condo month entries (populated from condoHistory below)
 let activeCondoId = 'c1';
 
@@ -2325,7 +2312,7 @@ function openAddCondo(){
   document.getElementById('cm-limpeza').value = '330';
   document.getElementById('cm-venc-prox').checked = true;
   document.getElementById('cm-delete-row').style.display = 'none';
-  openOverlay('condo-modal-overlay');
+  document.getElementById('condo-modal-overlay').classList.add('open');
 }
 function openEditCondo(){
   const c = getActiveCondo();
@@ -2337,7 +2324,7 @@ function openEditCondo(){
   document.getElementById('cm-uc-agua').value = c.ucAgua||'';
   document.getElementById('cm-uc-energia').value = c.ucEnergia||'';
   document.getElementById('cm-units').value = c.units.join(', ');
-  document.getElementById('cm-limpeza').value = c.limpezaPadrao||LIMPEZA_PADRAO;
+  document.getElementById('cm-limpeza').value = c.limpezaPadrao||330;
   document.getElementById('cm-venc-prox').checked = c.vencMesSeguinte !== false;
   const tx = getCondoTaxas(c.id);
   ['agua','energia','limpeza','lixo','iptu','outras'].forEach(item=>{
@@ -2345,7 +2332,7 @@ function openEditCondo(){
     document.getElementById(`cm-tx-${item}-pct`).value  = tx[item].pct;
   });
   document.getElementById('cm-delete-row').style.display = condominios.length>1?'block':'none';
-  openOverlay('condo-modal-overlay');
+  document.getElementById('condo-modal-overlay').classList.add('open');
 }
 function saveCondoModal(){
   const nome = document.getElementById('cm-nome').value.trim();
@@ -2365,23 +2352,18 @@ function saveCondoModal(){
 
   if(editingCondoId){
     const c = condominios.find(x=>x.id===editingCondoId);
-    const oldNome = c.nome;
-    const oldUnits = c.units;
     c.nome = nome;
     c.apelido = document.getElementById('cm-apelido').value.trim()||nome.substring(0,8);
     c.endereco = document.getElementById('cm-end').value.trim();
     c.ucAgua = document.getElementById('cm-uc-agua').value.trim();
     c.ucEnergia = document.getElementById('cm-uc-energia').value.trim();
     c.units = units;
-    c.limpezaPadrao = parseFloat(document.getElementById('cm-limpeza').value)||LIMPEZA_PADRAO;
+    c.limpezaPadrao = parseFloat(document.getElementById('cm-limpeza').value)||330;
     c.vencMesSeguinte = document.getElementById('cm-venc-prox').checked;
     c.taxas = taxasFromModal;
     if(c.id===activeCondoId){
       CONDO_UNITS.length=0; units.forEach(u=>CONDO_UNITS.push(u));
     }
-    // Registrar mudanças do condomínio
-    if(oldNome !== c.nome) SYNC_ENGINE.onChange(`condominios.${c.id}.nome`, oldNome, c.nome);
-    if(JSON.stringify(oldUnits) !== JSON.stringify(c.units)) SYNC_ENGINE.onChange(`condominios.${c.id}.units`, oldUnits, c.units);
   } else {
     const newId = 'c' + Date.now();
     condominios.push({
@@ -2390,20 +2372,18 @@ function saveCondoModal(){
       endereco: document.getElementById('cm-end').value.trim(),
       ucAgua: document.getElementById('cm-uc-agua').value.trim(),
       ucEnergia: document.getElementById('cm-uc-energia').value.trim(),
-      units, limpezaPadrao: parseFloat(document.getElementById('cm-limpeza').value)||LIMPEZA_PADRAO,
+      units, limpezaPadrao: parseFloat(document.getElementById('cm-limpeza').value)||330,
       vencMesSeguinte: document.getElementById('cm-venc-prox').checked,
       taxas: taxasFromModal
     });
     condoHistories[newId] = [];
-    // Registrar novo condomínio
-    SYNC_ENGINE.onChange(`condominios.${newId}.nome`, null, nome);
     // Switch to new condo
-    closeOverlay('condo-modal-overlay');
+    document.getElementById('condo-modal-overlay').classList.remove('open');
     switchCondo(newId);
     saveToStorage();
     return;
   }
-  closeOverlay('condo-modal-overlay');
+  document.getElementById('condo-modal-overlay').classList.remove('open');
   renderCondoSwitcher();
   renderCondoInfoBar();
   saveToStorage();
@@ -2413,7 +2393,7 @@ function deleteCondo(){
   if(!confirm('Excluir este condomínio e todo o seu histórico?\n\nEsta ação não pode ser desfeita.')) return;
   condoHistories[editingCondoId] = undefined;
   condominios = condominios.filter(c=>c.id!==editingCondoId);
-  closeOverlay('condo-modal-overlay');
+  document.getElementById('condo-modal-overlay').classList.remove('open');
   switchCondo(condominios[0].id);
   saveToStorage();
 }
@@ -2433,7 +2413,7 @@ function openPrintReport(){
   document.getElementById('pr-to').value = toRef;
   updatePrintPreview();
   ['pr-from','pr-to','pr-type'].forEach(id=>document.getElementById(id).addEventListener('change',updatePrintPreview));
-  openOverlay('print-report-overlay');
+  document.getElementById('print-report-overlay').classList.add('open');
 }
 
 function updatePrintPreview(){
@@ -2628,7 +2608,7 @@ function printCondoReport(){
     ${detailPerMonth?`<div style="font-family:Georgia,serif;font-size:14px;font-weight:bold;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #E2DDD6;">Detalhes por Mês</div>${detailPerMonth}`:''}
     <div class="footer">
       <div>Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}</div>
-      <div>Lucas Prado Medeiros Perin · OWNER_CPF</div>
+      <div>Lucas Prado Medeiros Perin · CPF 702.738.471-04</div>
     </div>
     <div style="margin-top:32px;text-align:right;"><div class="signature-line">Assinatura do responsável</div></div>
   </div>
@@ -2638,14 +2618,14 @@ function printCondoReport(){
   const w = window.open('','_blank','width=960,height=800');
   w.document.write(html);
   w.document.close();
-  closeOverlay('print-report-overlay');
+  document.getElementById('print-report-overlay').classList.remove('open');
 }
 
 // ============================================================
 // CONSTANTS
 // ============================================================
 const TODAY      = new Date();
-let CONDO_UNITS= [];  // Populado por applyPayload() via condominios[x].units
+let CONDO_UNITS= ['Apto 1','Apto 2','Apto 3','Apto 4','Apto 5','Apto 6','Apto 7','Apto 8'];
 const TAX        = 0.10; // fallback legado
 const MULTA_RATE = 0.10;      // 10% flat
 const JUROS_RATE = 0.01/30;   // 1% ao mês = ~0.0333% ao dia
@@ -2670,60 +2650,8 @@ function applyTaxa(valor, cfg){
   return cfg.aplicar ? R2(valor * (cfg.pct / 100)) : 0;
 }
 const MN         = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const OWNER_NAME = 'Lucas Prado Medeiros Perin';
-const OWNER_CPF  = 'CPF 702.738.471-04';
-const PIX_NAME   = OWNER_NAME;  // Mesmo do locador
-const PIX_KEY    = OWNER_CPF;   // Mesmo do locador
-
-// Status de pagamento — labels para UI
-const STATUS_LABELS = {
-  pago: 'Em dia',
-  pendente: 'Pendente',
-  inadimplente: 'Inadimplente',
-  parcial: 'Parcial',
-  futuro: 'A vencer',
-  vago: 'Vago'
-};
-
-// Constantes financeiras
-const LIMPEZA_PADRAO = 330;  // Valor padrão de limpeza em condomínio
-const MULTA_RATE = 0.10;     // 10% de multa por atraso
-const COMISSAO_RATE = 0.10;  // 10% taxa administrativa padrão
-
-// ============================================================
-// UTILITY FUNCTIONS
-// ============================================================
-
-// Renderizar grid de dots coloridos do histórico de pagamento
-function renderHistDots(t){
-  if(!t || !t.history) return '';
-  return t.history.slice(-6).map(h=>{
-    const m = h.ref.split('-')[1];
-    let cls = 'futuro';
-    if(h.status==='pago') cls='pago';
-    else if(h.status==='parcial') cls='parcial';
-    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
-    const tip = `${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
-    return `<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')">${m}</div>`;
-  }).join('');
-}
-
-// Abrir nova janela de impressão com HTML e imprimir automaticamente
-function openPrintWindow(html, title='Relatório'){
-  openPrintWindow(html);
-}
-
-// Abrir overlay (modal/dialog)
-function openOverlay(id){
-  const el = document.getElementById(id);
-  if(el) el.classList.add('open');
-}
-
-// Fechar overlay (modal/dialog)
-function closeOverlay(id){
-  const el = document.getElementById(id);
-  if(el) el.classList.remove('open');
-}
+const PIX_NAME   = 'Lucas Prado Medeiros Perin';
+const PIX_KEY    = 'CPF 702.738.471-04';
 
 // ============================================================
 // DATA MODEL
@@ -2737,9 +2665,9 @@ function closeOverlay(id){
 //   status: 'pago'|'parcial'|'inadimplente'|'pendente'|'futuro'
 // }
 // ============================================================
-let condoHistory = [];  // Dados carregados via localStorage/Drive via applyPayload()
+let condoHistory = [{"ref": "2022-06", "agua": 284.31, "aguaData": "", "energia": 42.58, "energiaData": "", "limpeza": 396.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2022-07", "agua": 268.13, "aguaData": "", "energia": 42.2, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2022-08", "agua": 335.15, "aguaData": "", "energia": 43.89, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2022-09", "agua": 471.75, "aguaData": "", "energia": 43.59, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2022-10", "agua": 399.19, "aguaData": "", "energia": 42.69, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2022-11", "agua": 633.85, "aguaData": "", "energia": 43.57, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2022-12", "agua": 803.88, "aguaData": "", "energia": 41.87, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-01", "agua": 294.14, "aguaData": "", "energia": 43.89, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-02", "agua": 564.83, "aguaData": "", "energia": 44.08, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-03", "agua": 399.09, "aguaData": "", "energia": 43.62, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-04", "agua": 470.59, "aguaData": "", "energia": 45.0, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-05", "agua": 302.45, "aguaData": "", "energia": 45.0, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-06", "agua": 297.04, "aguaData": "", "energia": 46.87, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-07", "agua": 247.01, "aguaData": "", "energia": 72.29, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-08", "agua": 433.48, "aguaData": "", "energia": 102.94, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-09", "agua": 358.32, "aguaData": "", "energia": 98.26, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-10", "agua": 358.27, "aguaData": "", "energia": 113.47, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-11", "agua": 517.28, "aguaData": "", "energia": 89.49, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2023-12", "agua": 404.9, "aguaData": "", "energia": 102.57, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-01", "agua": 136.15, "aguaData": "", "energia": 86.07, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-02", "agua": 350.25, "aguaData": "", "energia": 74.1, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-03", "agua": 380.23, "aguaData": "", "energia": 73.61, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-04", "agua": 499.87, "aguaData": "", "energia": 78.11, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-05", "agua": 269.29, "aguaData": "", "energia": 88.28, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-06", "agua": 274.01, "aguaData": "", "energia": 80.61, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-07", "agua": 302.01, "aguaData": "", "energia": 86.16, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-08", "agua": 286.98, "aguaData": "", "energia": 84.59, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-09", "agua": 292.33, "aguaData": "", "energia": 79.82, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-10", "agua": 351.6, "aguaData": "", "energia": 70.35, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-11", "agua": 509.37, "aguaData": "", "energia": 70.45, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2024-12", "agua": 294.12, "aguaData": "", "energia": 65.01, "energiaData": "", "limpeza": 330.0, "lixo": 0, "iptu": 0, "outras": 0.0, "obs": ""}, {"ref": "2025-01", "agua": 141.04, "aguaData": "", "energia": 53.06, "energiaData": "", "limpeza": 330.0, "lixo": 24.0271, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-02", "agua": 397.67, "aguaData": "", "energia": 63.62, "energiaData": "", "limpeza": 330.0, "lixo": 24.0271, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-03", "agua": 245.82, "aguaData": "", "energia": 62.76, "energiaData": "", "limpeza": 330.0, "lixo": 24.0271, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-04", "agua": 243.99, "aguaData": "", "energia": 56.92, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-05", "agua": 124.44, "aguaData": "", "energia": 78.8, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-06", "agua": 237.62, "aguaData": "", "energia": 73.99, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-07", "agua": 269.97, "aguaData": "", "energia": 97.06, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-08", "agua": 170.89, "aguaData": "", "energia": 75.46, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-09", "agua": 249.6, "aguaData": "", "energia": 91.16, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-10", "agua": 288.68, "aguaData": "", "energia": 79.59, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 36.1145, "outras": 0.0, "obs": ""}, {"ref": "2025-11", "agua": 222.13, "aguaData": "", "energia": 77.64, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 0.0, "outras": 0.0, "obs": ""}, {"ref": "2025-12", "agua": 290.91, "aguaData": "", "energia": 77.65, "energiaData": "", "limpeza": 330.0, "lixo": 0.0, "iptu": 0.0, "outras": 0.0, "obs": ""}, {"ref": "2026-01", "agua": 124.16, "aguaData": "", "energia": 66.4, "energiaData": "", "limpeza": 330.0, "lixo": 25.0, "iptu": 38.0, "outras": 0.0, "obs": ""}, {"ref": "2026-02", "agua": 225.25, "aguaData": "", "energia": 62.0, "energiaData": "", "limpeza": 330.0, "lixo": 25.0, "iptu": 38.0, "outras": 0.0, "obs": ""}, {"ref": "2026-03", "agua": 248.8, "aguaData": "", "energia": 70.08, "energiaData": "", "limpeza": 330.0, "lixo": 25.0, "iptu": 38.0, "outras": 0.0, "obs": ""}];
 
-let tenants = [];  // Dados carregados via localStorage/Drive via applyPayload()
+let tenants = [{"unit": "Apto 1", "vencDia": 5, "vago": false, "condoId": "c1", "name": "Rafael Moura Dornelles", "start": "2022-01-19", "end": "2025-01-18", "reajuste": "2023-01-05", "garantia": "Seguro Fiança", "tel": "67 9864-6110", "history": [{"ref": "2022-07", "venc": "2022-08-05", "aluguel": 650.0, "condo": 90.3612, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 775.3613, "valorPago": 775.3613, "dataPagamento": "2022-08-05", "status": "pago", "obs": ""}, {"ref": "2022-08", "venc": "2022-09-05", "aluguel": 650.0, "condo": 88.0454, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 773.0454, "valorPago": 773.0454, "dataPagamento": "2022-09-12", "status": "pago", "obs": ""}, {"ref": "2022-09", "venc": "2022-10-05", "aluguel": 650.0, "condo": 97.493, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 782.493, "valorPago": 782.493, "dataPagamento": "2022-10-26", "status": "pago", "obs": ""}, {"ref": "2022-10", "venc": "2022-11-05", "aluguel": 650.0, "condo": 116.2343, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 801.2342, "valorPago": 801.2342, "dataPagamento": "2022-11-01", "status": "pago", "obs": ""}, {"ref": "2022-11", "venc": "2022-12-05", "aluguel": 650.0, "condo": 106.1335, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 756.1335, "valorPago": 756.1335, "dataPagamento": "2022-12-21", "status": "pago", "obs": ""}, {"ref": "2022-12", "venc": "2023-01-05", "aluguel": 650.0, "condo": 138.5203, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 788.5203, "valorPago": 788.5203, "dataPagamento": "2023-01-27", "status": "pago", "obs": ""}, {"ref": "2023-01", "venc": "2023-02-05", "aluguel": 685.48, "condo": 161.6656, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 880.0156, "valorPago": 880.0156, "dataPagamento": "2023-03-01", "status": "pago", "obs": ""}, {"ref": "2023-02", "venc": "2023-03-05", "aluguel": 685.48, "condo": 91.8541, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 810.2041, "valorPago": 810.2041, "dataPagamento": "2023-03-11", "status": "pago", "obs": ""}, {"ref": "2023-03", "venc": "2023-04-05", "aluguel": 685.48, "condo": 129.1001, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 847.4501, "valorPago": 847.4501, "dataPagamento": "2023-04-30", "status": "pago", "obs": ""}, {"ref": "2023-04", "venc": "2023-05-05", "aluguel": 685.48, "condo": 106.2476, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 824.5976, "valorPago": 824.5976, "dataPagamento": "2023-05-17", "status": "pago", "obs": ""}, {"ref": "2023-05", "venc": "2023-06-05", "aluguel": 685.48, "condo": 116.2686, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 834.6186, "valorPago": 834.6186, "dataPagamento": "2023-06-25", "status": "pago", "obs": ""}, {"ref": "2023-06", "venc": "2023-07-05", "aluguel": 685.48, "condo": 93.1494, "iptu": 32.87, "lixo": 0.0, "multa": 83.01, "juros": 5.44, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 811.4994, "valorPago": 811.4994, "dataPagamento": "2023-08-10", "status": "pago", "obs": ""}, {"ref": "2023-07", "venc": "2023-08-05", "aluguel": 685.48, "condo": 92.6626, "iptu": 32.87, "lixo": 0.0, "multa": 82.9545, "juros": 6.789, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 811.0126, "valorPago": 811.0126, "dataPagamento": "2023-08-30", "status": "pago", "obs": ""}, {"ref": "2023-08", "venc": "2023-09-05", "aluguel": 685.48, "condo": 89.2788, "iptu": 32.87, "lixo": 0.0, "multa": 82.5485, "juros": 6.4905, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 807.6287, "valorPago": 807.6287, "dataPagamento": "2023-09-29", "status": "pago", "obs": ""}, {"ref": "2023-09", "venc": "2023-10-05", "aluguel": 685.48, "condo": 119.1328, "iptu": 32.87, "lixo": 0.0, "multa": 86.1309, "juros": 7.2975, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 837.4828, "valorPago": 837.4828, "dataPagamento": "2023-10-31", "status": "pago", "obs": ""}, {"ref": "2023-10", "venc": "2023-11-05", "aluguel": 685.48, "condo": 108.1548, "iptu": 32.87, "lixo": 0.0, "multa": 84.8136, "juros": 6.0967, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 51.64}], "valorCobrado": 826.5047, "valorPago": 826.5047, "dataPagamento": "2023-11-30", "status": "pago", "obs": ""}, {"ref": "2023-11", "venc": "2023-12-05", "aluguel": 685.48, "condo": 110.2392, "iptu": 0.0, "lixo": 0.0, "multa": 81.7767, "juros": 5.8717, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 795.7192, "valorPago": 795.7192, "dataPagamento": "2023-12-27", "status": "pago", "obs": ""}, {"ref": "2023-12", "venc": "2024-01-05", "aluguel": 685.48, "condo": 128.8059, "iptu": 0.0, "lixo": 0.0, "multa": 84.0047, "juros": 14.9711, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 814.2859, "valorPago": 814.2859, "dataPagamento": "2024-02-29", "status": "pago", "obs": ""}, {"ref": "2024-01", "venc": "2024-02-05", "aluguel": 685.48, "condo": 115.1521, "iptu": 35.0, "lixo": 0.0, "multa": 85.8663, "juros": 14.5223, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 835.6321, "valorPago": 835.6321, "dataPagamento": "2024-03-28", "status": "pago", "obs": ""}, {"ref": "2024-02", "venc": "2024-03-05", "aluguel": 685.48, "condo": 75.9303, "iptu": 35.0, "lixo": 0.0, "multa": 81.1596, "juros": 13.8295, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 796.4103, "valorPago": 796.4103, "dataPagamento": "2024-04-26", "status": "pago", "obs": ""}, {"ref": "2024-03", "venc": "2024-04-05", "aluguel": 685.48, "condo": 103.7231, "iptu": 35.0, "lixo": 0.0, "multa": 84.4948, "juros": 16.793, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 824.2031, "valorPago": 824.2031, "dataPagamento": "2024-06-05", "status": "pago", "obs": ""}, {"ref": "2024-04", "venc": "2024-05-05", "aluguel": 685.48, "condo": 107.778, "iptu": 35.0, "lixo": 0.0, "multa": 84.9814, "juros": 20.4659, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 828.258, "valorPago": 828.258, "dataPagamento": "2024-07-18", "status": "pago", "obs": ""}, {"ref": "2024-05", "venc": "2024-06-05", "aluguel": 685.48, "condo": 124.8473, "iptu": 35.0, "lixo": 0.0, "multa": 84.5327, "juros": 16.343, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 845.3273, "valorPago": 845.3273, "dataPagamento": "2024-08-02", "status": "pago", "obs": ""}, {"ref": "2024-06", "venc": "2024-07-05", "aluguel": 685.48, "condo": 94.5409, "iptu": 35.0, "lixo": 0.0, "multa": 81.5021, "juros": 15.2137, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 281.2}], "valorCobrado": 815.0209, "valorPago": 815.0209, "dataPagamento": "2024-08-30", "status": "pago", "obs": ""}, {"ref": "2024-07", "venc": "2024-08-05", "aluguel": 685.48, "condo": 94.1352, "iptu": 35.0, "lixo": 0.0, "multa": 81.4615, "juros": 31.4985, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 292.79}], "valorCobrado": 814.6152, "valorPago": 814.6152, "dataPagamento": "2024-11-29", "status": "pago", "obs": ""}, {"ref": "2024-08", "venc": "2024-09-05", "aluguel": 685.48, "condo": 98.7484, "iptu": 35.0, "lixo": 0.0, "multa": 83.8978, "juros": 7.1326, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 819.2284, "valorPago": 819.2284, "dataPagamento": "2024-10-01", "status": "pago", "obs": ""}, {"ref": "2024-09", "venc": "2024-10-05", "aluguel": 685.48, "condo": 96.4659, "iptu": 35.0, "lixo": 0.0, "multa": 83.6239, "juros": 7.112, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 816.9459, "valorPago": 816.9459, "dataPagamento": "2024-10-31", "status": "pago", "obs": ""}, {"ref": "2024-10", "venc": "2024-11-05", "aluguel": 685.48, "condo": 96.5456, "iptu": 35.0, "lixo": 0.0, "multa": 83.6335, "juros": 23.7256, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 304.28}], "valorCobrado": 817.0256, "valorPago": 817.0256, "dataPagamento": "2025-01-31", "status": "pago", "obs": ""}, {"ref": "2024-11", "venc": "2024-12-05", "aluguel": 685.48, "condo": 103.3931, "iptu": 0.0, "lixo": 0.0, "multa": 80.9552, "juros": 5.8192, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 788.8731, "valorPago": 788.8731, "dataPagamento": "2024-12-27", "status": "pago", "obs": ""}, {"ref": "2024-12", "venc": "2025-01-05", "aluguel": 685.48, "condo": 125.1003, "iptu": 0.0, "lixo": 0.0, "multa": 83.56, "juros": 23.0077, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 810.5802, "valorPago": 810.5802, "dataPagamento": "2025-03-31", "status": "pago", "obs": ""}, {"ref": "2025-01", "venc": "2025-02-05", "aluguel": 685.48, "condo": 94.7554, "iptu": 36.1145, "lixo": 24.0271, "multa": 85.9328, "juros": 25.5227, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 840.377, "valorPago": 840.377, "dataPagamento": "2025-05-07", "status": "pago", "obs": ""}, {"ref": "2025-02", "venc": "2025-03-05", "aluguel": 685.48, "condo": 72.8155, "iptu": 36.1145, "lixo": 24.0271, "multa": 83.3, "juros": 25.3956, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 818.4371, "valorPago": 818.4371, "dataPagamento": "2025-06-06", "status": "pago", "obs": ""}, {"ref": "2025-03", "venc": "2025-04-05", "aluguel": 685.48, "condo": 109.5541, "iptu": 36.1145, "lixo": 24.0271, "multa": 87.7087, "juros": 17.7098, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 855.1757, "valorPago": 855.1757, "dataPagamento": "2025-06-06", "status": "pago", "obs": ""}, {"ref": "2025-04", "venc": "2025-05-05", "aluguel": 685.48, "condo": 88.5565, "iptu": 36.1145, "lixo": 0.0, "multa": 82.7862, "juros": 8.6708, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 810.151, "valorPago": 810.151, "dataPagamento": "2025-06-06", "status": "pago", "obs": ""}, {"ref": "2025-05", "venc": "2025-06-05", "aluguel": 685.48, "condo": 87.2016, "iptu": 36.1145, "lixo": 0.0, "multa": 82.6236, "juros": 8.6559, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 191.2}], "valorCobrado": 808.7961, "valorPago": 808.7961, "dataPagamento": "2025-07-07", "status": "pago", "obs": ""}, {"ref": "2025-06", "venc": "2025-07-05", "aluguel": 685.48, "condo": 73.3205, "iptu": 36.1145, "lixo": 0.0, "multa": 80.9579, "juros": 0.5541, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 794.915, "valorPago": 794.915, "dataPagamento": "2025-07-07", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-08-05", "aluguel": 685.48, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 82.746, "juros": 0.569, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 545.57}], "valorCobrado": 809.8159, "valorPago": 809.8159, "dataPagamento": "2025-08-07", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-09-05", "aluguel": 685.48, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 300.39}], "valorCobrado": 817.4361, "valorPago": 817.4361, "dataPagamento": "2025-09-05", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-10-05", "aluguel": 685.48, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 800.8426, "valorPago": 800.8426, "dataPagamento": "2025-10-05", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-11-05", "aluguel": 707.07, "condo": 92.2295, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 835.414, "valorPago": 835.414, "dataPagamento": "2025-11-05", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-12-05", "aluguel": 707.07, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 803.0821, "valorPago": 803.0821, "dataPagamento": "2025-12-12", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2026-01-05", "aluguel": 707.07, "condo": 86.5934, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 793.6634, "valorPago": 793.6634, "dataPagamento": "2025-01-05", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-02-05", "aluguel": 707.07, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 866.12, "valorPago": 866.12, "dataPagamento": "2026-02-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-03-05", "aluguel": 707.07, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 850.3095, "valorPago": 850.3095, "dataPagamento": "2023-03-06", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-04-05", "aluguel": 707.07, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 863.6044, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-04", "venc": "2026-05-05", "aluguel": 707.07, "condo": 97.8835, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 867.9535, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-06-05", "aluguel": 707.07, "condo": 0.0, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 707.07, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 707.07, "id": 1}, {"unit": "Apto 2", "vencDia": 5, "vago": false, "condoId": "c1", "name": "Evelin Marcelly Caoni Soligo", "start": "2021-02-18", "end": "2024-02-17", "reajuste": "2023-02-05", "garantia": "Fiadores", "tel": "67 9841-3611", "history": [{"ref": "2022-07", "venc": "2022-08-05", "aluguel": 584.55, "condo": 90.3612, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 709.9112, "valorPago": 709.9112, "dataPagamento": "2022-08-04", "status": "pago", "obs": ""}, {"ref": "2022-08", "venc": "2022-09-05", "aluguel": 584.55, "condo": 88.0454, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 707.5954, "valorPago": 707.5954, "dataPagamento": "2022-08-27", "status": "pago", "obs": ""}, {"ref": "2022-09", "venc": "2022-10-05", "aluguel": 584.55, "condo": 97.493, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 717.043, "valorPago": 717.043, "dataPagamento": "2022-09-30", "status": "pago", "obs": ""}, {"ref": "2022-10", "venc": "2022-11-05", "aluguel": 584.55, "condo": 116.2343, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 735.7843, "valorPago": 735.7843, "dataPagamento": "2022-11-01", "status": "pago", "obs": ""}, {"ref": "2022-11", "venc": "2022-12-05", "aluguel": 584.55, "condo": 106.1335, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 690.6835, "valorPago": 690.6835, "dataPagamento": "2022-12-05", "status": "pago", "obs": ""}, {"ref": "2022-12", "venc": "2023-01-05", "aluguel": 584.55, "condo": 138.5203, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 723.0702, "valorPago": 723.0702, "dataPagamento": "2023-01-03", "status": "pago", "obs": ""}, {"ref": "2023-01", "venc": "2023-02-05", "aluguel": 584.55, "condo": 161.6656, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 779.0856, "valorPago": 779.0856, "dataPagamento": "2023-01-30", "status": "pago", "obs": ""}, {"ref": "2023-02", "venc": "2023-03-05", "aluguel": 584.55, "condo": 91.8541, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 709.2741, "valorPago": 709.2741, "dataPagamento": "2023-03-05", "status": "pago", "obs": ""}, {"ref": "2023-03", "venc": "2023-04-05", "aluguel": 584.55, "condo": 129.1001, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 746.5201, "valorPago": 746.5201, "dataPagamento": "2023-03-29", "status": "pago", "obs": ""}, {"ref": "2023-04", "venc": "2023-05-05", "aluguel": 584.55, "condo": 106.2476, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 723.6676, "valorPago": 723.6676, "dataPagamento": "2023-05-03", "status": "pago", "obs": ""}, {"ref": "2023-05", "venc": "2023-06-05", "aluguel": 584.55, "condo": 116.2686, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 733.6886, "valorPago": 733.6886, "dataPagamento": "2023-06-05", "status": "pago", "obs": ""}, {"ref": "2023-06", "venc": "2023-07-05", "aluguel": 584.55, "condo": 93.1494, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 710.5694, "valorPago": 710.5694, "dataPagamento": "2023-07-05", "status": "pago", "obs": ""}, {"ref": "2023-07", "venc": "2023-08-05", "aluguel": 584.55, "condo": 92.6626, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 710.0826, "valorPago": 710.0826, "dataPagamento": "2023-08-01", "status": "pago", "obs": ""}, {"ref": "2023-08", "venc": "2023-09-05", "aluguel": 584.55, "condo": 89.2788, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 706.6988, "valorPago": 706.6988, "dataPagamento": "2023-09-04", "status": "pago", "obs": ""}, {"ref": "2023-09", "venc": "2023-10-05", "aluguel": 584.55, "condo": 119.1328, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 736.5527, "valorPago": 736.5527, "dataPagamento": "2023-10-05", "status": "pago", "obs": ""}, {"ref": "2023-10", "venc": "2023-11-05", "aluguel": 584.55, "condo": 108.1548, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 725.5747, "valorPago": 725.5747, "dataPagamento": "2023-11-02", "status": "pago", "obs": ""}, {"ref": "2023-11", "venc": "2023-12-05", "aluguel": 584.55, "condo": 110.2392, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 694.7893, "valorPago": 694.7893, "dataPagamento": "2023-12-04", "status": "pago", "obs": ""}, {"ref": "2023-12", "venc": "2024-01-05", "aluguel": 584.55, "condo": 128.8059, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 713.3559, "valorPago": 713.3559, "dataPagamento": "2024-01-03", "status": "pago", "obs": ""}, {"ref": "2024-01", "venc": "2024-02-05", "aluguel": 584.55, "condo": 115.1521, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 734.7021, "valorPago": 734.7021, "dataPagamento": "2024-02-04", "status": "pago", "obs": ""}, {"ref": "2024-02", "venc": "2024-03-05", "aluguel": 584.55, "condo": 75.9303, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 695.4802, "valorPago": 695.4802, "dataPagamento": "2024-03-03", "status": "pago", "obs": ""}, {"ref": "2024-03", "venc": "2024-04-05", "aluguel": 584.55, "condo": 103.7231, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 723.2731, "valorPago": 723.2731, "dataPagamento": "2024-04-04", "status": "pago", "obs": ""}, {"ref": "2024-04", "venc": "2024-05-05", "aluguel": 584.55, "condo": 107.778, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 727.328, "valorPago": 727.328, "dataPagamento": "2024-05-02", "status": "pago", "obs": ""}, {"ref": "2024-05", "venc": "2024-06-05", "aluguel": 584.55, "condo": 124.8473, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 744.3972, "valorPago": 744.3972, "dataPagamento": "2024-06-03", "status": "pago", "obs": ""}, {"ref": "2024-06", "venc": "2024-07-05", "aluguel": 584.55, "condo": 94.5409, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 714.0909, "valorPago": 714.0909, "dataPagamento": "2024-06-28", "status": "pago", "obs": ""}, {"ref": "2024-07", "venc": "2024-08-05", "aluguel": 584.55, "condo": 94.1352, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 713.6852, "valorPago": 713.6852, "dataPagamento": "2024-07-29", "status": "pago", "obs": ""}, {"ref": "2024-08", "venc": "2024-09-05", "aluguel": 584.55, "condo": 98.7484, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 718.2984, "valorPago": 718.2984, "dataPagamento": "2024-09-02", "status": "pago", "obs": ""}, {"ref": "2024-09", "venc": "2024-10-05", "aluguel": 584.55, "condo": 96.4659, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 716.0159, "valorPago": 716.0159, "dataPagamento": "2024-10-01", "status": "pago", "obs": ""}, {"ref": "2024-10", "venc": "2024-11-05", "aluguel": 584.55, "condo": 96.5456, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 716.0956, "valorPago": 716.0956, "dataPagamento": "2024-10-31", "status": "pago", "obs": ""}, {"ref": "2024-11", "venc": "2024-12-05", "aluguel": 584.55, "condo": 103.3931, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 687.9431, "valorPago": 687.9431, "dataPagamento": "2024-12-03", "status": "pago", "obs": ""}, {"ref": "2024-12", "venc": "2025-01-05", "aluguel": 584.55, "condo": 125.1003, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 709.6503, "valorPago": 709.6503, "dataPagamento": "2024-12-28", "status": "pago", "obs": ""}, {"ref": "2025-01", "venc": "2025-02-05", "aluguel": 584.55, "condo": 94.7554, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 739.447, "valorPago": 739.447, "dataPagamento": "2025-01-28", "status": "pago", "obs": ""}, {"ref": "2025-02", "venc": "2025-03-05", "aluguel": 584.55, "condo": 72.8155, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 717.5071, "valorPago": 717.5071, "dataPagamento": "2025-03-07", "status": "pago", "obs": ""}, {"ref": "2025-03", "venc": "2025-04-05", "aluguel": 628.52, "condo": 109.5541, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 798.2157, "valorPago": 798.2157, "dataPagamento": "2025-04-03", "status": "pago", "obs": ""}, {"ref": "2025-04", "venc": "2025-05-05", "aluguel": 628.52, "condo": 88.5565, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 753.191, "valorPago": 753.191, "dataPagamento": "2025-05-10", "status": "pago", "obs": ""}, {"ref": "2025-05", "venc": "2025-06-05", "aluguel": 628.52, "condo": 87.2016, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 751.8361, "valorPago": 751.8361, "dataPagamento": "2025-06-02", "status": "pago", "obs": ""}, {"ref": "2025-06", "venc": "2025-07-05", "aluguel": 628.52, "condo": 73.3205, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 737.955, "valorPago": 737.955, "dataPagamento": "2025-07-01", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-08-05", "aluguel": 628.52, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 752.8559, "valorPago": 752.8559, "dataPagamento": "2025-08-04", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-09-05", "aluguel": 628.52, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 760.4761, "valorPago": 760.4761, "dataPagamento": "2025-09-02", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-10-05", "aluguel": 628.52, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 743.8826, "valorPago": 743.8826, "dataPagamento": "2025-10-03", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-11-05", "aluguel": 628.52, "condo": 92.2295, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 756.864, "valorPago": 756.864, "dataPagamento": "2025-11-04", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-12-05", "aluguel": 628.52, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 724.5321, "valorPago": 724.5321, "dataPagamento": "2025-12-04", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2026-01-05", "aluguel": 628.52, "condo": 86.5934, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 715.1134, "valorPago": 715.1134, "dataPagamento": "2026-01-05", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-02-05", "aluguel": 628.52, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 787.57, "valorPago": 787.57, "dataPagamento": "2026-02-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-03-05", "aluguel": 628.52, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 771.7595, "valorPago": 771.7595, "dataPagamento": "2026-03-03", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-04-05", "aluguel": 652.48, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 809.0144, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-04", "venc": "2026-05-05", "aluguel": 652.48, "condo": 0, "iptu": 0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 652.48, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-06-05", "aluguel": 652.48, "condo": 0, "iptu": 0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 652.48, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 652.48, "id": 2}, {"unit": "Apto 3", "vencDia": 5, "vago": false, "condoId": "c1", "name": "Ana Carla Vieira Ferreira", "start": "2021-12-01", "end": "2024-11-30", "reajuste": "2022-12-05", "garantia": "Fiadores", "tel": "67 9176-9741", "history": [{"ref": "2022-07", "venc": "2022-08-05", "aluguel": 550.0, "condo": 90.3612, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 675.3613, "valorPago": 675.3613, "dataPagamento": "2022-08-01", "status": "pago", "obs": ""}, {"ref": "2022-08", "venc": "2022-09-05", "aluguel": 550.0, "condo": 88.0454, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 673.0454, "valorPago": 673.0454, "dataPagamento": "2022-09-01", "status": "pago", "obs": ""}, {"ref": "2022-09", "venc": "2022-10-05", "aluguel": 550.0, "condo": 97.493, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 682.493, "valorPago": 682.493, "dataPagamento": "2022-10-03", "status": "pago", "obs": ""}, {"ref": "2022-10", "venc": "2022-11-05", "aluguel": 550.0, "condo": 116.2343, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 701.2342, "valorPago": 701.2342, "dataPagamento": "2022-11-04", "status": "pago", "obs": ""}, {"ref": "2022-11", "venc": "2022-12-05", "aluguel": 550.0, "condo": 106.1335, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 656.1335, "valorPago": 656.1335, "dataPagamento": "2022-12-05", "status": "pago", "obs": ""}, {"ref": "2022-12", "venc": "2023-01-05", "aluguel": 550.0, "condo": 138.5203, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 688.5203, "valorPago": 688.5203, "dataPagamento": "2023-01-05", "status": "pago", "obs": ""}, {"ref": "2023-01", "venc": "2023-02-05", "aluguel": 582.45, "condo": 161.6656, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 776.9856, "valorPago": 776.9856, "dataPagamento": "2023-02-03", "status": "pago", "obs": ""}, {"ref": "2023-02", "venc": "2023-03-05", "aluguel": 582.45, "condo": 91.8541, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 707.1741, "valorPago": 707.1741, "dataPagamento": "2023-03-05", "status": "pago", "obs": ""}, {"ref": "2023-03", "venc": "2023-04-05", "aluguel": 582.45, "condo": 129.1001, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 744.4201, "valorPago": 744.4201, "dataPagamento": "2023-04-05", "status": "pago", "obs": ""}, {"ref": "2023-04", "venc": "2023-05-05", "aluguel": 582.45, "condo": 106.2476, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 721.5676, "valorPago": 721.5676, "dataPagamento": "2023-05-05", "status": "pago", "obs": ""}, {"ref": "2023-05", "venc": "2023-06-05", "aluguel": 582.45, "condo": 116.2686, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 731.5886, "valorPago": 731.5886, "dataPagamento": "2023-06-05", "status": "pago", "obs": ""}, {"ref": "2023-06", "venc": "2023-07-05", "aluguel": 582.45, "condo": 93.1494, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 708.4694, "valorPago": 708.4694, "dataPagamento": "2023-07-05", "status": "pago", "obs": ""}, {"ref": "2023-07", "venc": "2023-08-05", "aluguel": 582.45, "condo": 92.6626, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 707.9826, "valorPago": 707.9826, "dataPagamento": "2023-08-04", "status": "pago", "obs": ""}, {"ref": "2023-08", "venc": "2023-09-05", "aluguel": 582.45, "condo": 89.2788, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 704.5987, "valorPago": 704.5987, "dataPagamento": "2023-09-04", "status": "pago", "obs": ""}, {"ref": "2023-09", "venc": "2023-10-05", "aluguel": 582.45, "condo": 119.1328, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 734.4528, "valorPago": 734.4528, "dataPagamento": "2023-10-03", "status": "pago", "obs": ""}, {"ref": "2023-10", "venc": "2023-11-05", "aluguel": 582.45, "condo": 108.1548, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 723.4747, "valorPago": 723.4747, "dataPagamento": "2023-11-04", "status": "pago", "obs": ""}, {"ref": "2023-11", "venc": "2023-12-05", "aluguel": 582.45, "condo": 110.2392, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 692.6893, "valorPago": 692.6893, "dataPagamento": "2023-12-05", "status": "pago", "obs": ""}, {"ref": "2023-12", "venc": "2024-01-05", "aluguel": 582.45, "condo": 128.8059, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 711.2559, "valorPago": 711.2559, "dataPagamento": "2024-01-05", "status": "pago", "obs": ""}, {"ref": "2024-01", "venc": "2024-02-05", "aluguel": 582.45, "condo": 115.1521, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 730.4721, "valorPago": 730.4721, "dataPagamento": "2024-02-05", "status": "pago", "obs": ""}, {"ref": "2024-02", "venc": "2024-03-05", "aluguel": 582.45, "condo": 75.9303, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 693.3803, "valorPago": 693.3803, "dataPagamento": "2024-03-05", "status": "pago", "obs": ""}, {"ref": "2024-03", "venc": "2024-04-05", "aluguel": 582.45, "condo": 103.7231, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 721.1731, "valorPago": 721.1731, "dataPagamento": "2024-04-05", "status": "pago", "obs": ""}, {"ref": "2024-04", "venc": "2024-05-05", "aluguel": 582.45, "condo": 107.778, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 725.228, "valorPago": 725.228, "dataPagamento": "2024-05-05", "status": "pago", "obs": ""}, {"ref": "2024-05", "venc": "2024-06-05", "aluguel": 582.45, "condo": 124.8473, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 742.2972, "valorPago": 742.2972, "dataPagamento": "2024-06-05", "status": "pago", "obs": ""}, {"ref": "2024-06", "venc": "2024-07-05", "aluguel": 582.45, "condo": 94.5409, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 711.9909, "valorPago": 711.9909, "dataPagamento": "2024-07-02", "status": "pago", "obs": ""}, {"ref": "2024-07", "venc": "2024-08-05", "aluguel": 582.45, "condo": 94.1352, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 711.5852, "valorPago": 711.5852, "dataPagamento": "2024-08-02", "status": "pago", "obs": ""}, {"ref": "2024-08", "venc": "2024-09-05", "aluguel": 582.45, "condo": 98.7484, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 716.1984, "valorPago": 716.1984, "dataPagamento": "2024-09-03", "status": "pago", "obs": ""}, {"ref": "2024-09", "venc": "2024-10-05", "aluguel": 582.45, "condo": 96.4659, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 713.9159, "valorPago": 713.9159, "dataPagamento": "2024-10-05", "status": "pago", "obs": ""}, {"ref": "2024-10", "venc": "2024-11-05", "aluguel": 582.45, "condo": 96.5456, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 713.9956, "valorPago": 713.9956, "dataPagamento": "2024-11-04", "status": "pago", "obs": ""}, {"ref": "2024-11", "venc": "2024-12-05", "aluguel": 582.45, "condo": 103.3931, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 685.8431, "valorPago": 685.8431, "dataPagamento": "2024-12-05", "status": "pago", "obs": ""}, {"ref": "2024-12", "venc": "2025-01-05", "aluguel": 620.54, "condo": 125.1003, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 745.6403, "valorPago": 745.6403, "dataPagamento": "2025-01-05", "status": "pago", "obs": ""}, {"ref": "2025-01", "venc": "2025-02-05", "aluguel": 620.54, "condo": 94.7554, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 775.437, "valorPago": 775.437, "dataPagamento": "2025-02-05", "status": "pago", "obs": ""}, {"ref": "2025-02", "venc": "2025-03-05", "aluguel": 620.54, "condo": 72.8155, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 753.4971, "valorPago": 753.4971, "dataPagamento": "2025-03-05", "status": "pago", "obs": ""}, {"ref": "2025-03", "venc": "2025-04-05", "aluguel": 620.54, "condo": 109.5541, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 790.2357, "valorPago": 790.2357, "dataPagamento": "2025-04-05", "status": "pago", "obs": ""}, {"ref": "2025-04", "venc": "2025-05-05", "aluguel": 620.54, "condo": 88.5565, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 745.211, "valorPago": 745.211, "dataPagamento": "2025-05-05", "status": "pago", "obs": ""}, {"ref": "2025-05", "venc": "2025-06-05", "aluguel": 620.54, "condo": 87.2016, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 743.8561, "valorPago": 743.8561, "dataPagamento": "2025-06-04", "status": "pago", "obs": ""}, {"ref": "2025-06", "venc": "2025-07-05", "aluguel": 620.54, "condo": 73.3205, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 729.975, "valorPago": 729.975, "dataPagamento": "2025-07-05", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-08-05", "aluguel": 620.54, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 744.8759, "valorPago": 744.8759, "dataPagamento": "2025-08-05", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-09-05", "aluguel": 620.54, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 752.4961, "valorPago": 752.4961, "dataPagamento": "2025-09-05", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-10-05", "aluguel": 620.54, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 735.9026, "valorPago": 735.9026, "dataPagamento": "2025-10-05", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-11-05", "aluguel": 620.54, "condo": 92.2295, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 748.884, "valorPago": 748.884, "dataPagamento": "2025-11-04", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-12-05", "aluguel": 620.54, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 716.5521, "valorPago": 716.5521, "dataPagamento": "2025-12-04", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2026-01-05", "aluguel": 620.54, "condo": 86.5934, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 707.1334, "valorPago": 707.1334, "dataPagamento": "2026-01-05", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-02-05", "aluguel": 620.54, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 779.59, "valorPago": 779.59, "dataPagamento": "2026-02-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-03-05", "aluguel": 620.54, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 763.7795, "valorPago": 763.7795, "dataPagamento": "2026-03-10", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-04-05", "aluguel": 648.22, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 804.7544, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-04", "venc": "2026-05-05", "aluguel": 648.22, "condo": 97.8835, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 809.1035, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-06-05", "aluguel": 648.22, "condo": 0.0, "iptu": 0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 648.22, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 648.22, "id": 3}, {"unit": "Apto 4", "vencDia": 5, "vago": false, "condoId": "c1", "name": "ADRIANO RAMOA ANDRADE", "start": "2025-05-26", "end": "2028-05-26", "reajuste": "2026-05-26", "garantia": "Fiadores", "tel": "99868-0602", "history": [{"ref": "2025-06", "venc": "2025-06-05", "aluguel": 850.0, "condo": 0.0, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 886.1145, "valorPago": 886.1145, "dataPagamento": "2025-06-02", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-07-05", "aluguel": 850.0, "condo": 0.0, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 886.1145, "valorPago": 886.1145, "dataPagamento": "2025-07-01", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-08-05", "aluguel": 850.0, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 974.3359, "valorPago": 974.3359, "dataPagamento": "2025-08-01", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-09-05", "aluguel": 850.0, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 981.9561, "valorPago": 981.9561, "dataPagamento": "2025-09-05", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-10-05", "aluguel": 850.0, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 965.3626, "valorPago": 965.3626, "dataPagamento": "2025-10-05", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-11-05", "aluguel": 850.0, "condo": 92.2295, "iptu": 36.11, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 978.3395, "valorPago": 978.3395, "dataPagamento": "2025-11-05", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2025-12-05", "aluguel": 850.0, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 40.0}], "valorCobrado": 946.0121, "valorPago": 946.0121, "dataPagamento": "2025-12-01", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-01-05", "aluguel": 850.0, "condo": 86.5934, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 999.5934, "valorPago": 999.5934, "dataPagamento": "2026-01-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-02-05", "aluguel": 850.0, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 1009.052, "valorPago": 1009.052, "dataPagamento": "2026-02-05", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-03-05", "aluguel": 850.0, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 993.2395, "valorPago": 993.2395, "dataPagamento": "2026-03-03", "status": "pago", "obs": ""}, {"ref": "2026-04", "venc": "2026-04-05", "aluguel": 850.0, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 1006.5344, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-05-05", "aluguel": 850.0, "condo": 0, "iptu": 38.0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 888.0, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-06", "venc": "2026-06-05", "aluguel": 850.0, "condo": 0, "iptu": 38.0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 888.0, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 850.0, "id": 4}, {"unit": "Apto 5", "vencDia": 5, "vago": false, "condoId": "c1", "name": "GABRIELY VILHALVA MENDONÇA", "start": "2023-07-01", "end": "2026-07-01", "reajuste": "2024-07-01", "garantia": "Fiadores", "tel": "67 9864-1720", "history": [{"ref": "2023-06", "venc": "2023-07-05", "aluguel": 300.0, "condo": 0, "iptu": 0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 300.0, "valorPago": 300.0, "dataPagamento": "2023-06-21", "status": "pago", "obs": ""}, {"ref": "2023-07", "venc": "2023-08-05", "aluguel": 650.0, "condo": 92.6626, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 775.5326, "valorPago": 775.5326, "dataPagamento": "2023-08-05", "status": "pago", "obs": ""}, {"ref": "2023-08", "venc": "2023-09-05", "aluguel": 650.0, "condo": 89.2788, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 772.1487, "valorPago": 772.1487, "dataPagamento": "2023-09-04", "status": "pago", "obs": ""}, {"ref": "2023-09", "venc": "2023-10-05", "aluguel": 650.0, "condo": 119.1328, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 802.0027, "valorPago": 802.0027, "dataPagamento": "2023-10-05", "status": "pago", "obs": ""}, {"ref": "2023-10", "venc": "2023-11-05", "aluguel": 650.0, "condo": 108.1548, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 791.0248, "valorPago": 791.0248, "dataPagamento": "2023-11-06", "status": "pago", "obs": ""}, {"ref": "2023-11", "venc": "2023-12-05", "aluguel": 650.0, "condo": 110.2392, "iptu": 0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 760.2392, "valorPago": 760.2392, "dataPagamento": "2023-12-05", "status": "pago", "obs": ""}, {"ref": "2023-12", "venc": "2024-01-05", "aluguel": 650.0, "condo": 128.8059, "iptu": 0, "lixo": 0.0, "multa": 80.46, "juros": 6.27, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 778.8059, "valorPago": 778.8059, "dataPagamento": "2024-01-29", "status": "pago", "obs": ""}, {"ref": "2024-01", "venc": "2024-02-05", "aluguel": 650.0, "condo": 115.1521, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 800.1521, "valorPago": 800.1521, "dataPagamento": "2024-02-05", "status": "pago", "obs": ""}, {"ref": "2024-02", "venc": "2024-03-05", "aluguel": 650.0, "condo": 75.9303, "iptu": 35.0, "lixo": 0.0, "multa": 77.6116, "juros": 4.337, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 760.9303, "valorPago": 760.9303, "dataPagamento": "2024-03-22", "status": "pago", "obs": ""}, {"ref": "2024-03", "venc": "2024-04-05", "aluguel": 650.0, "condo": 103.7231, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 788.7231, "valorPago": 788.7231, "dataPagamento": "2024-04-01", "status": "pago", "obs": ""}, {"ref": "2024-04", "venc": "2024-05-05", "aluguel": 650.0, "condo": 107.778, "iptu": 35.0, "lixo": 0.0, "multa": 81.4334, "juros": 2.1496, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 792.778, "valorPago": 792.778, "dataPagamento": "2024-05-13", "status": "pago", "obs": ""}, {"ref": "2024-05", "venc": "2024-06-05", "aluguel": 650.0, "condo": 124.8473, "iptu": 35.0, "lixo": 0.0, "multa": 83.4817, "juros": 0.3111, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 809.8473, "valorPago": 809.8473, "dataPagamento": "2024-06-06", "status": "pago", "obs": ""}, {"ref": "2024-06", "venc": "2024-07-05", "aluguel": 650.0, "condo": 94.5409, "iptu": 35.0, "lixo": 0.0, "multa": 79.8449, "juros": 1.0706, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 779.5409, "valorPago": 779.5409, "dataPagamento": "2024-07-09", "status": "pago", "obs": ""}, {"ref": "2024-07", "venc": "2024-08-05", "aluguel": 665.86, "condo": 94.1352, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 794.9953, "valorPago": 794.9953, "dataPagamento": "2024-07-30", "status": "pago", "obs": ""}, {"ref": "2024-08", "venc": "2024-09-05", "aluguel": 665.86, "condo": 98.7484, "iptu": 35.0, "lixo": 0.0, "multa": 81.9358, "juros": 1.3653, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 799.6084, "valorPago": 799.6084, "dataPagamento": "2024-09-10", "status": "pago", "obs": ""}, {"ref": "2024-09", "venc": "2024-10-05", "aluguel": 665.86, "condo": 96.4659, "iptu": 35.0, "lixo": 0.0, "multa": 81.6619, "juros": 1.6265, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 797.3259, "valorPago": 797.3259, "dataPagamento": "2024-10-11", "status": "pago", "obs": ""}, {"ref": "2024-10", "venc": "2024-11-05", "aluguel": 665.86, "condo": 96.5456, "iptu": 35.0, "lixo": 0.0, "multa": 81.6715, "juros": 3.2215, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 797.4056, "valorPago": 797.4056, "dataPagamento": "2024-11-17", "status": "pago", "obs": ""}, {"ref": "2024-11", "venc": "2024-12-05", "aluguel": 665.86, "condo": 103.3931, "iptu": 0, "lixo": 0.0, "multa": 78.9932, "juros": 4.6496, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 769.2531, "valorPago": 769.2531, "dataPagamento": "2024-12-23", "status": "pago", "obs": ""}, {"ref": "2024-12", "venc": "2025-01-05", "aluguel": 665.86, "condo": 125.1003, "iptu": 0, "lixo": 0.0, "multa": 81.598, "juros": 5.578, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 790.9602, "valorPago": 790.9602, "dataPagamento": "2025-01-26", "status": "pago", "obs": ""}, {"ref": "2025-01", "venc": "2025-02-05", "aluguel": 665.86, "condo": 94.7554, "iptu": 36.1145, "lixo": 24.0271, "multa": 83.9708, "juros": 3.8615, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 820.757, "valorPago": 820.757, "dataPagamento": "2025-02-19", "status": "pago", "obs": ""}, {"ref": "2025-02", "venc": "2025-03-05", "aluguel": 665.86, "condo": 72.8155, "iptu": 36.1145, "lixo": 24.0271, "multa": 81.338, "juros": 6.1483, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 798.8171, "valorPago": 798.8171, "dataPagamento": "2025-03-28", "status": "pago", "obs": ""}, {"ref": "2025-03", "venc": "2025-04-05", "aluguel": 665.86, "condo": 109.5541, "iptu": 36.1145, "lixo": 24.0271, "multa": 85.7467, "juros": 6.4421, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 835.5557, "valorPago": 835.5557, "dataPagamento": "2025-04-28", "status": "pago", "obs": ""}, {"ref": "2025-04", "venc": "2025-05-05", "aluguel": 665.86, "condo": 88.5565, "iptu": 36.1145, "lixo": 0.0, "multa": 80.8242, "juros": 9.7791, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 35.56}], "valorCobrado": 790.531, "valorPago": 790.531, "dataPagamento": "2025-06-11", "status": "pago", "obs": ""}, {"ref": "2025-05", "venc": "2025-06-05", "aluguel": 665.86, "condo": 87.2016, "iptu": 36.1145, "lixo": 0.0, "multa": 80.6616, "juros": 1.6071, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 789.1761, "valorPago": 789.1761, "dataPagamento": "2025-06-11", "status": "pago", "obs": ""}, {"ref": "2025-06", "venc": "2025-07-05", "aluguel": 722.46, "condo": 73.3205, "iptu": 36.1145, "lixo": 0.0, "multa": 84.6559, "juros": 3.3518, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 831.895, "valorPago": 831.895, "dataPagamento": "2025-07-17", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-08-05", "aluguel": 722.46, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 86.444, "juros": 4.2631, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 119.9}], "valorCobrado": 846.7959, "valorPago": 846.7959, "dataPagamento": "2025-08-20", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-09-05", "aluguel": 722.46, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 87.3584, "juros": 2.0253, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 854.4161, "valorPago": 854.4161, "dataPagamento": "2025-09-12", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-10-05", "aluguel": 722.46, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 85.3672, "juros": 2.2603, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 837.8226, "valorPago": 837.8226, "dataPagamento": "2025-10-13", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-11-05", "aluguel": 722.46, "condo": 92.2295, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 850.804, "valorPago": 850.804, "dataPagamento": "2025-11-13", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-12-05", "aluguel": 722.46, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 88.62}], "valorCobrado": 818.4721, "valorPago": 818.4721, "dataPagamento": "2025-12-19", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2026-01-05", "aluguel": 722.46, "condo": 86.5934, "iptu": 0.0, "lixo": 0.0, "multa": 0, "juros": 0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 809.0534, "valorPago": 809.0534, "dataPagamento": "2026-01-13", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-02-05", "aluguel": 722.46, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 9.05}], "valorCobrado": 890.56, "valorPago": 890.56, "dataPagamento": "2025-02-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-03-05", "aluguel": 722.46, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 90.57}], "valorCobrado": 865.6995, "valorPago": 865.6995, "dataPagamento": "2026-03-05", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-04-05", "aluguel": 722.46, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 878.9944, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-04", "venc": "2026-05-05", "aluguel": 722.46, "condo": 97.8835, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 883.3435, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-06-05", "aluguel": 722.46, "condo": 0, "iptu": 0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 722.46, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 722.46, "id": 5}, {"unit": "Apto 6", "vencDia": 5, "vago": false, "condoId": "c1", "name": "Fernanda Duarte", "start": "2022-07-18", "end": "2023-07-18", "reajuste": "2023-07-18", "garantia": "Seguro Fiança", "tel": "67 9310-1119", "history": [{"ref": "2022-07", "venc": "2022-08-05", "aluguel": 260.0, "condo": 0.0, "iptu": 14.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 274.0, "valorPago": 274.0, "dataPagamento": "2022-08-01", "status": "pago", "obs": ""}, {"ref": "2022-08", "venc": "2022-09-05", "aluguel": 600.0, "condo": 88.0454, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 723.0454, "valorPago": 723.0454, "dataPagamento": "2022-09-05", "status": "pago", "obs": ""}, {"ref": "2022-09", "venc": "2022-10-05", "aluguel": 600.0, "condo": 97.493, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 732.493, "valorPago": 732.493, "dataPagamento": "2022-10-05", "status": "pago", "obs": ""}, {"ref": "2022-10", "venc": "2022-11-05", "aluguel": 600.0, "condo": 116.2343, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 751.2342, "valorPago": 751.2342, "dataPagamento": "2022-11-04", "status": "pago", "obs": ""}, {"ref": "2022-11", "venc": "2022-12-05", "aluguel": 600.0, "condo": 106.1335, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 706.1335, "valorPago": 706.1335, "dataPagamento": "2022-12-05", "status": "pago", "obs": ""}, {"ref": "2022-12", "venc": "2023-01-05", "aluguel": 600.0, "condo": 138.5203, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 738.5203, "valorPago": 738.5203, "dataPagamento": "2023-01-05", "status": "pago", "obs": ""}, {"ref": "2023-01", "venc": "2023-02-05", "aluguel": 600.0, "condo": 161.6656, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 794.5356, "valorPago": 794.5356, "dataPagamento": "2023-02-05", "status": "pago", "obs": ""}, {"ref": "2023-02", "venc": "2023-03-05", "aluguel": 600.0, "condo": 91.8541, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 724.7241, "valorPago": 724.7241, "dataPagamento": "2023-03-05", "status": "pago", "obs": ""}, {"ref": "2023-03", "venc": "2023-04-05", "aluguel": 600.0, "condo": 129.1001, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 761.9701, "valorPago": 761.9701, "dataPagamento": "2023-04-04", "status": "pago", "obs": ""}, {"ref": "2023-04", "venc": "2023-05-05", "aluguel": 600.0, "condo": 106.2476, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 739.1176, "valorPago": 739.1176, "dataPagamento": "2023-05-04", "status": "pago", "obs": ""}, {"ref": "2023-05", "venc": "2023-06-05", "aluguel": 600.0, "condo": 116.2686, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 749.1386, "valorPago": 749.1386, "dataPagamento": "2023-06-05", "status": "pago", "obs": ""}, {"ref": "2023-06", "venc": "2023-07-05", "aluguel": 600.0, "condo": 93.1494, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 726.0194, "valorPago": 726.0194, "dataPagamento": "2023-07-05", "status": "pago", "obs": ""}, {"ref": "2023-07", "venc": "2023-08-05", "aluguel": 600.0, "condo": 92.6626, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 725.5326, "valorPago": 725.5326, "dataPagamento": "2023-08-06", "status": "pago", "obs": ""}, {"ref": "2023-08", "venc": "2023-09-05", "aluguel": 600.0, "condo": 89.2788, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 722.1487, "valorPago": 722.1487, "dataPagamento": "2023-08-31", "status": "pago", "obs": ""}, {"ref": "2023-09", "venc": "2023-10-05", "aluguel": 600.0, "condo": 119.1328, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 752.0027, "valorPago": 752.0027, "dataPagamento": "2023-10-04", "status": "pago", "obs": ""}, {"ref": "2023-10", "venc": "2023-11-05", "aluguel": 600.0, "condo": 108.1548, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 741.0248, "valorPago": 741.0248, "dataPagamento": "2023-11-05", "status": "pago", "obs": ""}, {"ref": "2023-11", "venc": "2023-12-05", "aluguel": 600.0, "condo": 110.2392, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 710.2392, "valorPago": 710.2392, "dataPagamento": "2023-12-05", "status": "pago", "obs": ""}, {"ref": "2023-12", "venc": "2024-01-05", "aluguel": 600.0, "condo": 128.8059, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 728.8059, "valorPago": 728.8059, "dataPagamento": "2024-01-04", "status": "pago", "obs": ""}, {"ref": "2024-01", "venc": "2024-02-05", "aluguel": 600.0, "condo": 115.1521, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 750.1521, "valorPago": 750.1521, "dataPagamento": "2024-02-05", "status": "pago", "obs": ""}, {"ref": "2024-02", "venc": "2024-03-05", "aluguel": 600.0, "condo": 75.9303, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 710.9303, "valorPago": 710.9303, "dataPagamento": "2024-03-05", "status": "pago", "obs": ""}, {"ref": "2024-03", "venc": "2024-04-05", "aluguel": 600.0, "condo": 103.7231, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 738.7231, "valorPago": 738.7231, "dataPagamento": "2024-04-06", "status": "pago", "obs": ""}, {"ref": "2024-04", "venc": "2024-05-05", "aluguel": 600.0, "condo": 107.778, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 742.778, "valorPago": 742.778, "dataPagamento": "2024-05-05", "status": "pago", "obs": ""}, {"ref": "2024-05", "venc": "2024-06-05", "aluguel": 600.0, "condo": 124.8473, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 759.8473, "valorPago": 759.8473, "dataPagamento": "2024-05-04", "status": "pago", "obs": ""}, {"ref": "2024-06", "venc": "2024-07-05", "aluguel": 600.0, "condo": 94.5409, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 729.5409, "valorPago": 729.5409, "dataPagamento": "2024-07-05", "status": "pago", "obs": ""}, {"ref": "2024-07", "venc": "2024-08-05", "aluguel": 614.64, "condo": 94.1352, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 743.7753, "valorPago": 743.7753, "dataPagamento": "2024-08-05", "status": "pago", "obs": ""}, {"ref": "2024-08", "venc": "2024-09-05", "aluguel": 614.64, "condo": 98.7484, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 748.3884, "valorPago": 748.3884, "dataPagamento": "2024-09-05", "status": "pago", "obs": ""}, {"ref": "2024-09", "venc": "2024-10-05", "aluguel": 614.64, "condo": 96.4659, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 746.1059, "valorPago": 746.1059, "dataPagamento": "2024-10-05", "status": "pago", "obs": ""}, {"ref": "2024-10", "venc": "2024-11-05", "aluguel": 614.64, "condo": 96.5456, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 746.1856, "valorPago": 746.1856, "dataPagamento": "2024-11-05", "status": "pago", "obs": ""}, {"ref": "2024-11", "venc": "2024-12-05", "aluguel": 614.64, "condo": 103.3931, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 718.0331, "valorPago": 718.0331, "dataPagamento": "2024-12-05", "status": "pago", "obs": ""}, {"ref": "2024-12", "venc": "2025-01-05", "aluguel": 614.64, "condo": 125.1003, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 739.7402, "valorPago": 739.7402, "dataPagamento": "2025-01-05", "status": "pago", "obs": ""}, {"ref": "2025-01", "venc": "2025-02-05", "aluguel": 614.64, "condo": 94.7554, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 769.537, "valorPago": 769.537, "dataPagamento": "2025-02-05", "status": "pago", "obs": ""}, {"ref": "2025-02", "venc": "2025-03-05", "aluguel": 614.64, "condo": 72.8155, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 747.5971, "valorPago": 747.5971, "dataPagamento": "2025-03-05", "status": "pago", "obs": ""}, {"ref": "2025-03", "venc": "2025-04-05", "aluguel": 614.64, "condo": 109.5541, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 784.3357, "valorPago": 784.3357, "dataPagamento": "2025-04-03", "status": "pago", "obs": ""}, {"ref": "2025-04", "venc": "2025-05-05", "aluguel": 614.64, "condo": 88.5565, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 739.311, "valorPago": 739.311, "dataPagamento": "2025-05-05", "status": "pago", "obs": ""}, {"ref": "2025-05", "venc": "2025-06-05", "aluguel": 614.64, "condo": 87.2016, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 737.9561, "valorPago": 737.9561, "dataPagamento": "2025-06-04", "status": "pago", "obs": ""}, {"ref": "2025-06", "venc": "2025-07-05", "aluguel": 666.88, "condo": 73.3205, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 776.315, "valorPago": 776.315, "dataPagamento": "2025-07-04", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-08-05", "aluguel": 666.88, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 791.2159, "valorPago": 791.2159, "dataPagamento": "2025-08-05", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-09-05", "aluguel": 666.88, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 798.8361, "valorPago": 798.8361, "dataPagamento": "2025-09-02", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-10-05", "aluguel": 666.88, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 782.2426, "valorPago": 782.2426, "dataPagamento": "2025-10-05", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-11-05", "aluguel": 666.88, "condo": 92.2295, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 795.224, "valorPago": 795.224, "dataPagamento": "2025-11-05", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-12-05", "aluguel": 666.88, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 762.8921, "valorPago": 762.8921, "dataPagamento": "2025-12-04", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2026-01-05", "aluguel": 666.88, "condo": 86.5934, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 753.4734, "valorPago": 753.4734, "dataPagamento": "2026-01-05", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-02-05", "aluguel": 666.88, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 825.93, "valorPago": 825.93, "dataPagamento": "2026-02-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-03-05", "aluguel": 666.88, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 810.1195, "valorPago": 810.1195, "dataPagamento": "2026-03-05", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-04-05", "aluguel": 666.88, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 823.4144, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-04", "venc": "2026-05-05", "aluguel": 666.88, "condo": 97.8835, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 827.7635, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-06-05", "aluguel": 666.88, "condo": 0, "iptu": 0, "lixo": 0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 666.88, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 666.88, "id": 6}, {"unit": "Apto 7", "vencDia": 5, "vago": false, "condoId": "c1", "name": "Lorenza", "start": "2023-06-17", "end": "2026-06-17", "reajuste": "2024-06-17", "garantia": "Fiadores", "tel": "67 9961-9424", "history": [{"ref": "2023-06", "venc": "2023-07-05", "aluguel": 303.33, "condo": 0.0, "iptu": 15.33, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 318.66, "valorPago": 318.66, "dataPagamento": "2023-06-29", "status": "pago", "obs": ""}, {"ref": "2023-07", "venc": "2023-08-05", "aluguel": 650.0, "condo": 92.6626, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 775.5326, "valorPago": 775.5326, "dataPagamento": "2023-08-02", "status": "pago", "obs": ""}, {"ref": "2023-08", "venc": "2023-09-05", "aluguel": 650.0, "condo": 89.2788, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 772.1487, "valorPago": 772.1487, "dataPagamento": "2023-09-04", "status": "pago", "obs": ""}, {"ref": "2023-09", "venc": "2023-10-05", "aluguel": 650.0, "condo": 119.1328, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 802.0027, "valorPago": 802.0027, "dataPagamento": "2023-10-04", "status": "pago", "obs": ""}, {"ref": "2023-10", "venc": "2023-11-05", "aluguel": 650.0, "condo": 108.1548, "iptu": 32.87, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 791.0248, "valorPago": 791.0248, "dataPagamento": "2023-10-31", "status": "pago", "obs": ""}, {"ref": "2023-11", "venc": "2023-12-05", "aluguel": 650.0, "condo": 110.2392, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 760.2392, "valorPago": 760.2392, "dataPagamento": "2023-12-02", "status": "pago", "obs": ""}, {"ref": "2023-12", "venc": "2024-01-05", "aluguel": 650.0, "condo": 128.8059, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 778.8059, "valorPago": 778.8059, "dataPagamento": "2024-01-04", "status": "pago", "obs": ""}, {"ref": "2024-01", "venc": "2024-02-05", "aluguel": 650.0, "condo": 115.1521, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 800.1521, "valorPago": 800.1521, "dataPagamento": "2024-02-08", "status": "pago", "obs": ""}, {"ref": "2024-02", "venc": "2024-03-05", "aluguel": 650.0, "condo": 75.9303, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 760.9303, "valorPago": 760.9303, "dataPagamento": "2024-03-04", "status": "pago", "obs": ""}, {"ref": "2024-03", "venc": "2024-04-05", "aluguel": 650.0, "condo": 103.7231, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 788.7231, "valorPago": 788.7231, "dataPagamento": "2024-04-04", "status": "pago", "obs": ""}, {"ref": "2024-04", "venc": "2024-05-05", "aluguel": 650.0, "condo": 107.778, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 792.778, "valorPago": 792.778, "dataPagamento": "2024-05-03", "status": "pago", "obs": ""}, {"ref": "2024-05", "venc": "2024-06-05", "aluguel": 650.0, "condo": 124.8473, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 809.8473, "valorPago": 809.8473, "dataPagamento": "2024-06-04", "status": "pago", "obs": ""}, {"ref": "2024-06", "venc": "2024-07-05", "aluguel": 650.0, "condo": 94.5409, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 779.5409, "valorPago": 779.5409, "dataPagamento": "2024-07-04", "status": "pago", "obs": ""}, {"ref": "2024-07", "venc": "2024-08-05", "aluguel": 665.86, "condo": 94.1352, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 794.9953, "valorPago": 794.9953, "dataPagamento": "2024-08-01", "status": "pago", "obs": ""}, {"ref": "2024-08", "venc": "2024-09-05", "aluguel": 665.86, "condo": 98.7484, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 799.6084, "valorPago": 799.6084, "dataPagamento": "2024-09-03", "status": "pago", "obs": ""}, {"ref": "2024-09", "venc": "2024-10-05", "aluguel": 665.86, "condo": 96.4659, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 797.3259, "valorPago": 797.3259, "dataPagamento": "2024-10-03", "status": "pago", "obs": ""}, {"ref": "2024-10", "venc": "2024-11-05", "aluguel": 665.86, "condo": 96.5456, "iptu": 35.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 797.4056, "valorPago": 797.4056, "dataPagamento": "2024-11-01", "status": "pago", "obs": ""}, {"ref": "2024-11", "venc": "2024-12-05", "aluguel": 665.86, "condo": 103.3931, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 769.2531, "valorPago": 769.2531, "dataPagamento": "2024-12-02", "status": "pago", "obs": ""}, {"ref": "2024-12", "venc": "2025-01-05", "aluguel": 665.86, "condo": 125.1003, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 790.9602, "valorPago": 790.9602, "dataPagamento": "2025-01-02", "status": "pago", "obs": ""}, {"ref": "2025-01", "venc": "2025-02-05", "aluguel": 665.86, "condo": 94.7554, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 820.757, "valorPago": 820.757, "dataPagamento": "2025-02-03", "status": "pago", "obs": ""}, {"ref": "2025-02", "venc": "2025-03-05", "aluguel": 665.86, "condo": 72.8155, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 798.8171, "valorPago": 798.8171, "dataPagamento": "2025-03-05", "status": "pago", "obs": ""}, {"ref": "2025-03", "venc": "2025-04-05", "aluguel": 665.86, "condo": 109.5541, "iptu": 36.1145, "lixo": 24.0271, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 835.5557, "valorPago": 835.5557, "dataPagamento": "2025-04-04", "status": "pago", "obs": ""}, {"ref": "2025-04", "venc": "2025-05-05", "aluguel": 665.86, "condo": 88.5565, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 790.531, "valorPago": 790.531, "dataPagamento": "2025-05-05", "status": "pago", "obs": ""}, {"ref": "2025-05", "venc": "2025-06-05", "aluguel": 665.86, "condo": 87.2016, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 789.1761, "valorPago": 789.1761, "dataPagamento": "2025-06-05", "status": "pago", "obs": ""}, {"ref": "2025-06", "venc": "2025-07-05", "aluguel": 722.46, "condo": 73.3205, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 831.895, "valorPago": 831.895, "dataPagamento": "2025-07-04", "status": "pago", "obs": ""}, {"ref": "2025-07", "venc": "2025-08-05", "aluguel": 722.46, "condo": 88.2214, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 846.7959, "valorPago": 846.7959, "dataPagamento": "2025-08-05", "status": "pago", "obs": ""}, {"ref": "2025-08", "venc": "2025-09-05", "aluguel": 722.46, "condo": 95.8416, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 854.4161, "valorPago": 854.4161, "dataPagamento": "2025-09-05", "status": "pago", "obs": ""}, {"ref": "2025-09", "venc": "2025-10-05", "aluguel": 722.46, "condo": 79.2481, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 837.8226, "valorPago": 837.8226, "dataPagamento": "2025-10-03", "status": "pago", "obs": ""}, {"ref": "2025-10", "venc": "2025-11-05", "aluguel": 722.46, "condo": 92.2295, "iptu": 36.1145, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 850.804, "valorPago": 850.804, "dataPagamento": "2025-11-05", "status": "pago", "obs": ""}, {"ref": "2025-11", "venc": "2025-12-05", "aluguel": 722.46, "condo": 96.0121, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 818.4721, "valorPago": 818.4721, "dataPagamento": "2025-12-05", "status": "pago", "obs": ""}, {"ref": "2025-12", "venc": "2026-01-05", "aluguel": 722.46, "condo": 86.5934, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 809.0534, "valorPago": 809.0534, "dataPagamento": "2026-01-05", "status": "pago", "obs": ""}, {"ref": "2026-01", "venc": "2026-02-05", "aluguel": 722.46, "condo": 96.052, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 881.51, "valorPago": 881.51, "dataPagamento": "2025-02-05", "status": "pago", "obs": ""}, {"ref": "2026-02", "venc": "2026-03-05", "aluguel": 722.46, "condo": 80.2395, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 865.6995, "valorPago": 865.6995, "dataPagamento": "2026-03-05", "status": "pago", "obs": ""}, {"ref": "2026-03", "venc": "2026-04-05", "aluguel": 722.46, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 878.9944, "valorPago": 878.9944, "dataPagamento": "2026-04-02", "status": "pago", "obs": ""}, {"ref": "2026-04", "venc": "2026-05-05", "aluguel": 722.46, "condo": 97.8835, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 883.3435, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}, {"ref": "2026-05", "venc": "2026-06-05", "aluguel": 722.46, "condo": 0.0, "iptu": 0.0, "lixo": 0.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [], "valorCobrado": 722.46, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 722.46, "id": 7}, {"unit": "Apto 8", "vencDia": 5, "vago": false, "condoId": "c1", "name": "Thais", "start": "2026-04-01", "end": "2029-04-01", "reajuste": "2027-04-01", "garantia": "Sem Garantia", "tel": "98137-4705", "history": [{"ref": "2026-04", "venc": "2026-04-05", "aluguel": 600.0, "condo": 93.5344, "iptu": 38.0, "lixo": 25.0, "multa": 0.0, "juros": 0.0, "pendingMulta": 0, "pendingJuros": 0, "extras": [{"descricao": "Outras despesas", "valor": 400.0}], "valorCobrado": 756.5344, "valorPago": 0, "dataPagamento": null, "status": "pendente", "obs": ""}], "rent": 600.0, "id": 8}];
 
 // ============================================================
 // HELPERS
@@ -2829,6 +2757,7 @@ function R2(n){return Math.round(n*100)/100;}
 // Return current status and penalty preview for a tenant's last open entry
 function getTenantFinancials(t){
   if(t.vago) return {status:'vago'};
+  const last = t.history[t.history.length-1];
   if(!last) return {status:'futuro'};
 
   // Already paid / futuro
@@ -3063,11 +2992,11 @@ function openEditPayModal(tenantId, ref){
   document.getElementById('ep-info-box').innerHTML =
     `<strong>${t.unit} — ${t.name}</strong> &nbsp;·&nbsp; ${monthName(ref)} &nbsp;·&nbsp; Cobrado: ${fmtBRL(entry.valorCobrado)} &nbsp;·&nbsp; Pago: ${fmtBRL(entry.valorPago)}`;
 
-  openOverlay('edit-pay-overlay');
+  document.getElementById('edit-pay-overlay').classList.add('open');
 }
 
 function closeEditPayModal(){
-  closeOverlay('edit-pay-overlay');
+  document.getElementById('edit-pay-overlay').classList.remove('open');
   editPayTenantId = null;
   editPayRef = null;
 }
@@ -3083,10 +3012,6 @@ function saveEditPayModal(){
   const value = document.getElementById('ep-value').value;
   if(!date || !value){ alert('Preencha Data e Valor Pago.'); return; }
 
-  const entry = t.history.find(h=>h.ref===ref);
-  const oldStatus = entry ? entry.status : null;
-  const oldValorPago = entry ? entry.valorPago : 0;
-
   _resetPaymentEntry(t, ref);
   applyPayment(tid, ref, date, value,
     document.getElementById('ep-condo').value,
@@ -3095,13 +3020,6 @@ function saveEditPayModal(){
     document.getElementById('ep-multa').value,
     document.getElementById('ep-juros').value,
     document.getElementById('ep-obs').value);
-
-  // Registrar mudança de pagamento
-  const updatedEntry = t.history.find(h=>h.ref===ref);
-  if(updatedEntry && oldStatus){
-    SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.status`, oldStatus, updatedEntry.status);
-    SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.valorPago`, oldValorPago, updatedEntry.valorPago);
-  }
 
   saveToStorage();
   closeEditPayModal();
@@ -3189,7 +3107,8 @@ function renderCardDashboard(t, container){
   }
 
   const fin = getTenantFinancials(t);
-  const stLabel = STATUS_LABELS[st]||st;
+  const last = t.history[t.history.length-1];
+  const stLabel = {pago:'Em dia',pendente:'Pendente',inadimplente:'Inadimplente',parcial:'Parcial',futuro:'A vencer'}[st]||st;
   const e = getEntryForDisplay(t);
   const condoBadge = (()=>{
     const c = condominios.find(x=>x.id===(t.condoId||activeCondoId));
@@ -3197,7 +3116,15 @@ function renderCardDashboard(t, container){
   })();
 
   // History dots
-  const histHTML = renderHistDots(t);
+  const histHTML = t.history.slice(-6).map(h=>{
+    const m=h.ref.split('-')[1];
+    let cls='futuro';
+    if(h.status==='pago') cls='pago';
+    else if(h.status==='parcial') cls='parcial';
+    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
+    const tip=`${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
+    return`<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')">${m}</div>`;
+  }).join('');
 
   // Penalty bar
   let penaltyBar='';
@@ -3264,14 +3191,23 @@ function renderCard(t, container){
   }
 
   const fin = getTenantFinancials(t);
-  const stLabel=STATUS_LABELS[st]||st;
+  const last = t.history[t.history.length-1];
+  const stLabel={pago:'Em dia',pendente:'Pendente',inadimplente:'Inadimplente',parcial:'Parcial',futuro:'A vencer'}[st]||st;
 
   // --- current month billing entry (the open/latest one) ---
   // find the latest non-paid entry, or the last entry
   const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago') || last;
 
   // History dots (last 6) — clickable, show extrato for that month
-  const histHTML = renderHistDots(t);
+  const histHTML = t.history.slice(-6).map(h=>{
+    const m=h.ref.split('-')[1];
+    let cls='futuro';
+    if(h.status==='pago') cls='pago';
+    else if(h.status==='parcial') cls='parcial';
+    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
+    const tip=`${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
+    return`<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')" style="outline:none;">${m}</div>`;
+  }).join('');
 
   // penalty bar
   let penaltyBar='';
@@ -3558,16 +3494,6 @@ function saveCardCobr(id){
 
   // refresh the read-only dashboard cards so they reflect the saved values
   renderDashboard();
-
-  // Fase 2c: Registrar mudança de pagamento com SYNC_ENGINE
-  if(typeof SYNC_ENGINE !== 'undefined' && openEntry){
-    SYNC_ENGINE.onChange(
-      `tenants.${t.id}.history.${t.history.indexOf(openEntry)}.aluguel`,
-      0,
-      openEntry.aluguel
-    );
-  }
-
   saveToStorage();
 }
 
@@ -3605,7 +3531,7 @@ function openDet(id, highlightRef){
   detHighRef  = highlightRef || null;
   detPeriod   = highlightRef ? 'single' : 'todos';
   renderDet();
-  openOverlay('det-overlay');
+  document.getElementById('det-overlay').classList.add('open');
 }
 
 function initCustomPickers(){
@@ -3658,10 +3584,12 @@ function setDetPeriod(period){
   renderDet();
 }
 
-// --- Sub-functions for renderDet() ---
+function renderDet(){
+  const t = tenants.find(x=>x.id===detTenantId);
+  if(!t||t.vago) return;
 
-function renderDetHeader(t, st){
-  const stLabel = STATUS_LABELS[st]||st;
+  const st = statusOf(t);
+  const stLabel = {pago:'Em dia',pendente:'Pendente',inadimplente:'Inadimplente',parcial:'Parcial',futuro:'A vencer'}[st]||st;
   document.getElementById('d-unit').textContent = t.unit;
   document.getElementById('d-name').textContent = t.name;
   document.getElementById('d-badges').innerHTML = `
@@ -3670,9 +3598,44 @@ function renderDetHeader(t, st){
     <button class="btn btn-primary" style="font-size:11px;padding:5px 12px;" onclick="openRegFromDet(${t.id})">+ Registrar pgto</button>
     <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="openRecibo(${t.id})">🧾 Emitir recibo</button>
     <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="gerarContratoAluguel(${t.id})">📄 Contrato</button>`;
-}
 
-function renderDetDebt(t, st, fin){
+  // --- filter history by period ---
+  const todayStr = TODAY.toISOString().split('T')[0].slice(0,7); // YYYY-MM
+  let filtered = [...t.history];
+
+  if(detPeriod === 'single' && detHighRef){
+    filtered = filtered.filter(h=>h.ref===detHighRef);
+    // update tab UI: deactivate all tabs, activate none (custom selection)
+    ['todos','6m','ano','custom'].forEach(p=>{
+      const el=document.getElementById('tab-'+p);
+      if(el) el.classList.remove('active');
+    });
+  } else if(detPeriod === '6m'){
+    const cutoff = (() => {
+      const[y,m]=todayStr.split('-');
+      let nm=parseInt(m)-5,ny=parseInt(y);
+      if(nm<1){nm+=12;ny--;}
+      return`${ny}-${String(nm).padStart(2,'0')}`;
+    })();
+    filtered = filtered.filter(h=>h.ref>=cutoff);
+  } else if(detPeriod === 'ano'){
+    const year = TODAY.getFullYear();
+    filtered = filtered.filter(h=>h.ref.startsWith(String(year)));
+  } else if(detPeriod === 'custom'){
+    const fromM = document.getElementById('det-from-m')?.value;
+    const fromY = document.getElementById('det-from-y')?.value;
+    const toM   = document.getElementById('det-to-m')?.value;
+    const toY   = document.getElementById('det-to-y')?.value;
+    const from  = (fromY && fromM) ? `${fromY}-${fromM}` : '';
+    const to    = (toY && toM)     ? `${toY}-${toM}`     : '';
+    if(from) filtered = filtered.filter(h=>h.ref>=from);
+    if(to)   filtered = filtered.filter(h=>h.ref<=to);
+  }
+
+  const filteredRev = [...filtered].reverse();
+
+  // --- debt block ---
+  const fin = getTenantFinancials(t);
   let debtBlock = '';
   if(fin.totalDue && (st==='inadimplente'||st==='parcial')){
     debtBlock=`<div class="penalty-box">
@@ -3687,38 +3650,43 @@ function renderDetDebt(t, st, fin){
       <div class="penalty-row total"><span>Total a pagar hoje</span><span>${fmtBRL(fin.totalDue)}</span></div>
     </div>`;
   }
-  return debtBlock;
-}
 
-function buildDetSummary(filtered){
-  if(filtered.length===0) return '';
-
+  // --- summary totals for filtered period ---
   const totCobrado  = filtered.reduce((s,h)=>s+R(h.valorCobrado),0);
   const totPago     = filtered.reduce((s,h)=>s+R(h.valorPago),0);
+  const totAluguel  = filtered.reduce((s,h)=>s+R(h.aluguel),0);
+  const totEncargos = filtered.reduce((s,h)=>s+R(h.condo)+R(h.iptu)+R(h.lixo),0);
+  const totPenalties= filtered.reduce((s,h)=>s+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros),0);
   const totSaldo    = totCobrado - totPago;
   const mesesPagos  = filtered.filter(h=>h.status==='pago').length;
   const mesesInad   = filtered.filter(h=>h.status==='inadimplente'||h.status==='parcial').length;
 
-  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;">
-    <div style="background:var(--green-bg);border:1px solid var(--green-light);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
-      <div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.5px;">Recebido</div>
-      <div style="font-size:16px;font-weight:600;color:var(--green);margin-top:2px;">${fmtBRL(totPago)}</div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${mesesPagos} ${mesesPagos===1?'mês':'meses'} pagos</div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
-      <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Cobrado</div>
-      <div style="font-size:16px;font-weight:600;margin-top:2px;">${fmtBRL(totCobrado)}</div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${filtered.length} ${filtered.length===1?'mês':'meses'}</div>
-    </div>
-    <div style="background:${totSaldo>0?'var(--red-bg)':'var(--surface)'};border:1px solid ${totSaldo>0?'var(--red-light)':'var(--border)'};border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
-      <div style="font-size:10px;font-weight:600;color:${totSaldo>0?'var(--red)':'var(--text-faint)'};text-transform:uppercase;letter-spacing:.5px;">Saldo devedor</div>
-      <div style="font-size:16px;font-weight:600;color:${totSaldo>0?'var(--red)':'var(--text)'};margin-top:2px;">${fmtBRL(totSaldo)}</div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${mesesInad>0?mesesInad+' mês(es) em aberto':'Em dia'}</div>
-    </div>
-  </div>`;
-}
+  const periodLabel = detPeriod==='single'&&detHighRef ? monthName(detHighRef)
+    : detPeriod==='6m' ? 'Últimos 6 meses'
+    : detPeriod==='ano' ? `Ano ${TODAY.getFullYear()}`
+    : detPeriod==='custom' ? 'Período personalizado'
+    : 'Todo o período';
 
-function buildDetHistory(t, filtered, filteredRev){
+  const summaryBlock = filtered.length>0 ? `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;">
+      <div style="background:var(--green-bg);border:1px solid var(--green-light);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.5px;">Recebido</div>
+        <div style="font-size:16px;font-weight:600;color:var(--green);margin-top:2px;">${fmtBRL(totPago)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${mesesPagos} ${mesesPagos===1?'mês':'meses'} pagos</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;">Cobrado</div>
+        <div style="font-size:16px;font-weight:600;margin-top:2px;">${fmtBRL(totCobrado)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${filtered.length} ${filtered.length===1?'mês':'meses'}</div>
+      </div>
+      <div style="background:${totSaldo>0?'var(--red-bg)':'var(--surface)'};border:1px solid ${totSaldo>0?'var(--red-light)':'var(--border)'};border-radius:var(--radius-sm);padding:10px 12px;text-align:center;">
+        <div style="font-size:10px;font-weight:600;color:${totSaldo>0?'var(--red)':'var(--text-faint)'};text-transform:uppercase;letter-spacing:.5px;">Saldo devedor</div>
+        <div style="font-size:16px;font-weight:600;color:${totSaldo>0?'var(--red)':'var(--text)'};margin-top:2px;">${fmtBRL(totSaldo)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${mesesInad>0?mesesInad+' mês(es) em aberto':'Em dia'}</div>
+      </div>
+    </div>` : '';
+
+  // --- history rows ---
   const rows = filteredRev.map(h=>{
     const isHighlighted = h.ref === detHighRef;
     const st2     = h.status;
@@ -3808,13 +3776,7 @@ function buildDetHistory(t, filtered, filteredRev){
     </tr>`;
   }).join('');
 
-  const totAluguel  = filtered.reduce((s,h)=>s+R(h.aluguel),0);
-  const totEncargos = filtered.reduce((s,h)=>s+R(h.condo)+R(h.iptu)+R(h.lixo),0);
-  const totPenalties= filtered.reduce((s,h)=>s+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros),0);
-  const totCobrado  = filtered.reduce((s,h)=>s+R(h.valorCobrado),0);
-  const totPago     = filtered.reduce((s,h)=>s+R(h.valorPago),0);
-  const totSaldo    = totCobrado - totPago;
-
+  // totals footer row
   const footerRow = filtered.length>1 ? `<tr style="background:var(--bg);font-weight:600;font-size:12px;">
     <td>Totais (${filtered.length} meses)</td>
     <td class="r">${fmtBRL(totAluguel)}</td>
@@ -3824,65 +3786,6 @@ function buildDetHistory(t, filtered, filteredRev){
     <td class="r" style="color:var(--green);">${fmtBRL(totPago)}</td>
     <td class="r">${totSaldo>0?`<span class="pill inadimplente">${fmtBRL(totSaldo)}</span>`:`<span class="pill pago">Em dia</span>`}</td>
   </tr>` : '';
-
-  return { rows, footerRow };
-}
-
-function filterDetHistory(t){
-  const todayStr = TODAY.toISOString().split('T')[0].slice(0,7);
-  let filtered = [...t.history];
-
-  if(detPeriod === 'single' && detHighRef){
-    filtered = filtered.filter(h=>h.ref===detHighRef);
-    ['todos','6m','ano','custom'].forEach(p=>{
-      const el=document.getElementById('tab-'+p);
-      if(el) el.classList.remove('active');
-    });
-  } else if(detPeriod === '6m'){
-    const cutoff = (() => {
-      const[y,m]=todayStr.split('-');
-      let nm=parseInt(m)-5,ny=parseInt(y);
-      if(nm<1){nm+=12;ny--;}
-      return`${ny}-${String(nm).padStart(2,'0')}`;
-    })();
-    filtered = filtered.filter(h=>h.ref>=cutoff);
-  } else if(detPeriod === 'ano'){
-    const year = TODAY.getFullYear();
-    filtered = filtered.filter(h=>h.ref.startsWith(String(year)));
-  } else if(detPeriod === 'custom'){
-    const fromM = document.getElementById('det-from-m')?.value;
-    const fromY = document.getElementById('det-from-y')?.value;
-    const toM   = document.getElementById('det-to-m')?.value;
-    const toY   = document.getElementById('det-to-y')?.value;
-    const from  = (fromY && fromM) ? `${fromY}-${fromM}` : '';
-    const to    = (toY && toM)     ? `${toY}-${toM}`     : '';
-    if(from) filtered = filtered.filter(h=>h.ref>=from);
-    if(to)   filtered = filtered.filter(h=>h.ref<=to);
-  }
-
-  return filtered;
-}
-
-function renderDet(){
-  const t = tenants.find(x=>x.id===detTenantId);
-  if(!t||t.vago) return;
-
-  const st = statusOf(t);
-  renderDetHeader(t, st);
-
-  const filtered = filterDetHistory(t);
-  const filteredRev = [...filtered].reverse();
-
-  const fin = getTenantFinancials(t);
-  const debtBlock = renderDetDebt(t, st, fin);
-  const summaryBlock = buildDetSummary(filtered);
-  const { rows, footerRow } = buildDetHistory(t, filtered, filteredRev);
-
-  const periodLabel = detPeriod==='single'&&detHighRef ? monthName(detHighRef)
-    : detPeriod==='6m' ? 'Últimos 6 meses'
-    : detPeriod==='ano' ? `Ano ${TODAY.getFullYear()}`
-    : detPeriod==='custom' ? 'Período personalizado'
-    : 'Todo o período';
 
   const condoName = (condominios.find(c=>c.id===(t.condoId||activeCondoId))||condominios[0])?.nome||'—';
 
@@ -3920,7 +3823,7 @@ function renderDet(){
 }
 
 function closeDet(){
-  closeOverlay('det-overlay');
+  document.getElementById('det-overlay').classList.remove('open');
   detHighRef=null; detPeriod='todos';
 }
 
@@ -3937,7 +3840,7 @@ function openRegModal(presetId){
   }
   document.getElementById('rm-date').value=TODAY.toISOString().split('T')[0];
   onRegTenantChange();
-  openOverlay('reg-modal-overlay');
+  document.getElementById('reg-modal-overlay').classList.add('open');
 }
 function openRegFromDet(id){openRegModal(id);}
 function onRegTenantChange(){
@@ -3977,17 +3880,13 @@ function onRegTenantChange(){
     box.innerHTML=`<div style="font-size:12px;color:var(--green);">✓ Sem débitos anteriores — ${monthName(ref)} · Total: ${fmtBRL(R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo))}</div>`;
   }
 }
+function onRegValueChange(){}
 function saveRegModal(){
   const tid=parseInt(document.getElementById('rm-tenant').value);
   const ref=document.getElementById('rm-ref').value;
   const date=document.getElementById('rm-date').value;
   const value=document.getElementById('rm-value').value;
   if(!ref||!date||!value){alert('Preencha Referência, Data e Valor Pago.');return;}
-  const t=tenants.find(x=>x.id===tid);
-  const entry = t?.history.find(h=>h.ref===ref);
-  const oldStatus = entry ? entry.status : null;
-  const oldValorPago = entry ? entry.valorPago : 0;
-
   applyPayment(tid,ref,date,value,
     document.getElementById('rm-condo').value,
     document.getElementById('rm-iptu').value,
@@ -3995,17 +3894,8 @@ function saveRegModal(){
     document.getElementById('rm-multa').value,
     document.getElementById('rm-juros').value,
     document.getElementById('rm-obs').value);
-
-  // Registrar mudança de pagamento
-  if(t && entry && oldStatus){
-    const updatedEntry = t.history.find(h=>h.ref===ref);
-    if(updatedEntry){
-      SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.status`, oldStatus, updatedEntry.status);
-      SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.valorPago`, oldValorPago, updatedEntry.valorPago);
-    }
-  }
-
-  closeOverlay('reg-modal-overlay');
+  document.getElementById('reg-modal-overlay').classList.remove('open');
+  const t=tenants.find(x=>x.id===tid);
   saveToStorage();
   alert(`✓ Pagamento de ${t?.unit} registrado!\nStatus: ${statusOf(t)}`);
   if(regFromDetId){openDet(regFromDetId);regFromDetId=null;}
@@ -4054,7 +3944,7 @@ function openWpp(id){
     document.getElementById('wpp-juros').value='';
   }
   buildWpp();
-  openOverlay('wpp-overlay');
+  document.getElementById('wpp-overlay').classList.add('open');
 }
 function syncWppEdit(){
   document.getElementById('wpp-edit').value=document.getElementById('wpp-preview').textContent;
@@ -4233,7 +4123,7 @@ function loadCondoMonth(){
   document.getElementById('agua-data').value=e?e.aguaData:'';
   document.getElementById('energia-valor').value=e?e.energia:'';
   document.getElementById('energia-data').value=e?e.energiaData:'';
-  document.getElementById('limpeza-valor').value=e?(e.limpeza||LIMPEZA_PADRAO):330;
+  document.getElementById('limpeza-valor').value=e?(e.limpeza||330):330;
   document.getElementById('lixo-valor').value=e&&e.lixo?e.lixo:'';
   document.getElementById('iptu-valor').value=e&&e.iptu?e.iptu:'';
   document.getElementById('outras-valor').value=e&&e.outras?e.outras:'';
@@ -4249,17 +4139,8 @@ function saveCondoMonth(){
     limpeza:v.limpeza,lixo:v.lixo,iptu:v.iptu,outras:v.outras,
     obs:document.getElementById('condo-obs').value};
   const idx=condoHistory.findIndex(c=>c.ref===ref);
-  const oldEntry = idx>=0 ? JSON.parse(JSON.stringify(condoHistory[idx])) : null;
   if(idx>=0) condoHistory[idx]=entry; else condoHistory.push(entry);
   condoHistory.sort((a,b)=>a.ref.localeCompare(b.ref));
-
-  // Registrar mudança de condomínio
-  if(oldEntry){
-    SYNC_ENGINE.onChange(`condoHistories.${activeCondoId}.${ref}.agua`, oldEntry.agua, entry.agua);
-    SYNC_ENGINE.onChange(`condoHistories.${activeCondoId}.${ref}.energia`, oldEntry.energia, entry.energia);
-  } else {
-    SYNC_ENGINE.onChange(`condoHistories.${activeCondoId}.${ref}.agua`, null, entry.agua);
-  }
 
   // Condomínio de ref (ex: fev/26) é cobrado junto com aluguel de billingRef (ex: mar/26)
   // vencimento = dia fixo do próprio mês do aluguel (billingRef)
@@ -4281,16 +4162,11 @@ function saveCondoMonth(){
     }
     // vencimento: mês seguinte ou mês do aluguel, conforme config do condo
     const vencYM = getCondoVencYM(tCondoId, billingRef);
-    const oldCondo = h.condo;
     h.venc  = `${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
     h.condo = R2(v.porAptoRateavel);
     h.iptu  = iptuPerApto;
     h.lixo  = lixoPerApto;
     h.valorCobrado = R2(R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo)+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros));
-    // Registrar mudança de cobrança do inquilino
-    if(oldCondo !== h.condo){
-      SYNC_ENGINE.onChange(`tenants.${t.id}.history.${billingRef}.condo`, oldCondo, h.condo);
-    }
   });
 
   renderCondoHistory();
@@ -4679,7 +4555,7 @@ function printRepasse(propNome){
     </tfoot>
   </table>
   <div style="margin-top:28px;font-size:11px;color:#7a7268;border-top:1px solid #e2ddd6;padding-top:12px;display:flex;justify-content:space-between;">
-    <span>Lucas Prado Medeiros Perin · OWNER_CPF</span>
+    <span>Lucas Prado Medeiros Perin · CPF 702.738.471-04</span>
     <span>Gestão de Aluguéis</span>
   </div>
   <scr`+`ipt>window.onload=()=>window.print();</scr`+`ipt>
@@ -4794,7 +4670,7 @@ function openAddTenant(){
   document.getElementById('tenant-contr-fields').style.display='none';
   document.getElementById('tenant-contr-btn').textContent='▶ Dados para Contrato de Aluguel';
   tenantToggleFiadores();
-  openOverlay('add-tenant-overlay');
+  document.getElementById('add-tenant-overlay').classList.add('open');
 }
 
 function openEditTenant(id){
@@ -4825,11 +4701,11 @@ function openEditTenant(id){
   const mapF=[[0,['fi1-nome','nome'],['fi1-cpf','cpf'],['fi1-rg','rg'],['fi1-rg-orgao','rgOrgao'],['fi1-civil','estadoCivil'],['fi1-prof','profissao'],['fi1-tel','tel'],['fi1-end','endereco']],[1,['fi2-nome','nome'],['fi2-cpf','cpf'],['fi2-rg','rg'],['fi2-rg-orgao','rgOrgao'],['fi2-civil','estadoCivil'],['fi2-prof','profissao'],['fi2-tel','tel'],['fi2-end','endereco']]];
   mapF.forEach(([idx,...fields])=>{const f=fi[idx]||{};fields.forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.value=f[k]||'';});});
   tenantToggleFiadores();
-  openOverlay('add-tenant-overlay');
+  document.getElementById('add-tenant-overlay').classList.add('open');
 }
 
 function closeAddTenant(){
-  closeOverlay('add-tenant-overlay');
+  document.getElementById('add-tenant-overlay').classList.remove('open');
   editingTenantId = null;
 }
 
@@ -4860,8 +4736,6 @@ function saveTenant(){
   if(editingTenantId){
     const t = tenants.find(x=>x.id===editingTenantId);
     if(!t){ closeAddTenant(); return; }
-    const oldName = t.name;
-    const oldRent = t.rent;
     t.condoId   = condoId;
     t.imovelId  = imovelId;
     t.unit      = unit;
@@ -4875,19 +4749,13 @@ function saveTenant(){
     t.vencDia   = parseInt(document.getElementById('f-vencto').value)||5;
     t.cpf=document.getElementById('f-cpf').value||'';t.rg=document.getElementById('f-rg').value||'';t.rgOrgao=document.getElementById('f-rg-orgao').value||'';t.profissao=document.getElementById('f-profissao').value||'';t.endLoc=document.getElementById('f-end-loc').value||'';t.bairroLoc=document.getElementById('f-bairro-loc').value||'';t.cidadeUf=document.getElementById('f-cidade-uf').value||'';t.cepLoc=document.getElementById('f-cep-loc').value||'';t.emailLoc=document.getElementById('f-email-loc').value||'';t.nacionalidade=document.getElementById('f-nacionalidade').value||'brasileiro(a)';t.estadoCivil=document.getElementById('f-estado-civil').value||'solteiro(a)';
     t.fiadores=lerFiadoresForm();
-
-    // Registrar mudanças do inquilino
-    if(oldName !== t.name) SYNC_ENGINE.onChange(`tenants.${t.id}.name`, oldName, t.name);
-    if(oldRent !== t.rent) SYNC_ENGINE.onChange(`tenants.${t.id}.rent`, oldRent, t.rent);
-
     closeAddTenant();
     renderDashboard();
     saveToStorage();
     alert(`✓ ${t.name} atualizado!`);
   } else {
-    const tenantId = tenants.length ? Math.max(...tenants.map(x=>x.id))+1 : 1;
     const t = {
-      id: tenantId,
+      id: tenants.length ? Math.max(...tenants.map(x=>x.id))+1 : 1,
       condoId, imovelId, unit, name,
       tel:      document.getElementById('f-tel').value||'—',
       rent:     R(document.getElementById('f-rent').value),
@@ -4901,10 +4769,6 @@ function saveTenant(){
       history:  []
     };
     tenants.push(t);
-
-    // Registrar novo inquilino
-    SYNC_ENGINE.onChange(`tenants.${tenantId}.name`, null, name);
-
     closeAddTenant();
     renderDashboard();
     saveToStorage();
@@ -5268,9 +5132,9 @@ function abrirCliModal(id){
   }
   document.getElementById('hint-cla-cpf').textContent='';
   document.getElementById('hint-cla-cep').textContent='';
-  openOverlay('cli-modal-overlay');
+  document.getElementById('cli-modal-overlay').classList.add('open');
 }
-function fecharCliModal(){ closeOverlay('cli-modal-overlay'); }
+function fecharCliModal(){ document.getElementById('cli-modal-overlay').classList.remove('open'); }
 
 function salvarClienteAdv(){
   const nome=document.getElementById('cla-nome').value.trim().toUpperCase();
@@ -5354,9 +5218,9 @@ function abrirProcModal(id){
     document.getElementById('pra-status').value='em_andamento';
     document.getElementById('pra-data').value=new Date().toISOString().split('T')[0];
   }
-  openOverlay('proc-modal-overlay');
+  document.getElementById('proc-modal-overlay').classList.add('open');
 }
-function fecharProcModal(){ closeOverlay('proc-modal-overlay'); }
+function fecharProcModal(){ document.getElementById('proc-modal-overlay').classList.remove('open'); }
 
 function salvarProcessoAdv(){
   const tipo=document.getElementById('pra-tipo').value.trim();
@@ -5408,9 +5272,9 @@ function abrirContrModal(){
   document.getElementById('ctr-entrada-wrap').style.display='none';
   document.getElementById('ctr-preview').style.display='none';
   document.getElementById('hint-ctr-total').textContent='';
-  openOverlay('contr-modal-overlay');
+  document.getElementById('contr-modal-overlay').classList.add('open');
 }
-function fecharContrModal(){ closeOverlay('contr-modal-overlay'); }
+function fecharContrModal(){ document.getElementById('contr-modal-overlay').classList.remove('open'); }
 
 function recalcContr(){
   const forma=document.getElementById('ctr-forma').value;
@@ -5482,9 +5346,9 @@ function abrirPagModal(blocoId, parcelaIdx){
   document.getElementById('pga-valor').value=parseFloat(p.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
   document.getElementById('pga-data').value=new Date().toISOString().split('T')[0];
   document.getElementById('pga-obs').value='';
-  openOverlay('pag-modal-overlay');
+  document.getElementById('pag-modal-overlay').classList.add('open');
 }
-function fecharPagModal(){ closeOverlay('pag-modal-overlay'); }
+function fecharPagModal(){ document.getElementById('pag-modal-overlay').classList.remove('open'); }
 
 function confirmarPagamentoAdv(){
   const idx=clientesAdv.findIndex(x=>x.id===clienteAdvAtualId);
@@ -5626,9 +5490,9 @@ function abrirSvModal(id){
       recalcSv();
     }
   }
-  openOverlay('sv-modal-overlay');
+  document.getElementById('sv-modal-overlay').classList.add('open');
 }
-function fecharSvModal(){ closeOverlay('sv-modal-overlay'); }
+function fecharSvModal(){ document.getElementById('sv-modal-overlay').classList.remove('open'); }
 
 function salvarServicoAdv(){
   const tipoSel=document.getElementById('sva-tipo').value;
@@ -5828,9 +5692,9 @@ function abrirGerarDocModal(){
   document.getElementById('gd-diaVenc').value='5';
   ['gd-renda','gd-vinculo','gd-imovel-prop','gd-veiculo','gd-dependentes','gd-bens'].forEach(id=>{document.getElementById(id).value='';});
   gdToggleFields();
-  openOverlay('gerar-doc-modal-overlay');
+  document.getElementById('gerar-doc-modal-overlay').classList.add('open');
 }
-function fecharGerarDocModal(){closeOverlay('gerar-doc-modal-overlay');}
+function fecharGerarDocModal(){document.getElementById('gerar-doc-modal-overlay').classList.remove('open');}
 function gdToggleFields(){
   const hon=document.getElementById('gd-chk-hon').checked||document.getElementById('gd-chk-recibo').checked;
   document.getElementById('gd-sec-hon').style.display=hon?'block':'none';
@@ -6305,11 +6169,11 @@ function abrirDespesaModal(id){
     }
   }
   dpStatusChange();
-  openOverlay('despesa-modal-overlay');
+  document.getElementById('despesa-modal-overlay').classList.add('open');
 }
 
 function fecharDespesaModal(){
-  closeOverlay('despesa-modal-overlay');
+  document.getElementById('despesa-modal-overlay').classList.remove('open');
 }
 
 function salvarDespesaEscritorio(){
@@ -6497,9 +6361,9 @@ function abrirReceitaModal(id){
       document.getElementById('rp-data').value=r.data||hoje;
     }
   }
-  openOverlay('receita-modal-overlay');
+  document.getElementById('receita-modal-overlay').classList.add('open');
 }
-function fecharReceitaModal(){closeOverlay('receita-modal-overlay');}
+function fecharReceitaModal(){document.getElementById('receita-modal-overlay').classList.remove('open');}
 function salvarReceita(){
   const valor=document.getElementById('rp-valor').value.trim();
   const data=document.getElementById('rp-data').value;
@@ -7008,7 +6872,7 @@ function openRecibo(id){
   document.getElementById('rb-data').value = pago?.dataPagamento || TODAY.toISOString().split('T')[0];
   document.getElementById('rb-valor').value = pago ? R(pago.valorPago) : '';
   buildRecibo();
-  openOverlay('recibo-overlay');
+  document.getElementById('recibo-overlay').classList.add('open');
 }
 
 function buildRecibo(){
@@ -7219,11 +7083,11 @@ function printRecibo(){
 // PERSISTÊNCIA — localStorage + Google Drive
 // ============================================================
 const STORAGE_KEY = 'gestao_alugueis_v1';
-// Fase 1c: DRIVE_FILE_NAME removida (gerenciada por DRIVE_LOADER)
+const DRIVE_FILE_NAME = 'gestao_alugueis_dados.json';
 const GAPI_CLIENT_ID = '267608598510-h5f83cjjqe20qc8n9gqtrltvq5n1lb6o.apps.googleusercontent.com';
 const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
-// Fase 1c: driveFileId agora gerenciado por DRIVE_LOADER
+let driveFileId = null;
 let driveConnected = false;
 let gapiReady = false;
 let gisReady = false;
@@ -7298,66 +7162,66 @@ function saveToStorage(){
     setTimeout(()=>updateSaveStatus('Conecte o Drive para salvar na nuvem','var(--amber)'), 4000);
   }
 }
+function loadFromStorage(){ return loadFromLocalStorage(); }
 
-// Fase 1c: findDriveFile() removida (agora em DRIVE_LOADER.findFile())
+async function findDriveFile(){
+  const res = await gapi.client.drive.files.list({
+    spaces: 'appDataFolder',
+    fields: 'files(id,name)',
+    q: `name='${DRIVE_FILE_NAME}'`
+  });
+  const files = res.result.files;
+  return files && files.length ? files[0].id : null;
+}
 
 async function saveToDrive(){
   if(!driveConnected) return;
   try {
     updateSaveStatus('☁ Salvando no Drive…', 'var(--blue)');
-    const payload = getPayload();
-
-    // Fase 1c: Usar DRIVE_LOADER.uploadFile() ao invés de implementação duplicada
-    const success = await DRIVE_LOADER.uploadFile(payload);
-
-    if(success){
-      const now = new Date();
-      updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
-    } else {
-      updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)');
-    }
+    const payload = JSON.stringify(getPayload());
+    const metadata = { name: DRIVE_FILE_NAME, parents: driveFileId ? undefined : ['appDataFolder'] };
+    const boundary = '-------314159265358979323846';
+    const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${boundary}--`;
+    const method = driveFileId ? 'PATCH' : 'POST';
+    const url = driveFileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const res = await gapi.client.request({ method, path: url,
+      headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` }, body });
+    if(!driveFileId) driveFileId = res.result.id;
+    const now = new Date();
+    updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
   } catch(e){ console.warn('Erro ao salvar no Drive:', e); updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)'); }
 }
 
 async function loadFromDrive(){
   try {
     updateSaveStatus('☁ Carregando do Drive…', 'var(--blue)');
-
-    // Fase 1c: Usar DRIVE_LOADER.loadFromDrive() ao invés de implementação duplicada
-    const success = await DRIVE_LOADER.loadFromDrive();
-
-    if(success && window.DRIVE_DATA){
-      // Aplicar dados carregados do Drive
-      if(applyPayload(window.DRIVE_DATA)){
-        if(window.DRIVE_DATA.savedAt){
-          const d = new Date(window.DRIVE_DATA.savedAt);
-          updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
-        }
-        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
-        return true;
-      }
-    } else if(!success){
-      // Drive não tem arquivo ainda — envia os dados atuais
-      console.log('[loadFromDrive] Nenhum arquivo no Drive. Enviando dados iniciais…');
+    driveFileId = await findDriveFile();
+    if(!driveFileId){
+      // Drive não tem arquivo ainda — envia os dados atuais (importados da planilha)
+      console.log('Nenhum arquivo no Drive. Enviando dados iniciais…');
       await saveToDrive();
       updateSaveStatus('☁ Dados enviados ao Drive (primeira vez)', 'var(--green)');
       return true;
     }
-  } catch(e){ console.warn('[loadFromDrive] Erro:', e); updateSaveStatus('⚠ Erro ao carregar do Drive', 'var(--red)'); }
+    const res = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+    const data = typeof res.result === 'string' ? JSON.parse(res.result) : res.result;
+    if(applyPayload(data)){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if(data.savedAt){
+        const d = new Date(data.savedAt);
+        updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+      }
+      hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
+      return true;
+    }
+  } catch(e){ console.warn('Erro ao carregar do Drive:', e); updateSaveStatus('⚠ Erro ao carregar do Drive', 'var(--red)'); }
   return false;
 }
 
 function onDriveConnected(){
   driveConnected = true;
-
-  // Fase 1b: Notificar DRIVE_LOADER sobre conectividade
-  DRIVE_LOADER.onDriveConnected();
-
-  // Fase 2c: Notificar SYNC_ENGINE sobre conectividade
-  if(typeof SYNC_ENGINE !== 'undefined'){
-    SYNC_ENGINE.onDriveConnected();
-  }
-
   updateSaveStatus('☁ Drive conectado', 'var(--blue)');
   const btn = document.getElementById('btn-drive-connect');
   if(btn){ btn.innerHTML = '<span class="icon">☁</span> Drive ativo'; btn.style.color='var(--green)'; btn.style.background='var(--green-bg)'; btn.style.fontWeight='600'; }
@@ -7368,55 +7232,6 @@ function onDriveConnected(){
   window.addEventListener('beforeunload', ()=>{ if(driveConnected) saveToDrive(); });
 }
 
-function onDriveDisconnected(){
-  driveConnected = false;
-  if(typeof SYNC_ENGINE !== 'undefined'){
-    SYNC_ENGINE.onDriveDisconnected();
-  }
-  updateSaveStatus('💾 Desconectado - Dados salvos localmente', 'var(--text-faint)');
-}
-
-// Fase 2c: Atualizar indicador de status de sincronização
-function updateSyncStatus(){
-  if(typeof SYNC_ENGINE === 'undefined') return;
-
-  const status = SYNC_ENGINE.getStatus();
-  const statusEl = document.getElementById('sync-status');
-  if(!statusEl) return;
-
-  let indicator = '⏳';
-  let text = 'Sincronizando...';
-  let color = 'var(--blue)';
-
-  if(status.offline) {
-    indicator = '📱';
-    text = `Offline (${status.queueLength} mudança${status.queueLength !== 1 ? 's' : ''})`;
-    color = 'var(--amber)';
-  } else if(status.synced) {
-    indicator = '✓';
-    const age = SYNC_ENGINE.getLastSyncAge();
-    if(age) {
-      const seconds = Math.floor(age / 1000);
-      if(seconds < 60) {
-        text = `Sincronizado há ${seconds}s`;
-      } else {
-        const minutes = Math.floor(seconds / 60);
-        text = `Sincronizado há ${minutes}m`;
-      }
-    } else {
-      text = 'Sincronizado';
-    }
-    color = 'var(--green)';
-  } else if(status.state === 'ERROR') {
-    indicator = '⚠';
-    text = 'Erro na sincronização';
-    color = 'var(--red)';
-  }
-
-  statusEl.innerHTML = `<span style="font-size: 16px; margin-right: 6px;">${indicator}</span><span>${text}</span>`;
-  statusEl.style.color = color;
-}
-
 function connectDrive(){
   if(!gapiReady || !gisReady){ alert('Aguarde o carregamento das APIs Google.'); return; }
   tokenClient.requestAccessToken({ prompt: 'consent' });
@@ -7425,20 +7240,6 @@ function connectDrive(){
 function gapiLoaded(){
   gapi.load('client', async ()=>{
     await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-
-    // Fase 1b: Inicializar DRIVE_LOADER após gapi estar pronto
-    console.log('[init] Carregando dados via DRIVE_LOADER...');
-    await DRIVE_LOADER.init();
-    console.log('[init] Status:', DRIVE_LOADER.getStatus());
-
-    // Fase 2c: Inicializar SYNC_ENGINE após DRIVE_LOADER
-    console.log('[init] Carregando sincronização...');
-    await SYNC_ENGINE.init(DRIVE_LOADER, window.DRIVE_DATA);
-    console.log('[init] Sincronização pronta');
-
-    // Iniciar atualização de status de sincronização a cada segundo
-    setInterval(updateSyncStatus, 1000);
-
     gapiReady = true;
   });
 }
@@ -7519,7 +7320,7 @@ function toggleDarkMode(){
 applyDarkMode(localStorage.getItem('ga_dark') === '1');
 
 // INIT
-const _hadSavedData = loadFromLocalStorage();
+const _hadSavedData = loadFromStorage();
 if(!condoHistories['c1'] || !condoHistories['c1'].length) condoHistories['c1'] = [...condoHistory];
 tenants.forEach(t=>{ if(!t.condoId) t.condoId = 'c1'; });
 hydrateEntries();
