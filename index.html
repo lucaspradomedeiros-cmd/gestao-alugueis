@@ -7422,50 +7422,6 @@ function connectDrive(){
   tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-function gapiLoaded(){
-  gapi.load('client', async ()=>{
-    await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
-
-    // Fase 1b: Inicializar DRIVE_LOADER após gapi estar pronto
-    console.log('[init] Carregando dados via DRIVE_LOADER...');
-    await DRIVE_LOADER.init();
-    console.log('[init] Status:', DRIVE_LOADER.getStatus());
-
-    // Fase 2c: Inicializar SYNC_ENGINE após DRIVE_LOADER
-    console.log('[init] Carregando sincronização...');
-    await SYNC_ENGINE.init(DRIVE_LOADER, window.DRIVE_DATA);
-    console.log('[init] Sincronização pronta');
-
-    // Iniciar atualização de status de sincronização a cada segundo
-    setInterval(updateSyncStatus, 1000);
-
-    gapiReady = true;
-  });
-}
-
-function gisLoaded(){
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GAPI_CLIENT_ID,
-    scope: GAPI_SCOPES,
-    callback: (resp)=>{
-      if(resp.error){ console.warn('Erro OAuth:', resp); return; }
-      onDriveConnected();
-    }
-  });
-  gisReady = true;
-  // Auto-reconecta se já tinha token salvo
-  const saved = localStorage.getItem('ga_drive_token');
-  if(saved){
-    try {
-      const t = JSON.parse(saved);
-      if(t.expires_at > Date.now()){
-        gapi.client.setToken(t);
-        onDriveConnected();
-      }
-    } catch(e){}
-  }
-}
-
 // ── Backup manual ─────────────────────────────────────────────
 function exportBackup(){
   condoHistories[activeCondoId] = [...condoHistory];
@@ -7532,6 +7488,45 @@ if(!_hadSavedData) saveToStorage();
 setTimeout(()=>{
   if(!driveConnected) updateSaveStatus('⚠ Drive desconectado — clique em "Conectar Drive"', 'var(--amber)');
 }, 5000);
+</script>
+
+<!-- Definir callbacks ANTES de carregar os scripts Google -->
+<script>
+function gapiLoaded(){
+  gapi.load('client', async ()=>{
+    await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    console.log('[init] Carregando dados via DRIVE_LOADER...');
+    await DRIVE_LOADER.init();
+    console.log('[init] Status:', DRIVE_LOADER.getStatus());
+    console.log('[init] Carregando sincronização...');
+    await SYNC_ENGINE.init(DRIVE_LOADER, window.DRIVE_DATA);
+    console.log('[init] Sincronização pronta');
+    setInterval(updateSyncStatus, 1000);
+    gapiReady = true;
+  });
+}
+
+function gisLoaded(){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GAPI_CLIENT_ID,
+    scope: GAPI_SCOPES,
+    callback: (resp)=>{
+      if(resp.error){ console.warn('Erro OAuth:', resp); return; }
+      onDriveConnected();
+    }
+  });
+  gisReady = true;
+  const saved = localStorage.getItem('ga_drive_token');
+  if(saved){
+    try {
+      const t = JSON.parse(saved);
+      if(t.expires_at > Date.now()){
+        gapi.client.setToken(t);
+        onDriveConnected();
+      }
+    } catch(e){}
+  }
+}
 </script>
 
 <!-- Google APIs -->
