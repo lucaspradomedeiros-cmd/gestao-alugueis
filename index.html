@@ -2829,7 +2829,6 @@ function R2(n){return Math.round(n*100)/100;}
 // Return current status and penalty preview for a tenant's last open entry
 function getTenantFinancials(t){
   if(t.vago) return {status:'vago'};
-  const last = t.history[t.history.length-1];
   if(!last) return {status:'futuro'};
 
   // Already paid / futuro
@@ -3190,8 +3189,7 @@ function renderCardDashboard(t, container){
   }
 
   const fin = getTenantFinancials(t);
-  const last = t.history[t.history.length-1];
-  const stLabel = {pago:'Em dia',pendente:'Pendente',inadimplente:'Inadimplente',parcial:'Parcial',futuro:'A vencer'}[st]||st;
+  const stLabel = STATUS_LABELS[st]||st;
   const e = getEntryForDisplay(t);
   const condoBadge = (()=>{
     const c = condominios.find(x=>x.id===(t.condoId||activeCondoId));
@@ -3266,8 +3264,7 @@ function renderCard(t, container){
   }
 
   const fin = getTenantFinancials(t);
-  const last = t.history[t.history.length-1];
-  const stLabel={pago:'Em dia',pendente:'Pendente',inadimplente:'Inadimplente',parcial:'Parcial',futuro:'A vencer'}[st]||st;
+  const stLabel=STATUS_LABELS[st]||st;
 
   // --- current month billing entry (the open/latest one) ---
   // find the latest non-paid entry, or the last entry
@@ -3666,7 +3663,7 @@ function renderDet(){
   if(!t||t.vago) return;
 
   const st = statusOf(t);
-  const stLabel = {pago:'Em dia',pendente:'Pendente',inadimplente:'Inadimplente',parcial:'Parcial',futuro:'A vencer'}[st]||st;
+  const stLabel = STATUS_LABELS[st]||st;
   document.getElementById('d-unit').textContent = t.unit;
   document.getElementById('d-name').textContent = t.name;
   document.getElementById('d-badges').innerHTML = `
@@ -3957,7 +3954,6 @@ function onRegTenantChange(){
     box.innerHTML=`<div style="font-size:12px;color:var(--green);">✓ Sem débitos anteriores — ${monthName(ref)} · Total: ${fmtBRL(R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo))}</div>`;
   }
 }
-function onRegValueChange(){}
 function saveRegModal(){
   const tid=parseInt(document.getElementById('rm-tenant').value);
   const ref=document.getElementById('rm-ref').value;
@@ -7279,7 +7275,6 @@ function saveToStorage(){
     setTimeout(()=>updateSaveStatus('Conecte o Drive para salvar na nuvem','var(--amber)'), 4000);
   }
 }
-function loadFromStorage(){ return loadFromLocalStorage(); }
 
 // Fase 1c: findDriveFile() removida (agora em DRIVE_LOADER.findFile())
 
@@ -7501,7 +7496,7 @@ function toggleDarkMode(){
 applyDarkMode(localStorage.getItem('ga_dark') === '1');
 
 // INIT
-const _hadSavedData = loadFromStorage();
+const _hadSavedData = loadFromLocalStorage();
 if(!condoHistories['c1'] || !condoHistories['c1'].length) condoHistories['c1'] = [...condoHistory];
 tenants.forEach(t=>{ if(!t.condoId) t.condoId = 'c1'; });
 hydrateEntries();
