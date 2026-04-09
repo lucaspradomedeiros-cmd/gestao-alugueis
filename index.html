@@ -2337,7 +2337,7 @@ function openEditCondo(){
   document.getElementById('cm-uc-agua').value = c.ucAgua||'';
   document.getElementById('cm-uc-energia').value = c.ucEnergia||'';
   document.getElementById('cm-units').value = c.units.join(', ');
-  document.getElementById('cm-limpeza').value = c.limpezaPadrao||330;
+  document.getElementById('cm-limpeza').value = c.limpezaPadrao||LIMPEZA_PADRAO;
   document.getElementById('cm-venc-prox').checked = c.vencMesSeguinte !== false;
   const tx = getCondoTaxas(c.id);
   ['agua','energia','limpeza','lixo','iptu','outras'].forEach(item=>{
@@ -2373,7 +2373,7 @@ function saveCondoModal(){
     c.ucAgua = document.getElementById('cm-uc-agua').value.trim();
     c.ucEnergia = document.getElementById('cm-uc-energia').value.trim();
     c.units = units;
-    c.limpezaPadrao = parseFloat(document.getElementById('cm-limpeza').value)||330;
+    c.limpezaPadrao = parseFloat(document.getElementById('cm-limpeza').value)||LIMPEZA_PADRAO;
     c.vencMesSeguinte = document.getElementById('cm-venc-prox').checked;
     c.taxas = taxasFromModal;
     if(c.id===activeCondoId){
@@ -2390,7 +2390,7 @@ function saveCondoModal(){
       endereco: document.getElementById('cm-end').value.trim(),
       ucAgua: document.getElementById('cm-uc-agua').value.trim(),
       ucEnergia: document.getElementById('cm-uc-energia').value.trim(),
-      units, limpezaPadrao: parseFloat(document.getElementById('cm-limpeza').value)||330,
+      units, limpezaPadrao: parseFloat(document.getElementById('cm-limpeza').value)||LIMPEZA_PADRAO,
       vencMesSeguinte: document.getElementById('cm-venc-prox').checked,
       taxas: taxasFromModal
     });
@@ -2628,7 +2628,7 @@ function printCondoReport(){
     ${detailPerMonth?`<div style="font-family:Georgia,serif;font-size:14px;font-weight:bold;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #E2DDD6;">Detalhes por Mês</div>${detailPerMonth}`:''}
     <div class="footer">
       <div>Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}</div>
-      <div>Lucas Prado Medeiros Perin · CPF 702.738.471-04</div>
+      <div>Lucas Prado Medeiros Perin · OWNER_CPF</div>
     </div>
     <div style="margin-top:32px;text-align:right;"><div class="signature-line">Assinatura do responsável</div></div>
   </div>
@@ -2670,8 +2670,25 @@ function applyTaxa(valor, cfg){
   return cfg.aplicar ? R2(valor * (cfg.pct / 100)) : 0;
 }
 const MN         = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const PIX_NAME   = 'Lucas Prado Medeiros Perin';
-const PIX_KEY    = 'CPF 702.738.471-04';
+const OWNER_NAME = 'Lucas Prado Medeiros Perin';
+const OWNER_CPF  = 'CPF 702.738.471-04';
+const PIX_NAME   = OWNER_NAME;  // Mesmo do locador
+const PIX_KEY    = OWNER_CPF;   // Mesmo do locador
+
+// Status de pagamento — labels para UI
+const STATUS_LABELS = {
+  pago: 'Em dia',
+  pendente: 'Pendente',
+  inadimplente: 'Inadimplente',
+  parcial: 'Parcial',
+  futuro: 'A vencer',
+  vago: 'Vago'
+};
+
+// Constantes financeiras
+const LIMPEZA_PADRAO = 330;  // Valor padrão de limpeza em condomínio
+const MULTA_RATE = 0.10;     // 10% de multa por atraso
+const COMISSAO_RATE = 0.10;  // 10% taxa administrativa padrão
 
 // ============================================================
 // DATA MODEL
@@ -4178,7 +4195,7 @@ function loadCondoMonth(){
   document.getElementById('agua-data').value=e?e.aguaData:'';
   document.getElementById('energia-valor').value=e?e.energia:'';
   document.getElementById('energia-data').value=e?e.energiaData:'';
-  document.getElementById('limpeza-valor').value=e?(e.limpeza||330):330;
+  document.getElementById('limpeza-valor').value=e?(e.limpeza||LIMPEZA_PADRAO):330;
   document.getElementById('lixo-valor').value=e&&e.lixo?e.lixo:'';
   document.getElementById('iptu-valor').value=e&&e.iptu?e.iptu:'';
   document.getElementById('outras-valor').value=e&&e.outras?e.outras:'';
@@ -4624,7 +4641,7 @@ function printRepasse(propNome){
     </tfoot>
   </table>
   <div style="margin-top:28px;font-size:11px;color:#7a7268;border-top:1px solid #e2ddd6;padding-top:12px;display:flex;justify-content:space-between;">
-    <span>Lucas Prado Medeiros Perin · CPF 702.738.471-04</span>
+    <span>Lucas Prado Medeiros Perin · OWNER_CPF</span>
     <span>Gestão de Aluguéis</span>
   </div>
   <scr`+`ipt>window.onload=()=>window.print();</scr`+`ipt>
