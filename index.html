@@ -2301,6 +2301,7 @@ function renderCondoSwitcher(){
 
 function renderCondoInfoBar(){
   const c = getActiveCondo();
+  if(!c || !c.units) return;  // Guard: sem condomínio = sair
   const units = c.units.length;
   document.getElementById('cib-nome').textContent = c.nome;
   document.getElementById('cib-end').textContent = c.endereco||'—';
