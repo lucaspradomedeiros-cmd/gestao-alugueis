@@ -7225,9 +7225,7 @@ const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
 // Fase 1c: driveFileId agora gerenciado por DRIVE_LOADER
 let driveConnected = false;
-let gapiReady = false;
-let gisReady = false;
-let tokenClient = null;
+// gapiReady, gisReady, tokenClient movidos para tag <script> antes dos APIs Google
 
 // ── localStorage ──────────────────────────────────────────────
 function getPayload(){
@@ -7487,6 +7485,10 @@ setTimeout(()=>{
 
 <!-- Definir callbacks ANTES de carregar os scripts Google -->
 <script>
+let gapiReady = false;
+let gisReady = false;
+let tokenClient = null;
+
 function gapiLoaded(){
   gapi.load('client', async ()=>{
     await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
