@@ -7417,11 +7417,6 @@ function updateSyncStatus(){
   statusEl.style.color = color;
 }
 
-function connectDrive(){
-  if(!gapiReady || !gisReady){ alert('Aguarde o carregamento das APIs Google.'); return; }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-}
-
 // ── Backup manual ─────────────────────────────────────────────
 function exportBackup(){
   condoHistories[activeCondoId] = [...condoHistory];
@@ -7526,6 +7521,11 @@ function gisLoaded(){
       }
     } catch(e){}
   }
+}
+
+function connectDrive(){
+  if(!gapiReady || !gisReady){ alert('Aguarde o carregamento das APIs Google.'); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 </script>
 
