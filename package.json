@@ -1,0 +1,17 @@
+{
+  "name": "gestao-alugueis-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E tests for gestao-alugueis property management app",
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:headed": "cypress run --headed",
+    "serve": "serve . -p 3000",
+    "test": "serve . -p 3000 & sleep 2 && cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.17.0",
+    "serve": "^14.2.4"
+  }
+}
