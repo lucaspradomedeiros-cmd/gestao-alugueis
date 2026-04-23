@@ -2,8 +2,6 @@
 // GLOBAL STATE VARIABLES
 // ============================================================
 
-const APP_VERSION = 'v2.0.0';
-
 // Imoveis
 let imoveis = [];
 let despesasEscritorio = [];
@@ -104,4 +102,3 @@ const STATUS_LABELS = {
 };
 
 const LIMPEZA_PADRAO = 330;
-const COMISSAO_RATE = 0.10;
