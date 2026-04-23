@@ -66,6 +66,8 @@
 }
 </style>
 <script src="js/auth.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
 <style>
 :root{
   --bg:#F5F3EE;--surface:#FDFCF9;--border:#E2DDD6;--border-strong:#C8C1B7;
@@ -1739,15 +1741,6 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 //           despesas: [ { id, desc, cat, valor, resp, recorr:'unico'|'mensal'|'parcelado',
 //                         parcelas?, valorParcela?, inicio, fim?, obs, ativo } ] }
 
-let imoveis = [];
-let despesasEscritorio = [];
-let receitasEscritorio = [];
-let clientesAdv = [];
-let editingImovelId = null;
-let editingDespId   = null;
-let idetImovelId    = null;
-let idetTab         = 'despesas';
-
 // ── helpers ──────────────────────────────────────────────────
 function getImovel(id){ return imoveis.find(x=>x.id===id); }
 
@@ -2211,10 +2204,6 @@ function renderIdetBody(){
 // Each condo has its own condoHistory stored in condoHistories[id]
 // The legacy `condoHistory` and `CONDO_UNITS` remain as the "active" condo's data
 
-let condominios = [];  // Dados carregados via localStorage/Drive via applyPayload()
-let condoHistories = {}; // id -> array of condo month entries (populated from condoHistory below)
-let activeCondoId = 'c1';
-
 function getActiveCondo(){ return condominios.find(c=>c.id===activeCondoId)||condominios[0]; }
 function getActiveCondoHistory(){ return condoHistories[activeCondoId]||(condoHistories[activeCondoId]=[]); }
 
@@ -2254,7 +2243,6 @@ function renderCondoInfoBar(){
 }
 
 // ADD / EDIT CONDO MODAL
-let editingCondoId = null;
 function openAddCondo(){
   editingCondoId = null;
   document.getElementById('condo-modal-title').textContent = 'Novo Condomínio';
@@ -2586,52 +2574,6 @@ function printCondoReport(){
 // ============================================================
 // CONSTANTS
 // ============================================================
-const TODAY      = new Date();
-let CONDO_UNITS= [];  // Populado por applyPayload() via condominios[x].units
-const TAX        = 0.10; // fallback legado
-const MULTA_RATE = 0.10;      // 10% flat
-const JUROS_RATE = 0.01/30;   // 1% ao mês = ~0.0333% ao dia
-
-// Retorna configuração de taxas do condomínio, com defaults de 10% para itens sem config
-function getCondoTaxas(condoId){
-  const c = condominios.find(x=>x.id===(condoId||activeCondoId));
-  const def = { aplicar: true, pct: 10 };
-  const t = c?.taxas || {};
-  return {
-    agua:    { ...def, ...(t.agua||{}) },
-    energia: { ...def, ...(t.energia||{}) },
-    limpeza: { ...def, ...(t.limpeza||{}) },
-    lixo:    { ...def, ...(t.lixo||{}) },
-    iptu:    { ...def, ...(t.iptu||{}) },
-    outras:  { ...def, ...(t.outras||{}) }
-  };
-}
-
-// Aplica taxa sobre um valor conforme config do item
-function applyTaxa(valor, cfg){
-  return cfg.aplicar ? R2(valor * (cfg.pct / 100)) : 0;
-}
-const MN         = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const OWNER_NAME = 'Lucas Prado Medeiros Perin';
-const OWNER_CPF  = 'CPF 702.738.471-04';
-const PIX_NAME   = OWNER_NAME;  // Mesmo do locador
-const PIX_KEY    = OWNER_CPF;   // Mesmo do locador
-
-// Status de pagamento — labels para UI
-const STATUS_LABELS = {
-  pago: 'Em dia',
-  pendente: 'Pendente',
-  inadimplente: 'Inadimplente',
-  parcial: 'Parcial',
-  futuro: 'A vencer',
-  vago: 'Vago'
-};
-
-// Constantes financeiras
-const LIMPEZA_PADRAO = 330;  // Valor padrão de limpeza em condomínio
-const COMISSAO_RATE = 0.10;  // 10% taxa administrativa padrão
-
-// ============================================================
 // UTILITY FUNCTIONS
 // ============================================================
 
@@ -2678,23 +2620,6 @@ function closeOverlay(id){
 //   status: 'pago'|'parcial'|'inadimplente'|'pendente'|'futuro'
 // }
 // ============================================================
-let condoHistory = [];  // Dados carregados via localStorage/Drive via applyPayload()
-
-let tenants = [];  // Dados carregados via localStorage/Drive via applyPayload()
-
-// ============================================================
-// HELPERS
-// ============================================================
-function R(v){return typeof v==='number'?v:parseFloat(v)||0;}
-function fmtBRL(v){if(v===null||v===undefined||v==='')return'—';return'R$ '+R(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function numBRL(v){return R(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fmtDate(s){if(!s)return'—';const p=s.split('-');if(p.length===3)return`${p[2]}/${p[1]}/${p[0]}`;if(p.length===2)return`${p[1]}/${p[0]}`;return s;}
-function initials(n){const p=n.trim().split(' ').filter(x=>x.length>1);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():n.slice(0,2).toUpperCase();}
-function monthName(ref){if(!ref)return'—';const[y,m]=ref.split('-');return`${MN[parseInt(m)]} ${y}`;}
-function nextMonth(ref){const[y,m]=ref.split('-');let nm=parseInt(m)+1,ny=parseInt(y);if(nm>12){nm=1;ny++;}return`${ny}-${String(nm).padStart(2,'0')}`;}
-function daysUntilReajuste(t){if(!t.reajuste)return null;return Math.round((new Date(t.reajuste)-TODAY)/86400000);}
-function daysDiff(d1,d2){return Math.round((new Date(d2)-new Date(d1))/86400000);}
-function totalExtras(h){return h&&h.extras?h.extras.reduce((s,e)=>s+R(e.valor),0):0;}
 
 // Hydrate entries that have condo=0 but condoHistory has data for the previous month
 // Also ensure all entries have extras:[]
@@ -2957,8 +2882,6 @@ function _rollPenalties(t, ref, base, daysLate){
 // ============================================================
 // EDIT / UNDO PAYMENT
 // ============================================================
-let editPayTenantId = null;
-let editPayRef = null;
 
 function _resetPaymentEntry(t, ref){
   const entry = t.history.find(h=>h.ref===ref);
@@ -3538,9 +3461,6 @@ function renderDashboard(){
 // ============================================================
 // DETAIL PANEL
 // ============================================================
-let detTenantId = null;
-let detPeriod   = 'todos';
-let detHighRef  = null; // highlighted month ref from dot click
 
 function openDet(id, highlightRef){
   detTenantId = id;
@@ -3869,7 +3789,6 @@ function closeDet(){
 // ============================================================
 // REGISTER PAYMENT MODAL (global)
 // ============================================================
-let regFromDetId=null;
 function openRegModal(presetId){
   const sel=document.getElementById('rm-tenant');
   sel.innerHTML=tenants.filter(t=>!t.vago).map(t=>`<option value="${t.id}">${t.unit} — ${t.name.split(' ')[0]}</option>`).join('');
@@ -3956,7 +3875,6 @@ function saveRegModal(){
 // ============================================================
 // WHATSAPP
 // ============================================================
-let wppTid=null;
 function openWpp(id){
   const t=tenants.find(x=>x.id===id);if(!t||t.vago)return;
   wppTid=id;
@@ -4366,7 +4284,6 @@ function renderReajustes(){
 // ============================================================
 // REPORT
 // ============================================================
-let activeReportTab = 'receitas';
 
 function showReportTab(tab){
   activeReportTab = tab;
@@ -4641,8 +4558,6 @@ function printRelatorioImovel(){
 // ============================================================
 // ADD / EDIT TENANT
 // ============================================================
-let editingTenantId = null;
-
 function populateTenantUnitSelectAll(selectedVal){
   const sel = document.getElementById('f-unit-sel');
   sel.innerHTML = '';
@@ -4890,12 +4805,6 @@ const PROC_STATUS_LABEL = {
 const DOC_ICONS = {procuracao:'📜', honorarios:'📋', hipossuficiencia:'📝', recibo:'🧾', contrato_aluguel:'🏠'};
 const DOC_NOMES = {procuracao:'Procuração', honorarios:'Contrato de Honorários', hipossuficiencia:'Hipossuficiência', recibo:'Recibo', contrato_aluguel:'Contrato de Aluguel'};
 
-let clienteAdvAtualId = null;
-let _editCliId = null;
-let _editProcId = null;
-let _editSvId = null;
-let _pagBlocoId = null;
-let _pagIdx = null;
 
 // ── Helpers ──────────────────────────────────────────────────
 function formatarCPF(input){
@@ -5750,7 +5659,6 @@ function docxDownload(blob,nome){
 }
 
 // ── GERAR DOCUMENTOS ADVOCATÍCIOS ─────────────────────────
-let _gerarDocClienteId=null;
 function abrirGerarDocModal(){
   _gerarDocClienteId=clienteAdvAtualId;
   if(!_gerarDocClienteId){gaToast('Abra a ficha de um cliente primeiro.','error');return;}
@@ -6196,7 +6104,6 @@ async function docxBuildContrato(t,im){
 // ============================================================
 // TOAST
 // ============================================================
-let _gaToastTimer = null;
 function gaToast(msg, tipo='success'){
   const el = document.getElementById('ga-toast');
   if(!el) return;
@@ -6211,7 +6118,6 @@ function gaToast(msg, tipo='success'){
 // DESPESAS DO ESCRITÓRIO
 // ============================================================
 const DESP_TIPO_LABEL = {fixa:'Fixa',variavel:'Variável',pessoal:'Pessoal',outra:'Outra'};
-let _editandoDespId = null;
 
 function dpStatusChange(){
   const status=document.getElementById('dp-status').value;
@@ -6364,12 +6270,6 @@ function renderDespesas(){
 // ============================================================
 // FASE 4 — FINANCEIRO DO ESCRITÓRIO
 // ============================================================
-let _finTab = 'despesas';
-let _editandoRecId = null;
-let _areceberFiltro = 'todas';
-let _resultadoDetalhado = false;
-let _compAno = new Date().getFullYear();
-let _compChart = null;
 
 function getMesFiltro(){
   const el=document.getElementById('desp-filtro-mes');
@@ -6935,7 +6835,6 @@ function renderDashboardEscritorio(){
 // ============================================================
 // RECIBO
 // ============================================================
-let reciboTid = null;
 
 function openRecibo(id){
   const t = tenants.find(x=>x.id===id);
@@ -7164,7 +7063,6 @@ const STORAGE_KEY = 'gestao_alugueis_v1';
 // GAPI_CLIENT_ID e GAPI_SCOPES movidos para tag <script> com funções Google
 
 // Fase 1c: driveFileId agora gerenciado por DRIVE_LOADER
-let driveConnected = false;
 // gapiReady, gisReady, tokenClient movidos para tag <script> antes dos APIs Google
 
 // ── localStorage ──────────────────────────────────────────────
@@ -7225,7 +7123,6 @@ function loadFromLocalStorage(){
 
 // ── Google Drive ──────────────────────────────────────────────
 // Drive é a fonte principal. localStorage serve como cache local.
-let _driveDebounce = null;
 function saveToStorage(){
   saveToLocalStorage();
   if(driveConnected){
@@ -7392,9 +7289,6 @@ const GAPI_CLIENT_ID = '267608598510-h5f83cjjqe20qc8n9gqtrltvq5n1lb6o.apps.googl
 const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
 // Variáveis globais
-let gapiReady = false;
-let gisReady = false;
-let tokenClient = null;
 
 function gapiLoaded(){
   gapi.load('client', async ()=>{
