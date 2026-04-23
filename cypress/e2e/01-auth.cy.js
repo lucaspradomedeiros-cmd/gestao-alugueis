@@ -15,7 +15,7 @@ describe('Login Flow', () => {
   it('shows dashboard immediately after auth bypass', () => {
     cy.visitApp()
     // All main UI should be visible
-    cy.get('.navbar').should('be.visible')
+    cy.get('.topbar').should('be.visible')
     cy.get('.sidebar').should('be.visible')
     cy.get('#page-dashboard').should('be.visible')
   })

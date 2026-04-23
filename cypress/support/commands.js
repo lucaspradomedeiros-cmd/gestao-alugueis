@@ -56,7 +56,7 @@ Cypress.Commands.add('visitApp', (options = {}) => {
  * pageId matches showPage() argument: 'imoveis', 'tenants', 'alerts', etc.
  */
 Cypress.Commands.add('navigateTo', (pageId) => {
-  cy.get(`[onclick="showPage('${pageId}')"]`).click()
+  cy.get(`[onclick="showPage('${pageId}')"]`).first().click()
   cy.get(`#page-${pageId}`).should('have.class', 'active')
 })
 

@@ -3269,7 +3269,7 @@ function renderCard(t, container){
 
   // --- current month billing entry (the open/latest one) ---
   // find the latest non-paid entry, or the last entry
-  const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago') || last;
+  const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago') || t.history[t.history.length - 1];
 
   // History dots (last 6) — clickable, show extrato for that month
   const histHTML = renderHistDots(t);
