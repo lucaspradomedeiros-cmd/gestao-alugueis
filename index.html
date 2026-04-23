@@ -180,7 +180,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .cobr-field{display:flex;flex-direction:column;gap:3px;}
 .cobr-label{font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;}
 .cobr-inp{padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);width:100%;text-align:right;}
-.cobr-inp:focus{outline:none;border-color:var(--blue);}
+.cobr-inp:focus{border-color:var(--blue);}
 /* DETAIL PANEL */
 .det-overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;}
 .det-overlay.open{opacity:1;pointer-events:all;align-items:flex-start;justify-content:flex-end;}
@@ -222,7 +222,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .reg-grid.four{grid-template-columns:1fr 1fr 1fr 1fr;}
 .fi label{display:block;font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
 .fi input,.fi select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);}
-.fi input:focus,.fi select:focus{outline:none;border-color:var(--blue);}
+.fi input:focus,.fi select:focus{border-color:var(--blue);}
 .fi input.hi{border-color:var(--amber-light);background:var(--amber-bg);}
 /* ALERTS */
 .alert-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
@@ -261,7 +261,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .exp-lbl{font-size:13px;}
 .exp-sub{font-size:11px;color:var(--text-muted);}
 .exp-inp{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);width:100%;text-align:right;transition:border .15s;}
-.exp-inp:focus{outline:none;border-color:var(--blue);background:var(--surface);}
+.exp-inp:focus{border-color:var(--blue);background:var(--surface);}
 .exp-inp.hi{border-color:var(--blue-light);background:var(--blue-bg);}
 .dt-inp{padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-muted);background:var(--bg);width:100%;}
 /* RESULTADO */
@@ -339,7 +339,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .cli-badge.azul{background:var(--blue-bg);color:var(--blue);border:1px solid #b3d4f8;}
 .cli-badge.ouro{background:#FFF8E7;color:#B8790A;border:1px solid #FAEAB1;}
 .search-input{width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);margin-bottom:16px;}
-.search-input:focus{outline:none;border-color:var(--green);}
+.search-input:focus{border-color:var(--green);}
 .adv-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto;}
 .adv-tab{padding:9px 16px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .15s;}
 .adv-tab:hover{color:var(--text);}
@@ -396,7 +396,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .mfield{margin-bottom:12px;}
 .mfield label{display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
 .mfield input,.mfield select,.mfield textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);}
-.mfield input:focus,.mfield select:focus,.mfield textarea:focus{outline:none;border-color:var(--green);}
+.mfield input:focus,.mfield select:focus,.mfield textarea:focus{border-color:var(--green);}
 .mfooter{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
 .page{display:none;}
 .page.active{display:block;}
@@ -505,6 +505,27 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
     transition-duration:.01ms !important;
   }
 }
+
+/* ── BUTTON STATES ── */
+.btn:active { transform:translateY(1px); box-shadow:none; }
+.btn:disabled, .btn[disabled] { opacity:.45; cursor:not-allowed; pointer-events:none; }
+
+/* ── FOCUS-VISIBLE: Inputs ── */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
+/* ── FOCUS-VISIBLE: Buttons & Nav ── */
+.btn:focus-visible, .nav-item:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* ── SCROLLBAR: Custom webkit scrollbar ── */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--text-faint); }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
