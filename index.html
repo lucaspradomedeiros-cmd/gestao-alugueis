@@ -182,8 +182,8 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .cobr-inp{padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);width:100%;text-align:right;}
 .cobr-inp:focus{outline:none;border-color:var(--blue);}
 /* DETAIL PANEL */
-.det-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;backdrop-filter:blur(2px);}
-.det-overlay.open{display:flex;align-items:flex-start;justify-content:flex-end;}
+.det-overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;}
+.det-overlay.open{opacity:1;pointer-events:all;align-items:flex-start;justify-content:flex-end;}
 .det-panel{background:var(--surface);width:620px;max-width:93vw;height:100vh;overflow-y:auto;border-left:1px solid var(--border);}
 .det-header{background:var(--surface);padding:22px 26px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;}
 .det-close{position:absolute;top:18px;right:18px;background:var(--bg);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;}
@@ -387,8 +387,8 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .btn-wpp:hover{background:#1DA851;}
 .wpp-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 15px;font-size:13px;line-height:1.75;white-space:pre-wrap;margin:10px 0;}
 /* MODAIS */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;}
-.overlay.open{display:flex;}
+.overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;}
+/* opacity and pointer-events handled by animation rules below */
 .modal{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:26px;width:520px;max-width:95vw;max-height:92vh;overflow-y:auto;}
 .modal.wide{width:580px;}
 .modal-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:18px;}
@@ -474,6 +474,36 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   .summary-grid{grid-template-columns:1fr;}
   .tenants-grid{grid-template-columns:1fr;}
   .det-panel{width:100%;}
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes slideUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+
+/* ── MODALS: Fade in/out via opacity ── */
+.overlay { opacity:0; pointer-events:none; transition: opacity .2s; }
+.overlay.open { opacity:1; pointer-events:all; }
+.overlay.open .modal { animation: slideUp .2s ease; }
+
+/* ── DETAIL PANEL: Slide from right ── */
+.det-overlay .det-panel { opacity:0; transform:translateX(30px); transition: opacity .25s, transform .25s ease; }
+.det-overlay.open .det-panel { opacity:1; transform:translateX(0); }
+
+/* ── TENANT CARDS: Staggered entrance ── */
+.tenant-card { animation: slideUp .3s ease both; }
+.tenant-card:nth-child(1) { animation-delay:.02s }
+.tenant-card:nth-child(2) { animation-delay:.05s }
+.tenant-card:nth-child(3) { animation-delay:.08s }
+.tenant-card:nth-child(4) { animation-delay:.11s }
+.tenant-card:nth-child(5) { animation-delay:.14s }
+.tenant-card:nth-child(6) { animation-delay:.17s }
+
+/* ── ACCESSIBILITY: Respect reduced motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:.01ms !important;
+    transition-duration:.01ms !important;
+  }
 }
 
 </style>
