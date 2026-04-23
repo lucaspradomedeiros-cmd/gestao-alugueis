@@ -76,6 +76,12 @@
 <script src="js/payment-modal.js"></script>
 <script src="js/whatsapp.js"></script>
 <script src="js/report.js"></script>
+<script src="js/tenant-modal.js"></script>
+<script src="js/navigation.js"></script>
+<script src="js/clientes-adv.js"></script>
+<script src="js/doc-gen.js"></script>
+<script src="js/financeiro.js"></script>
+<script src="js/recibo.js"></script>
 <style>
 :root{
   --bg:#F5F3EE;--surface:#FDFCF9;--border:#E2DDD6;--border-strong:#C8C1B7;
@@ -4591,38 +4597,10 @@ function saveTenant(){
 }
 
 // ============================================================
-// NAV
+// Navigation — moved to js/navigation.js
+// Advocacy clients — moved to js/clientes-adv.js
+// (Constants and functions moved to respective modules)
 // ============================================================
-const PT={dashboard:'Painel Geral',imoveis:'Imóveis',condominio:'Condomínio',tenants:'Locatários',alerts:'Alertas',reajustes:'Reajustes',report:'Receitas',despesas:'Despesas do Escritório',clientes:'Clientes','ficha-adv':'Ficha do Cliente'};
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const navEl = document.querySelector(`[onclick="showPage('${id}')"]`);
-  if(navEl) navEl.classList.add('active');
-  else if(id==='ficha-adv'){ const el=document.querySelector(`[onclick="showPage('clientes')"]`); if(el) el.classList.add('active'); }
-  document.getElementById('page-title').textContent=PT[id]||id;
-  if(id==='imoveis')renderImoveis();
-  if(id==='tenants')renderTenants();
-  if(id==='alerts')renderAlerts();
-  if(id==='reajustes')renderReajustes();
-  if(id==='report'){ activeReportTab='receitas'; showReportTab('receitas'); }
-  if(id==='condominio')initCondoPage();
-  if(id==='despesas')renderFinanceiro();
-  if(id==='clientes')renderClientesAdv();
-}
-
-// ============================================================
-// MÓDULO CLIENTES (ADVOCACIA)
-// ============================================================
-const PROC_STATUS_LABEL = {
-  em_andamento:'Em Andamento', aguardando_audiencia:'Aguardando Audiência',
-  aguardando_sentenca:'Aguardando Sentença', recurso:'Em Recurso',
-  encerrado_favoravel:'Encerrado — Favorável', encerrado_desfavoravel:'Encerrado — Desfavorável',
-  arquivado:'Arquivado'
-};
-const DOC_ICONS = {procuracao:'📜', honorarios:'📋', hipossuficiencia:'📝', recibo:'🧾', contrato_aluguel:'🏠'};
-const DOC_NOMES = {procuracao:'Procuração', honorarios:'Contrato de Honorários', hipossuficiencia:'Hipossuficiência', recibo:'Recibo', contrato_aluguel:'Contrato de Aluguel'};
 
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -5934,9 +5912,8 @@ function gaToast(msg, tipo='success'){
 }
 
 // ============================================================
-// DESPESAS DO ESCRITÓRIO
+// DESPESAS DO ESCRITÓRIO — moved to js/financeiro.js
 // ============================================================
-const DESP_TIPO_LABEL = {fixa:'Fixa',variavel:'Variável',pessoal:'Pessoal',outra:'Outra'};
 
 function dpStatusChange(){
   const status=document.getElementById('dp-status').value;
@@ -6132,8 +6109,7 @@ function renderFinanceiro(){
   showFinTab(_finTab||'despesas');
 }
 
-// ── RECEITAS ────────────────────────────────────────────────
-const REC_TIPO_LABEL={honorario:'Honorários',consultoria:'Consulta',aluguel_sala:'Aluguel Sala',acordo:'Acordo/Êxito',outra:'Outra'};
+// ── RECEITAS ──────────────────────────────────────────────── moved to js/financeiro.js
 
 function abrirReceitaModal(id){
   _editandoRecId=id||null;
