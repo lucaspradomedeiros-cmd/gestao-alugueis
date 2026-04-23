@@ -527,6 +527,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 ::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
 ::-webkit-scrollbar-thumb:hover { background:var(--text-faint); }
 
+/* ── ACCESSIBILITY: Skip link ── */
+.skip-link { position:absolute; left:-9999px; }
+.skip-link:focus { left:1rem; top:1rem; z-index:9999; background:var(--green); color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:500; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
@@ -536,6 +540,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 <script src="sync-engine.js"></script>
 </head>
 <body>
+
+<!-- Accessibility: Skip to main content -->
+<a href="#main-content" class="skip-link">Pular para conteúdo principal</a>
 
 <!-- ── LOGIN SCREEN ── -->
 <div id="login-screen">
@@ -552,9 +559,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   </div>
 </div>
 
-<div class="app">
+<div class="app" id="main-content">
 <!-- SIDEBAR -->
-<nav class="sidebar">
+<nav class="sidebar" role="navigation" aria-label="Menu principal">
   <div class="sidebar-brand">
     <div class="brand-name">Gestão de<br>Aluguéis</div>
     <div class="brand-sub">Lucas Prado Medeiros Perin</div>
@@ -973,9 +980,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 </div>
 
 <!-- RECIBO MODAL -->
-<div class="overlay" id="recibo-overlay" onclick="if(event.target===this)closeOverlay('recibo-overlay')">
+<div class="overlay" id="recibo-overlay" role="dialog" aria-modal="true" aria-labelledby="recibo-title" onclick="if(event.target===this)closeOverlay('recibo-overlay')">
   <div class="modal wide" style="max-width:640px;" onclick="event.stopPropagation()">
-    <div class="modal-title">🧾 Emitir Recibo de Pagamento</div>
+    <div class="modal-title" id="recibo-title">🧾 Emitir Recibo de Pagamento</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="recibo-info">—</div>
     <div class="mrow">
       <div class="mfield"><label>Mês de referência</label><input type="month" id="rb-ref" oninput="buildRecibo()"></div>
@@ -1000,7 +1007,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 </div>
 
 <!-- ADD/EDIT IMÓVEL MODAL -->
-<div class="overlay" id="imovel-modal-overlay" onclick="if(event.target===this)closeOverlay('imovel-modal-overlay')">
+<div class="overlay" id="imovel-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="imovel-modal-title" onclick="if(event.target===this)closeOverlay('imovel-modal-overlay')">
   <div class="modal wide" onclick="event.stopPropagation()" style="max-width:600px;">
     <div class="modal-title" id="imovel-modal-title">Novo Imóvel</div>
     <div class="mrow">
@@ -1147,7 +1154,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 </div>
 
 <!-- ADD/EDIT CONDOMÍNIO MODAL -->
-<div class="overlay" id="condo-modal-overlay" onclick="if(event.target===this)closeOverlay('condo-modal-overlay')">
+<div class="overlay" id="condo-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="condo-modal-title" onclick="if(event.target===this)closeOverlay('condo-modal-overlay')">
   <div class="modal wide" onclick="event.stopPropagation()">
     <div class="modal-title" id="condo-modal-title">Novo Condomínio</div>
     <div class="mrow">
@@ -1278,10 +1285,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 </div>
 
 <!-- TOAST -->
-<div id="ga-toast"></div>
+<div id="ga-toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- MODAL CLIENTE -->
-<div class="overlay" id="cli-modal-overlay" onclick="if(event.target===this)fecharCliModal()">
+<div class="overlay" id="cli-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cli-modal-titulo" onclick="if(event.target===this)fecharCliModal()">
   <div class="modal wide" onclick="event.stopPropagation()" style="max-width:620px;">
     <div class="modal-title" id="cli-modal-titulo">Novo Cliente</div>
     <div class="mfield"><label>Nome Completo *</label><input type="text" id="cla-nome" placeholder="Nome em maiúsculas" style="text-transform:uppercase;"></div>
@@ -1372,9 +1379,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 </div>
 
 <!-- MODAL CONFIRMAR PAGAMENTO -->
-<div class="overlay" id="pag-modal-overlay" onclick="if(event.target===this)fecharPagModal()">
+<div class="overlay" id="pag-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pag-modal-title" onclick="if(event.target===this)fecharPagModal()">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-title">Registrar Pagamento</div>
+    <div class="modal-title" id="pag-modal-title">Registrar Pagamento</div>
     <div class="mfield"><label>Parcela</label><input type="text" id="pga-parcela" readonly style="background:var(--bg);font-weight:600;"></div>
     <div class="mrow">
       <div class="mfield"><label>Valor Recebido (R$)</label><input type="text" id="pga-valor" placeholder="0,00"></div>
