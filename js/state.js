@@ -2,6 +2,8 @@
 // GLOBAL STATE VARIABLES
 // ============================================================
 
+const APP_VERSION = 'v2.0.0';
+
 // Imoveis
 let imoveis = [];
 let despesasEscritorio = [];
