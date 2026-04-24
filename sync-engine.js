@@ -297,9 +297,18 @@ const SYNC_ENGINE = {
   },
 
   // ── Callbacks do Drive ─────────────────────────────────────
-  onDriveConnected() {
+  async onDriveConnected() {
     console.log('[SyncEngine] Reconectado ao Drive');
     this.state = 'UPLOADING';
+
+    // Carregar dados DO Drive primeiro
+    const driveSuccess = await DRIVE_LOADER.loadFromDrive();
+
+    if (driveSuccess) {
+      // Drive tem dados - usar como referência
+      this.localData = DRIVE_LOADER.getData();
+      console.log('[SyncEngine] Dados carregados do Drive');
+    }
 
     // Sincronizar dados e fila
     this.uploadQueue().then(() => {
