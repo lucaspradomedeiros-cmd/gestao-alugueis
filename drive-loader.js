@@ -226,6 +226,16 @@ const DRIVE_LOADER = {
         throw new Error('tenants deve ser um array');
       }
 
+      // Proteção: não sobrescrever dados válidos locais com Drive vazio
+      const driveHasData = data.tenants && data.tenants.length > 0;
+      const localData = localStorage.getItem('gestao_alugueis_v1');
+      const localHasData = localData && JSON.parse(localData).tenants?.length > 0;
+
+      if (!driveHasData && localHasData) {
+        console.warn('[DriveLoader] ⚠ Drive tem dados vazios, mantendo dados locais');
+        return false; // Não sobrescrever
+      }
+
       // Salvar em localStorage como cache
       this.saveToLocalStorage(data);
 
