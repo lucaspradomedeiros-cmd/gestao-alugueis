@@ -188,7 +188,8 @@ function initializeApp(){
   renderDashboard();
   renderCondoSwitcher();
   renderCondoInfoBar();
-  if(!_hadSavedData) saveToStorage();
+  // NÃO salvar dados vazios na primeira inicialização — Drive carregará os dados
+  // if(!_hadSavedData) saveToStorage();
 
   // Aviso de Drive desconectado após 5s (tempo para auto-reconectar)
   setTimeout(()=>{
