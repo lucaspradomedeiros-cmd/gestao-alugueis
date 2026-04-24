@@ -99,7 +99,7 @@ async function loadFromDrive(){
           const d = new Date(window.DRIVE_DATA.savedAt);
           updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
         }
-        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar();
+        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
         return true;
       }
     } else if(!success){
