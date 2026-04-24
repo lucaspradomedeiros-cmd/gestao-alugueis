@@ -1,4 +1,5 @@
 (function () {
+  console.log('✓ bottom-tab.js carregado');
   const PRIMARY = ['dashboard', 'tenants', 'report', 'despesas'];
 
   function tabGo(pageId) {
@@ -34,14 +35,17 @@
     if (icon) icon.textContent = '···';
   }
 
-  // Mantém tab bar sincronizada quando showPage é chamado de dentro das páginas
-  const _orig = window.showPage;
-  window.showPage = function (id) {
-    _orig(id);
-    if (window.innerWidth <= 760) _setActiveTab(id);
-  };
-
+  // Expõe funções globalmente
   window.tabGo = tabGo;
   window.tabMoreToggle = tabMoreToggle;
   window.tabMoreClose = tabMoreClose;
+
+  // Mantém tab bar sincronizada quando showPage é chamado de dentro das páginas
+  if (window.showPage) {
+    const _orig = window.showPage;
+    window.showPage = function (id) {
+      _orig(id);
+      if (window.innerWidth <= 760) _setActiveTab(id);
+    };
+  }
 })();
