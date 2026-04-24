@@ -356,9 +356,9 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 .parcela-row.pendente{background:var(--bg);border:1px solid var(--border);}
 .parcela-row .p-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .pago .p-dot{background:var(--green);}.atrasado .p-dot{background:var(--red);}.pendente .p-dot{background:var(--text-faint);}
-.parcela-row .p-label{font-weight:600;min-width:80px;}
-.parcela-row .p-data{color:var(--text-muted);flex:1;}
-.parcela-row .p-valor{font-weight:700;min-width:90px;text-align:right;}
+.parcela-row .p-label{font-weight:600;min-width:60px;word-break:break-word;}
+.parcela-row .p-data{color:var(--text-muted);flex:1;word-break:break-word;}
+.parcela-row .p-valor{font-weight:700;min-width:70px;text-align:right;word-break:break-word;}
 .fin-bloco{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;}
 .fin-bloco-hdr{background:var(--bg);padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
 .fin-bloco-hdr .fb-icon{font-size:16px;}
@@ -519,6 +519,18 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   .det-unit{font-size:11px;}
   .det-name{font-size:14px;}
   #custom-period-bar select, #custom-period-bar input{font-size:10px;padding:4px 6px;}
+  .parcela-row .p-label{min-width:50px;font-size:11px;}
+  .parcela-row .p-valor{min-width:60px;font-size:11px;}
+  .parcela-row .p-data{font-size:10px;}
+  .fin-bloco{margin-bottom:10px;}
+  .fin-bloco-hdr{padding:10px 12px;gap:6px;}
+  .fin-bloco-hdr .fb-nome{font-size:12px;}
+  .fin-bloco-hdr .fb-total{font-size:11px;}
+  .fin-bloco-body{padding:10px 12px;}
+  .alert-item{padding:12px 14px;gap:10px;font-size:12px;}
+  table{font-size:10px !important;}
+  table th{padding:4px 3px !important;font-size:8px !important;}
+  table td{padding:4px 3px !important;}
 }
 
 /* ── BOTTOM TAB BAR (mobile) ── */
