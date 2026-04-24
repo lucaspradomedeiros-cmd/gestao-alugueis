@@ -83,23 +83,24 @@
 <script src="js/financeiro.js"></script>
 <script src="js/recibo.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/bottom-tab.js"></script>
 <style>
 :root{
-  --bg:#F5F3EE;--surface:#FDFCF9;--border:#E2DDD6;--border-strong:#C8C1B7;
-  --text:#1C1A17;--text-muted:#7A7268;--text-faint:#B0A99F;
-  --green:#2D6A4F;--green-bg:#EAF4EE;--green-light:#D8EDDF;
-  --red:#9B2226;--red-bg:#FCEEED;--red-light:#F7D5D5;
-  --amber:#8B5E0A;--amber-bg:#FEF6E6;--amber-light:#FAE5B4;
-  --blue:#1A4F8A;--blue-bg:#EBF2FB;--blue-light:#C8DEFA;
+  --bg:#FAFBFC;--surface:#FFFFFF;--border:#E0E4E8;--border-strong:#CBD2DC;
+  --text:#1A1E27;--text-muted:#6B7280;--text-faint:#9CA3AF;
+  --green:#1E7E74;--green-bg:#E8F4F2;--green-light:#B8E6E2;
+  --red:#A93226;--red-bg:#FDF0ED;--red-light:#EDB6AC;
+  --amber:#7D6B00;--amber-bg:#FEF9E7;--amber-light:#F5E6B3;
+  --blue:#003D7A;--blue-bg:#E8F0FA;--blue-light:#B8D4F0;
   --radius:12px;--radius-sm:8px;
 }
 body.dark{
-  --bg:#0F0E0C;--surface:#1A1816;--border:#2E2B27;--border-strong:#3E3A35;
-  --text:#F5F3F0;--text-muted:#A8A39D;--text-faint:#7A7268;
-  --green:#52C77C;--green-bg:#0F2818;--green-light:#1B3A28;
-  --red:#FF6B6F;--red-bg:#2D0F10;--red-light:#481415;
-  --amber:#FFB84D;--amber-bg:#2D2010;--amber-light:#4A3A18;
-  --blue:#6BB6FF;--blue-bg:#0F1E35;--blue-light:#1A3050;
+  --bg:#0F1116;--surface:#16202C;--border:#2D3A4D;--border-strong:#3E4D61;
+  --text:#E8EEF5;--text-muted:#9CA8B8;--text-faint:#6B7885;
+  --green:#4FCCD6;--green-bg:#0D3A3E;--green-light:#1A5A5E;
+  --red:#E74C3C;--red-bg:#3A1D19;--red-light:#5A2E2A;
+  --amber:#F4B84D;--amber-bg:#3A2E0D;--amber-light:#5A4E1D;
+  --blue:#5DADE2;--blue-bg:#1A3A4F;--blue-light:#2A5A7F;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; transition: background-color .25s, color .25s; }
@@ -466,45 +467,9 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
 
 /* ===== MOBILE OPTIMIZATION ===== */
 @media(max-width:760px){
-  .app{flex-direction:column;}
-  .sidebar{
-    position:relative;
-    width:100%;
-    height:auto;
-    flex-direction:column;
-    overflow-x:visible;
-    background:var(--surface);
-    border-bottom:1px solid var(--border);
-    padding:0;
-  }
-  .sidebar-brand{display:none;}
-  .nav-section{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
-    gap:2px;
-    padding:8px;
-    padding-bottom:0;
-    border-bottom:1px solid var(--border);
-  }
-  .nav-section:last-of-type{border-bottom:none;}
-  .nav-label{display:none;}
-  .nav-item{
-    white-space:nowrap;
-    font-size:10px;
-    padding:10px 8px;
-    border-radius:6px;
-    flex-direction:column;
-    align-items:center;
-    gap:4px;
-    text-align:center;
-    background:var(--bg);
-    color:var(--text-muted);
-    border:1px solid var(--border);
-    transition:all .15s;
-  }
-  .nav-item .icon{width:auto;font-size:16px;}
-  .nav-item.active{background:var(--green-bg);color:var(--green);border-color:var(--green-light);font-weight:500;}
-  .nav-item:active{transform:scale(.95);}
+  .sidebar{display:none;}
+  .main{padding-bottom:72px;}
+  .bottom-tab{display:flex;}
   .topbar{
     padding:12px 14px;
     flex-direction:column;
@@ -547,6 +512,29 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   .det-header{padding:16px 14px 12px;}
   .det-body{padding:14px;}
 }
+
+/* ── BOTTOM TAB BAR (mobile) ── */
+.bottom-tab{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom);align-items:stretch;}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--text-muted);font-size:9px;cursor:pointer;padding:8px 4px;transition:color .15s;-webkit-tap-highlight-color:transparent;}
+.tab-btn.active{color:var(--green);}
+.tab-btn:active{opacity:.7;}
+.tab-icon{font-size:22px;line-height:1;display:block;}
+.tab-label{font-size:9px;font-weight:500;}
+.tab-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;}
+.tab-backdrop.visible{display:block;}
+.tab-more-panel{position:fixed;bottom:64px;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:0 0 16px;z-index:200;visibility:hidden;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1),visibility 0s .28s;}
+.tab-more-panel.open{visibility:visible;transform:translateY(0);transition:transform .28s cubic-bezier(.4,0,.2,1),visibility 0s;}
+.tab-more-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);}
+.tab-more-close{border:none;background:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px 8px;}
+.tab-more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:12px 12px 8px;}
+.tab-more-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);font-size:11px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.tab-more-item:active{background:var(--green-bg);color:var(--green);}
+.tab-more-item span:first-child{font-size:22px;}
+.tab-more-utils{padding:8px 12px 0;border-top:1px solid var(--border);margin-top:8px;}
+.tab-more-utils-label{font-size:9px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;padding:8px 4px 6px;}
+.tab-more-utils-row{display:flex;gap:8px;}
+.tab-more-utils-row button{flex:1;padding:10px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);font-size:11px;cursor:pointer;transition:all .15s;}
+.tab-more-utils-row button:active{background:var(--green-bg);color:var(--green);}
 
 /* ── DARK MODE REFINEMENTS ── */
 body.dark .tenant-card { box-shadow: 0 2px 8px rgba(0,0,0,.3); }
@@ -1012,6 +1000,60 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     </div>
   </div>
 </main>
+</div>
+
+<!-- BOTTOM TAB BAR (mobile) -->
+<div class="bottom-tab" id="bottom-tab" role="navigation" aria-label="Navegação principal">
+  <button class="tab-btn active" data-page="dashboard" onclick="tabGo('dashboard')">
+    <span class="tab-icon">⬡</span><span class="tab-label">Painel</span>
+  </button>
+  <button class="tab-btn" data-page="tenants" onclick="tabGo('tenants')">
+    <span class="tab-icon">◎</span><span class="tab-label">Locatários</span>
+  </button>
+  <button class="tab-btn" data-page="report" onclick="tabGo('report')">
+    <span class="tab-icon">◱</span><span class="tab-label">Receitas</span>
+  </button>
+  <button class="tab-btn" data-page="despesas" onclick="tabGo('despesas')">
+    <span class="tab-icon">💸</span><span class="tab-label">Despesas</span>
+  </button>
+  <button class="tab-btn" id="tab-more-btn" onclick="tabMoreToggle()">
+    <span class="tab-icon" id="tab-more-icon">···</span>
+    <span class="tab-label">Mais</span>
+  </button>
+</div>
+
+<div class="tab-backdrop" id="tab-backdrop" onclick="tabMoreClose()"></div>
+
+<div class="tab-more-panel" id="tab-more-panel" role="dialog" aria-modal="true" aria-label="Mais opções de navegação">
+  <div class="tab-more-header">
+    <span>Mais opções</span>
+    <button class="tab-more-close" onclick="tabMoreClose()" aria-label="Fechar">✕</button>
+  </div>
+  <div class="tab-more-grid">
+    <button class="tab-more-item" onclick="tabGo('imoveis')">
+      <span>🏠</span><span>Imóveis</span>
+    </button>
+    <button class="tab-more-item" onclick="tabGo('condominio')">
+      <span>💧</span><span>Condomínio</span>
+    </button>
+    <button class="tab-more-item" onclick="tabGo('alerts')">
+      <span>◈</span><span>Alertas</span>
+    </button>
+    <button class="tab-more-item" onclick="tabGo('reajustes')">
+      <span>◷</span><span>Reajustes</span>
+    </button>
+    <button class="tab-more-item" onclick="tabGo('clientes')">
+      <span>👥</span><span>Clientes</span>
+    </button>
+  </div>
+  <div class="tab-more-utils">
+    <div class="tab-more-utils-label">Configurações</div>
+    <div class="tab-more-utils-row">
+      <button onclick="tabMoreClose();connectDrive()">☁ Drive</button>
+      <button onclick="tabMoreClose();toggleDarkMode()">◑ Tema</button>
+      <button onclick="tabMoreClose();exportBackup()">⬇ Backup</button>
+    </div>
+  </div>
 </div>
 
 <!-- DETAIL PANEL -->
