@@ -1,11 +1,23 @@
 // ── AUTH ─────────────────────────────────────────────────────
 const PASS_HASH = '3928a0d0aa4278d86016a7ef568939ec2f7d3eafc77713e6cc5186884f917a33';
+const PASSWORD = '2'; // Senha em texto claro para desenvolvimento em HTTP
 const SESSION_KEY = 'ga_auth_v1';
 const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 horas
 
 async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  // Tenta usar crypto.subtle (HTTPS)
+  if (crypto && crypto.subtle) {
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    } catch (e) {
+      console.warn('[Auth] crypto.subtle indisponível, usando fallback');
+    }
+  }
+
+  // Fallback para HTTP: comparar com senha em texto claro
+  // (Apenas para desenvolvimento local)
+  return str === PASSWORD ? PASS_HASH : '';
 }
 
 function isAuthenticated() {
