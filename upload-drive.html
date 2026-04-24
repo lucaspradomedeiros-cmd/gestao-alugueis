@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload para Google Drive</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .status { margin: 20px 0; padding: 15px; border-radius: 8px; }
+    .success { background: #c8e6c9; color: #2e7d32; }
+    .error { background: #ffcdd2; color: #c62828; }
+    .info { background: #e3f2fd; color: #1565c0; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Upload de dados.json para Google Drive</h1>
+  <p>Certifique-se de estar autenticado no Google Drive antes de clicar no botão.</p>
+  
+  <button onclick="uploadToDrive()">▶ Fazer Upload Agora</button>
+  
+  <div id="status"></div>
+  
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script>
+    async function uploadToDrive() {
+      const statusEl = document.getElementById('status');
+      statusEl.innerHTML = '<div class="status info">⏳ Iniciando upload...</div>';
+      
+      try {
+        // Buscar arquivo existente
+        const listRes = await gapi.client.drive.files.list({
+          spaces: 'appDataFolder',
+          fields: 'files(id)',
+          q: `name='dados.json' and trashed=false`,
+          pageSize: 1
+        });
+        
+        const fileId = listRes.result.files?.[0]?.id;
+        
+        // Ler dados.json local
+        const response = await fetch('dados.json');
+        const fileContent = await response.text();
+        
+        statusEl.innerHTML = '<div class="status info">⏳ Carregando ' + response.headers.get('content-length') + ' bytes...</div>';
+        
+        // Upload (update se existe, create se não)
+        const metadata = {
+          name: 'dados.json',
+          mimeType: 'application/json',
+          parents: fileId ? undefined : ['appDataFolder']
+        };
+        
+        const boundary = '-------314159265358979323846';
+        const body = 
+          `--${boundary}\r\n` +
+          `Content-Type: application/json\r\n\r\n` +
+          `${JSON.stringify(metadata)}\r\n` +
+          `--${boundary}\r\n` +
+          `Content-Type: application/json\r\n\r\n` +
+          `${fileContent}\r\n` +
+          `--${boundary}--`;
+        
+        const method = fileId ? 'PATCH' : 'POST';
+        const url = fileId
+          ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+          : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        
+        const uploadRes = await gapi.client.request({
+          method,
+          path: url,
+          headers: { 'Content-Type': `multipart/related; boundary="${boundary}"` },
+          body
+        });
+        
+        statusEl.innerHTML = '<div class="status success">✅ Upload concluído com sucesso!</div>';
+        
+        // Verificar
+        const checkRes = await gapi.client.drive.files.get({
+          fileId: uploadRes.result.id,
+          alt: 'media'
+        });
+        
+        const data = typeof checkRes.result === 'string' ? JSON.parse(checkRes.result) : checkRes.result;
+        statusEl.innerHTML += '<div class="status success">✅ Verificado: ' + data.tenants.length + ' locatários no Drive</div>';
+        
+      } catch(e) {
+        statusEl.innerHTML = '<div class="status error">❌ Erro: ' + e.message + '</div>';
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
