@@ -59,6 +59,12 @@
 
 ## 📋 Próximos Passos
 
+**Prioridade Recomendada:**
+1. Phase 9 — Testes & Refinamento Mobile (validar em dispositivos reais)
+2. Phase 9.5 — Document System (otimizar recibos + completar doc-gen)
+3. Phase 10 — PWA & Offline (sincronização robusta)
+4. Phase 11 — Deploy Production
+
 ### Phase 9 — Testes & Refinamento Mobile (Recomendado)
 
 1. **Testes Funcionais em Dispositivos Reais**
@@ -85,6 +91,52 @@
    - [ ] Ajustar se houver feedback de layout
    - [ ] Otimizar touch targets (mínimo 44x44px)
    - [ ] Verificar formulários em mobile
+
+### Phase 9.5 — Document System Optimization (Recomendado)
+
+**Status Atual:**
+- ✅ `js/recibo.js` (220 linhas) — Geração de recibos FUNCIONAL
+  - Suporta: texto puro, cópia para clipboard, impressão HTML
+  - Integrado: botões em histórico de pagamentos
+  - Mobile: reformatação automática via media query `@media print`
+  
+- 🟡 `js/doc-gen.js` (345 linhas) — Geração de documentos PARCIAL
+  - Implementado: Contrato Aluguel (template HTML)
+  - Implementado: Procuração (template HTML)
+  - Pendente: Integração docx library para DOCX export
+  - Pendente: Salvar documentos no Google Drive
+
+**Implementação Recomendada:**
+1. **Otimizar Recibo para Mobile**
+   - [ ] Testar impressão em mobile (iOS print dialog, Android print)
+   - [ ] Validar safe areas (notch, home indicator)
+   - [ ] Otimizar fuentes/paddings no print preview
+   - [ ] Adicionar QR code (opcional)
+
+2. **Completar doc-gen.js — DOCX Export**
+   - [ ] Integrar docx library (`npm install docx` ou CDN)
+   - [ ] Implementar: DocumentCreator class
+   - [ ] Métodos: toPDF(), toDOCX(), toHTML()
+   - [ ] Adicionar headers/footers com logo
+   - [ ] Testes em mobile print
+
+3. **Criar Sistema de Templates**
+   - [ ] Template: Contrato Aluguel (completo com cláusulas)
+   - [ ] Template: Procuração (assinatura digital placeholder)
+   - [ ] Template: Relatório Mensal (despesas + receitas)
+   - [ ] Sistema de variáveis dinâmicas (`{{tenant.name}}`, `{{period}}`, etc.)
+
+4. **Integração Google Drive**
+   - [ ] Salvar recibos gerados no Drive
+   - [ ] Salvar documentos (DOCX/PDF) em pasta `/Documentos`
+   - [ ] Vincular ao histórico do locatário
+   - [ ] Adicionar download/preview no detail panel
+
+5. **Formulários & Validação**
+   - [ ] Validar campos obrigatórios antes de gerar
+   - [ ] Preview antes de salvar
+   - [ ] Histórico de documentos gerados (tabela)
+   - [ ] Reenomear/reatribuir documentos
 
 ### Phase 10 — PWA & Offline (Futuro)
 
@@ -145,21 +197,42 @@
 ```
 index.html (7,140+ linhas)
 ├── CSS inline (em <style>)
-│   ├── Colors (CSS vars)
+│   ├── Colors (CSS vars — 5+ themes)
 │   ├── Layout (flex, grid)
-│   ├── Responsive (@media 760px)
-│   └── Dark mode
+│   ├── Responsive (@media 760px breakpoint)
+│   ├── Dark mode
+│   └── Print media (@media print)
 ├── HTML (app + pages + modals)
-└── Scripts (18 modules)
-    ├── js/auth.js
-    ├── js/state.js
-    ├── js/utils.js
-    ├── js/navigation.js
-    ├── js/bottom-tab.js ← NEW
-    ├── js/tenant-*.js
-    ├── js/condo.js
-    ├── js/storage.js
-    └── ... (mais 10 modules)
+└── Scripts (18+ modules)
+    ├── Core
+    │   ├── js/auth.js
+    │   ├── js/state.js
+    │   ├── js/utils.js
+    │   └── js/navigation.js
+    ├── Mobile
+    │   └── js/bottom-tab.js
+    ├── Financial
+    │   ├── js/tenant-financials.js
+    │   ├── js/payment-modal.js
+    │   └── js/recibo.js (Geração de recibos)
+    ├── Properties
+    │   ├── js/condo.js
+    │   ├── js/imovel.js
+    │   └── js/despesas.js
+    ├── Documents
+    │   └── js/doc-gen.js (Templates: Contrato, Procuração, Relatório)
+    ├── UI
+    │   ├── js/tenant-ui.js
+    │   ├── js/detail-panel.js
+    │   ├── js/report.js
+    │   └── js/tenant-modal.js
+    ├── Features
+    │   ├── js/clientes-adv.js
+    │   ├── js/financeiro.js
+    │   └── js/whatsapp.js
+    └── Storage
+        ├── js/storage.js
+        └── js/drive-loader.js
 ```
 
 ---
@@ -185,14 +258,23 @@ index.html (7,140+ linhas)
 
 ## Checklist Final
 
+**Sessão Atual (2026-04-24):**
 - [x] Bottom Tab Bar implementado
 - [x] Mobile layout otimizado
 - [x] Detalhe panel comprimido
 - [x] Condomínio responsivo
 - [x] Commits feitos
 - [x] Push para remote
-- [ ] Testes em dispositivos reais (próxima sessão)
-- [ ] Deploy production (futuro)
+- [x] Claude.md criado (checkpoint completo)
+- [x] Planos documentados (Phases 9-11)
+- [x] Document system incluído nos planos
+
+**Próximas Sessões:**
+- [ ] Phase 9: Testes em dispositivos reais (iPhone, Samsung, iPad)
+- [ ] Phase 9.5: Otimização document system (recibo mobile + doc-gen DOCX)
+- [ ] Phase 10: PWA & Offline (service workers, sync queue)
+- [ ] Phase 11: Deploy production
+- [ ] Monitoramento pós-deploy
 
 ---
 
