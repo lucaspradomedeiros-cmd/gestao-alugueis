@@ -183,6 +183,15 @@ const SYNC_ENGINE = {
     const localData = DRIVE_LOADER.getData() || this.localData;
     if (!localData) return driveData;
 
+    // Proteção: não sobrescrever dados válidos locais com Drive vazio
+    const driveHasData = driveData?.tenants && driveData.tenants.length > 0;
+    const localHasData = localData?.tenants && localData.tenants.length > 0;
+
+    if (!driveHasData && localHasData) {
+      console.log('[SyncEngine] ⚠ Drive tem dados vazios, mantendo dados locais');
+      return localData;
+    }
+
     // Se versão do Drive é mais recente
     if (driveData._version && driveData._version > this.version) {
       console.log(`[SyncEngine] Drive é mais recente (v${driveData._version} > v${this.version})`);
