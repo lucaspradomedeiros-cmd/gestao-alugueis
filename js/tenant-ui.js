@@ -2,7 +2,10 @@
 // TENANT UI — Dashboard & card rendering
 // ============================================================
 
+const cardMonthState = {}; // Map of tenantId -> monthIndex in history
+
 function renderDashboard(){
+  cardMonthState = {}; // Reset month selection to current month for all cards
   const c=document.getElementById('dash-cards');
   c.innerHTML='';
   tenants.forEach(t=>renderCardDashboard(t,c));
@@ -29,24 +32,28 @@ function renderCardDashboard(t, container){
   const st = statusOf(t);
   const card = document.createElement('div');
   card.className = `tenant-card s-${st}`;
-  card.style.cursor = 'pointer';
-  card.onclick = () => openDet(t.id);
 
   if(t.vago){
     card.innerHTML=`<div class="card-header"><div class="card-avatar" style="background:#F0EFEA;color:var(--text-faint);font-size:20px;">🔑</div><div class="card-info"><div class="card-unit">${t.unit}</div><div class="card-name" style="color:var(--text-faint);font-style:italic;">Imóvel disponível</div></div><span class="s-badge s-vago">Vago</span></div><div style="text-align:center;padding:14px 0;color:var(--text-faint);font-size:13px;">Sem locatário ativo</div>`;
     container.appendChild(card); return;
   }
 
+  // Initialize month index for this tenant (current month by default)
+  if(!(t.id in cardMonthState)){
+    cardMonthState[t.id] = t.history.length - 1; // Start at most recent
+  }
+  const monthIdx = cardMonthState[t.id];
+  const e = monthIdx >= 0 && monthIdx < t.history.length ? t.history[monthIdx] : getEntryForDisplay(t);
+
   const fin = getTenantFinancials(t);
   const stLabel = STATUS_LABELS[st]||st;
-  const e = getEntryForDisplay(t);
   const condoBadge = (()=>{
     const c = condominios.find(x=>x.id===(t.condoId||activeCondoId));
     return c ? `<span style="font-size:9px;font-weight:600;color:var(--green);background:var(--green-bg);padding:1px 6px;border-radius:10px;margin-left:4px;">${c.apelido||c.nome}</span>` : '';
   })();
 
-  // History dots
-  const histHTML = renderHistDots(t);
+  // History dots with navigation
+  const histHTML = renderHistDotsNav(t, monthIdx);
 
   // Penalty bar
   let penaltyBar='';
@@ -90,14 +97,14 @@ function renderCardDashboard(t, container){
         </div>
         <div style="display:flex;gap:6px;">
           <button class="btn-wpp" style="font-size:11px;padding:6px 12px;" onclick="event.stopPropagation();openWpp(${t.id})">📲 Cobrar</button>
-          <button class="btn" style="font-size:11px;padding:6px 12px;" onclick="event.stopPropagation();openDet(${t.id})">Ver extrato</button>
+          <button class="btn" style="font-size:11px;padding:6px 12px;" onclick="event.stopPropagation();openDet(${t.id},'${e?.ref||''}')" title="Abrir ficha completa">Ver extrato</button>
         </div>
       </div>
     </div>
     <hr class="card-div">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-      <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Últimos 6 meses</div>
-      <div class="card-history">${histHTML}</div>
+      <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Histórico de pagamentos</div>
+      <div>${histHTML}</div>
     </div>${penaltyBar}`;
   container.appendChild(card);
 }
@@ -154,6 +161,59 @@ function renderHistDots(t){
     const tip = `${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)} · clique para ver extrato`;
     return `<div class="hdot ${cls}" title="${tip}" onclick="event.stopPropagation();openDet(${t.id},'${h.ref}')">${m}</div>`;
   }).join('');
+}
+
+// Renderizar dots com navegação < >
+function renderHistDotsNav(t, currentIdx){
+  if(!t || !t.history || t.history.length === 0) return '';
+
+  const lastIdx = t.history.length - 1;
+  const firstIdx = Math.max(0, lastIdx - 5); // Show last 6 months max
+  const canGoPrev = currentIdx > firstIdx;
+  const canGoNext = currentIdx < lastIdx;
+
+  const dotsHTML = t.history.slice(firstIdx, lastIdx + 1).map((h, idx)=>{
+    const absIdx = firstIdx + idx;
+    const m = h.ref.split('-')[1];
+    let cls = 'futuro';
+    if(h.status==='pago') cls='pago';
+    else if(h.status==='parcial') cls='parcial';
+    else if(h.status==='inadimplente'||h.status==='pendente') cls='inadimplente';
+    if(absIdx === currentIdx) cls += ' active';
+    const isBold = absIdx === currentIdx ? 'font-weight:600;' : '';
+    const tip = `${monthName(h.ref)}: ${h.status} — ${fmtBRL(h.valorPago)}/${fmtBRL(h.valorCobrado)}`;
+    return `<div class="hdot ${cls}" title="${tip}" style="${isBold}">${m}</div>`;
+  }).join('');
+
+  return `
+    <div style="display:flex;align-items:center;gap:4px;">
+      <button class="btn-nav-month" onclick="event.stopPropagation();goToPrevMonth(${t.id})" ${canGoPrev?'':'disabled'} title="Mês anterior" style="padding:4px 8px;font-size:14px;border:none;background:var(--border);color:var(--text-muted);cursor:pointer;border-radius:4px;transition:all .2s;${!canGoPrev?'opacity:0.4;cursor:not-allowed;':''}">‹</button>
+      <div class="card-history" style="display:flex;gap:3px;">${dotsHTML}</div>
+      <button class="btn-nav-month" onclick="event.stopPropagation();goToNextMonth(${t.id})" ${canGoNext?'':'disabled'} title="Próximo mês" style="padding:4px 8px;font-size:14px;border:none;background:var(--border);color:var(--text-muted);cursor:pointer;border-radius:4px;transition:all .2s;${!canGoNext?'opacity:0.4;cursor:not-allowed;':''}">›</button>
+    </div>`;
+}
+
+// Navigate to previous month in card
+function goToPrevMonth(tenantId){
+  const tenant = tenants.find(t=>t.id===tenantId);
+  if(!tenant) return;
+  const lastIdx = tenant.history.length - 1;
+  const firstIdx = Math.max(0, lastIdx - 5);
+  if(cardMonthState[tenantId] > firstIdx){
+    cardMonthState[tenantId]--;
+    renderDashboard();
+  }
+}
+
+// Navigate to next month in card
+function goToNextMonth(tenantId){
+  const tenant = tenants.find(t=>t.id===tenantId);
+  if(!tenant) return;
+  const lastIdx = tenant.history.length - 1;
+  if(cardMonthState[tenantId] < lastIdx){
+    cardMonthState[tenantId]++;
+    renderDashboard();
+  }
 }
 
 // ============================================================
