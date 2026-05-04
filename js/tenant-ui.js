@@ -5,15 +5,12 @@
 const cardMonthState = {}; // Map of tenantId -> monthIndex in history
 
 function renderDashboard(){
-  alert('renderDashboard CALLED!');
-  console.log('[renderDashboard] ===== CALLED =====');
   cardMonthState = {}; // Reset month selection to current month for all cards
   const c=document.getElementById('dash-cards');
   c.innerHTML='';
   tenants.forEach(t=>renderCardDashboard(t,c));
   updateSummary();
   renderDashboardEscritorio();
-  console.log('[renderDashboard] COMPLETED');
 }
 
 function updateSummary(){
