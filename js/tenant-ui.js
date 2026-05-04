@@ -29,6 +29,7 @@ function updateSummary(){
 }
 
 function renderCardDashboard(t, container){
+  console.log(`[renderCardDashboard] START - tenant: ${t.id}, name: ${t.name}`);
   const st = statusOf(t);
   const card = document.createElement('div');
   card.className = `tenant-card s-${st}`;
@@ -44,6 +45,7 @@ function renderCardDashboard(t, container){
   }
   const monthIdx = cardMonthState[t.id];
   const e = monthIdx >= 0 && monthIdx < t.history.length ? t.history[monthIdx] : getEntryForDisplay(t);
+  console.log(`[renderCardDashboard] monthIdx: ${monthIdx}, history.length: ${t.history.length}, e.ref: ${e?.ref}`);
 
   const fin = getTenantFinancials(t);
   const stLabel = STATUS_LABELS[st]||st;
@@ -53,7 +55,9 @@ function renderCardDashboard(t, container){
   })();
 
   // History dots with navigation
+  console.log(`[renderCardDashboard] Calling renderHistDotsNav(${t.id}, ${monthIdx})`);
   const histHTML = renderHistDotsNav(t, monthIdx);
+  console.log(`[renderCardDashboard] histHTML returned:`, histHTML.substring(0, 100));
 
   // Penalty bar
   let penaltyBar='';
@@ -165,12 +169,17 @@ function renderHistDots(t){
 
 // Renderizar dots com navegação < >
 function renderHistDotsNav(t, currentIdx){
-  if(!t || !t.history || t.history.length === 0) return '';
+  console.log(`[renderHistDotsNav] START - t: ${t?.id}, currentIdx: ${currentIdx}, t.history: ${t?.history?.length}`);
+  if(!t || !t.history || t.history.length === 0){
+    console.log(`[renderHistDotsNav] EARLY RETURN - invalid data`);
+    return '';
+  }
 
   const lastIdx = t.history.length - 1;
   const firstIdx = Math.max(0, lastIdx - 5); // Show last 6 months max
   const canGoPrev = currentIdx > firstIdx;
   const canGoNext = currentIdx < lastIdx;
+  console.log(`[renderHistDotsNav] lastIdx: ${lastIdx}, firstIdx: ${firstIdx}, canGoPrev: ${canGoPrev}, canGoNext: ${canGoNext}`);
 
   const dotsHTML = t.history.slice(firstIdx, lastIdx + 1).map((h, idx)=>{
     const absIdx = firstIdx + idx;
@@ -185,12 +194,15 @@ function renderHistDotsNav(t, currentIdx){
     return `<div class="hdot ${cls}" title="${tip}" style="${isBold}">${m}</div>`;
   }).join('');
 
-  return `
+  const result = `
     <div style="display:flex;align-items:center;gap:4px;">
       <button class="btn-nav-month" onclick="event.stopPropagation();goToPrevMonth(${t.id})" ${canGoPrev?'':'disabled'} title="Mês anterior" style="padding:4px 8px;font-size:14px;border:none;background:var(--border);color:var(--text-muted);cursor:pointer;border-radius:4px;transition:all .2s;${!canGoPrev?'opacity:0.4;cursor:not-allowed;':''}">‹</button>
       <div class="card-history" style="display:flex;gap:3px;">${dotsHTML}</div>
       <button class="btn-nav-month" onclick="event.stopPropagation();goToNextMonth(${t.id})" ${canGoNext?'':'disabled'} title="Próximo mês" style="padding:4px 8px;font-size:14px;border:none;background:var(--border);color:var(--text-muted);cursor:pointer;border-radius:4px;transition:all .2s;${!canGoNext?'opacity:0.4;cursor:not-allowed;':''}">›</button>
     </div>`;
+
+  console.log(`[renderHistDotsNav] RETURNING HTML with buttons`);
+  return result;
 }
 
 // Navigate to previous month in card
