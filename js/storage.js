@@ -89,12 +89,15 @@ async function saveToDrive(){
 }
 
 async function loadFromDrive(){
+  console.log('[loadFromDrive] START');
   try {
     updateSaveStatus('☁ Carregando do Drive…', 'var(--blue)');
     const success = await DRIVE_LOADER.loadFromDrive();
+    console.log('[loadFromDrive] success:', success, 'DRIVE_DATA exists:', !!window.DRIVE_DATA);
     if(success && window.DRIVE_DATA){
       // Aplicar dados carregados do Drive
       if(applyPayload(window.DRIVE_DATA)){
+        console.log('[loadFromDrive] calling renderDashboard()');
         if(window.DRIVE_DATA.savedAt){
           const d = new Date(window.DRIVE_DATA.savedAt);
           updateSaveStatus(`☁ Drive: ${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
@@ -122,7 +125,9 @@ function onDriveConnected(){
   updateSaveStatus('☁ Drive conectado', 'var(--blue)');
   const btn = document.getElementById('btn-drive-connect');
   if(btn){ btn.innerHTML = '<span class="icon">☁</span> Drive ativo'; btn.style.color='var(--green)'; btn.style.background='var(--green-bg)'; btn.style.fontWeight='600'; }
+  console.log('[storage] Calling loadFromDrive()...');
   loadFromDrive();
+  console.log('[storage] loadFromDrive() called (async)');
   // Auto-save periódico a cada 2 minutos
   setInterval(()=>{ if(driveConnected){ clearTimeout(_driveDebounce); saveToDrive(); } }, 2*60*1000);
   // Salva ao fechar/recarregar a aba
