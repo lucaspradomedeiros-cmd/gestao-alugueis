@@ -299,20 +299,26 @@ const STORAGE_KEY = 'gestao_alugueis_v1'; // payload versão 3
 | Adicionar banco de dados (Firebase, Supabase) | Overkill para 8 unidades; cria dependência de serviço pago |
 | Migrar para React/Vue | Reescrita total sem benefício proporcional ao porte |
 | Múltiplos arquivos JS sem bundler | Piora portabilidade sem ganho real |
-| Armazenar CPF ou dados bancários | Eleva obrigações de LGPD desnecessariamente |
+| ~~Armazenar CPF~~ | REVERTIDO 12/09/2026 — decisão do proprietário: manter CPF, ver seção 15 |
 | Depender só do localStorage | Pode ser limpo pelo browser sem aviso |
 
 ---
 
 ## 15. Considerações de LGPD
 
+**DECISÃO DO PROPRIETÁRIO (12/09/2026): armazenamento de CPF liberado.**
+Justificativa registrada: uso é estritamente pessoal, só o proprietário (Lucas)
+tem acesso ao app finalizado — não há terceiros com acesso à base de dados.
+Decisão anterior de excluir CPF (linha "O que NÃO fazer", seção 14) fica
+revertida. Isso desbloqueia o módulo de Geração de Contrato (seção 18).
+
 | Item | Status |
 |------|--------|
 | Dados no Drive pessoal do proprietário | ✅ Não em servidor de terceiros |
-| CPF não armazenado | ✅ |
-| Acesso protegido por senha | ✅ (com limitações técnicas) |
+| CPF armazenado | ✅ Decisão de 12/09/2026 — uso pessoal único, sem terceiros com acesso |
+| Acesso protegido por senha | ✅ (com limitações técnicas — ver seção 3) |
 | Mecanismo de exclusão de dados | ⚠️ Não implementado |
-| Backup `.json` aberto (nome, telefone, histórico financeiro) | ⚠️ Proteger acesso ao arquivo |
+| Backup `.json` aberto (nome, telefone, CPF, histórico financeiro) | ⚠️ Proteger acesso ao arquivo — agora mais sensível com CPF incluído |
 
 ---
 
@@ -390,7 +396,7 @@ Campos a adicionar ao modal de cadastro/edição de locatário:
 | CEP | `f-cep` | text (máscara) | Sim |
 | E-mail | `f-email` | email | Opcional |
 
-> **Nota:** CPF já era explicitamente excluído por decisão de LGPD anterior. **Revisar essa decisão** antes de implementar, pois CPF é indispensável para o contrato. Alternativa: CPF só é exigido ao gerar o contrato, não fica visível nos cards.
+> **Nota (atualizada 12/09/2026):** decisão de LGPD revertida — CPF agora pode ser armazenado normalmente nos cadastros (ver seção 15). Não há mais restrição a implementar aqui.
 
 #### 18.3.2 Dados dos Fiadores (quando `garantia === 'Fiadores'`)
 
@@ -471,7 +477,7 @@ Botão de acionamento — adicionar dentro do `det-overlay`, na aba de dados do 
 
 ### 18.6 Pré-requisitos antes de Implementar
 
-- [ ] Revisar decisão de LGPD sobre armazenamento de CPF (seção 15)
+- [x] Revisar decisão de LGPD sobre armazenamento de CPF (seção 15) — RESOLVIDO 12/09/2026: CPF liberado
 - [ ] Atualizar dados dos 8 inquilinos ativos com os novos campos (CPF, RG, etc.) — trabalho manual
 - [ ] Atualizar dados do imóvel (Residencial Santa Nonna I) com matrícula e cartório
 - [ ] Definir dados completos do proprietário (CPF, RG, endereço) para o contrato
