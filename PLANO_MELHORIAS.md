@@ -59,12 +59,38 @@ não foi reconquistada. Antes de qualquer coisa da seção 5 em diante:
       mais parecido com o que a planilha já faz bem) em vez de insistir em
       mais camada de sofisticação.
 
+### Incidente real (12/09/2026): Drive sobrescreveu dados locais mais novos
+
+Aconteceu ao vivo, durante esta mesma sessão de trabalho: o cadastro de
+salas/locatários feito no app foi perdido ao **conectar a conta do Google**
+depois de já ter dados novos salvos localmente. Causa raiz: o app sempre
+aplicava o que estava no Drive por cima do estado atual, sem comparar datas
+— e ainda disparava esse carregamento por 3 caminhos concorrentes ao mesmo
+tempo (`DRIVE_LOADER.onDriveConnected()`, `SYNC_ENGINE.onDriveConnected()`
+e a chamada direta em `onDriveConnected()`), reforçando a sobrescrita.
+
+**Corrigido no mesmo dia, commit `2104130`:** `applyData()` agora compara
+`savedAt` local vs. Drive e, se o local for mais novo, não sobrescreve —
+pergunta ao usuário (manter local e enviar ao Drive, ou descartar e usar o
+Drive). As 3 chamadas concorrentes agora são coalescidas numa só requisição.
+
+Dado perdido nesse incidente específico: cadastro de salas/locatários feito
+na sessão anterior (não havia registro do JSON puro fora do app para
+restaurar, apenas os dados documentados nesta seção abaixo). Usuário optou
+por recadastrar manualmente depois, sem tentar recuperação forçada.
+
+⚠️ **Pendência ainda aberta:** `sync-engine.js` (`SYNC_ENGINE`) continua
+coexistindo como sistema de sync redundante/legado (`mergeStrategy:
+'drive-wins'` hard-coded, mesma filosofia do bug acima) — não removido ainda
+para manter o escopo da correção mínimo. Ver seção 3 (dead code).
+
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
-- [ ] **Remover o backdoor de senha em `js/auth.js`** — `const PASSWORD = '2'`
-      e o fallback que aceita essa senha em texto puro quando `crypto.subtle`
-      falha. Produção é 100% HTTPS (GitHub Pages), então esse fallback nunca é
-      necessário ali — só risco.
+- [x] **Remover o backdoor de senha em `js/auth.js`** — corrigido em
+      12/09/2026, commit `a795c9e`. Removida a constante `PASSWORD = '2'` e o
+      fallback que aceitava essa senha em texto puro quando `crypto.subtle`
+      falhava; agora sem `crypto.subtle` o login falha com segurança (nega
+      acesso) em vez de aceitar senha fixa.
 - [ ] Trocar a senha de acesso por algo mais longo/complexo, já que ela é a
       única barreira protegendo o cache local (`localStorage`), que agora
       inclui CPF (ver decisão da seção 2).
