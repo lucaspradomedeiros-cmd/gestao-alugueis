@@ -79,10 +79,25 @@ na sessão anterior (não havia registro do JSON puro fora do app para
 restaurar, apenas os dados documentados nesta seção abaixo). Usuário optou
 por recadastrar manualmente depois, sem tentar recuperação forçada.
 
-⚠️ **Pendência ainda aberta:** `sync-engine.js` (`SYNC_ENGINE`) continua
-coexistindo como sistema de sync redundante/legado (`mergeStrategy:
-'drive-wins'` hard-coded, mesma filosofia do bug acima) — não removido ainda
-para manter o escopo da correção mínimo. Ver seção 3 (dead code).
+✅ **Segundo achado do mesmo incidente, corrigido em 13/09/2026 (commit
+`a58f92e`):** investigando mais fundo, `sync-engine.js` (`SYNC_ENGINE`) não
+era código morto — `onChange()` está espalhado em ~20 pontos do código
+(index.html, tenant-modal.js, imovel.js, tenant-ui.js, payment-modal.js) e
+seu `_sync()` debounced disparava um **segundo caminho de upload pro Drive**,
+paralelo ao de `storage.js`/`saveToDrive()`, escrevendo no mesmo arquivo com
+um snapshot (`DRIVE_LOADER.getData()`) e um `savedAt` desatualizado — o que
+colidia diretamente com a proteção de conflito por data adicionada horas
+antes. Corrigido com a menor mudança possível: o upload real dentro de
+`_sync()` foi desativado (mantendo o rastreamento local de `onChange`/fila
+intacto, sem tocar nos ~20 call sites). Confirmado que `updateSyncStatus()`
+(o indicador de status que dependeria de `SYNC_ENGINE.getStatus()`) nunca é
+chamado em lugar nenhum — dead code, não impactado pela mudança.
+
+⚠️ **Pendência ainda aberta (limpeza de arquitetura, não urgente):** remover
+`sync-engine.js` e os ~20 call sites de `onChange()` por completo. Hoje ele
+só faz rastreamento local inofensivo (fila nunca foi realmente enviada de
+verdade — `uploadQueue()` já era só simulado, `// Simular envio`). Ver
+seção 3 (dead code).
 
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
