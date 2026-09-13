@@ -244,15 +244,14 @@ Todos os contratos escritos preveem energia+limpeza rateados entre salas
 cobrado na prática hoje**, valor é fixo e simples. Modelar como imóvel
 autônomo puro, sem componente de despesas.
 
-| Sala | Inquilino | Valor | Contrato encontrado? |
-|---|---|---|---|
-| 02 | Rodrigo | R$ 1.000,00/mês | ❌ Não encontrado em nenhum sistema (Paperless/T110/Lucas-linux) — sem contrato escrito localizado |
-| 03 | Camargo (Allison Tailan de Camargo, via CMG Soluções LTDA) | R$ 1.000,00/mês | ✅ Sim (valor do contrato original R$750 desatualizado — usar o valor real informado pelo usuário) |
-| 04 | Cristiano José Dundi | R$ 750,00/mês | ✅ Sim (valor do contrato original R$650 desatualizado — usar o valor real) |
-| 05 | Vagno Nunes de Oliveira + João Pedro Caseiro Oliveira | R$ 750,00/mês (total, conjunto) | ✅ Sim — **cadastrar como ÚNICO registro** (confirmado pelo usuário), não dois separados |
+| Sala | Inquilino | Valor | Telefone | Contrato encontrado? |
+|---|---|---|---|---|
+| 02 | Rodrigo | R$ 1.000,00/mês | +55 67 9833-5920 | ❌ Não encontrado em nenhum sistema (Paperless/T110/Lucas-linux) — sem contrato escrito localizado |
+| 03 | Camargo (Allison Tailan de Camargo, via CMG Soluções LTDA) | R$ 1.000,00/mês | +55 67 9319-7590 | ✅ Sim (valor do contrato original R$750 desatualizado — usar o valor real informado pelo usuário) |
+| 04 | Cristiano José Dundi | R$ 750,00/mês | +55 67 8143-0498 | ✅ Sim (valor do contrato original R$650 desatualizado — usar o valor real) |
+| 05 | Vagno Nunes de Oliveira (+55 67 9150-4435) + João Pedro Caseiro Oliveira (+55 67 9952-8595) | R$ 750,00/mês (total, conjunto) | ambos acima | ✅ Sim — **cadastrar como ÚNICO registro** (confirmado pelo usuário), não dois separados |
 
-Telefones das Salas e da Casa/Kitnet 02: **pendentes**, usuário vai passar
-depois.
+✅ Telefones de todas as unidades confirmados pelo usuário (12/09/2026) — nenhuma pendência de contato restante.
 
 ### Total de aluguéis (base, sem repasses de condomínio/IPTU)
 Santa Nonna I (7 aptos) R$ 5.619,90 + Santa Nonna II R$ 1.200,00 + Salas
@@ -260,7 +259,7 @@ R$ 3.500,00 = **R$ 10.319,90/mês**. Com a taxa de administração do
 condomínio (10% variável) somada: **~R$ 10.397,03/mês** (base julho/2026).
 
 ### Pendências antes do cadastro efetivo
-- [ ] Telefones de: Erivan, Rodrigo, Camargo, Cristiano, Vagno, João
+- [x] Telefones de: Erivan, Rodrigo, Camargo, Cristiano, Vagno, João — CONFIRMADOS 12/09/2026 (ver tabelas acima)
 - [x] Juros de 2% a.m. no contrato do Erivan (vs 1% padrão dos demais) — CONFIRMADO pelo usuário (12/09): é intencional, usar 2% conforme contrato só para essa unidade (Kitnet 02/Santa Nonna II).
 - [ ] Decidir se os contratos das Salas devem ser atualizados pra bater com a prática real (sem rateio) ou deixar como está
 - [ ] Contrato da Sala 02 (Rodrigo) não existe por escrito em lugar nenhum — considerar formalizar
