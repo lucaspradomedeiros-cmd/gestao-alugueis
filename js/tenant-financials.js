@@ -64,11 +64,21 @@ function hydrateEntries(){
 // FINANCIAL ENGINE
 // ============================================================
 // Given principal (base debt = aluguel+condo+iptu+lixo) and days overdue,
-// compute multa (10% flat, only once) and juros (1%/month, prorated daily)
-function calcPenalties(principal, daysLate, multaAlreadyApplied){
+// compute multa (10% flat, only once) and juros (1%/month padrão, prorated daily).
+// taxaJurosDiaria é opcional — default é a taxa padrão (1% a.m.); usar
+// jurosRateDiario(t) quando o contrato do inquilino tiver taxa própria
+// (ex: Erivan/Santa Nonna II, 2% a.m. — ver campo t.jurosRatePctMes).
+function calcPenalties(principal, daysLate, multaAlreadyApplied, taxaJurosDiaria){
+  if(taxaJurosDiaria===undefined) taxaJurosDiaria = JUROS_RATE;
   const multa = !multaAlreadyApplied && daysLate > 0 ? R2(principal * MULTA_RATE) : 0;
-  const juros = daysLate > 0 ? R2(principal * JUROS_RATE * daysLate) : 0;
+  const juros = daysLate > 0 ? R2(principal * taxaJurosDiaria * daysLate) : 0;
   return {multa, juros};
+}
+
+// Taxa de juros diária efetiva do inquilino: usa t.jurosRatePctMes (% ao mês)
+// quando o contrato define uma taxa própria, senão a taxa padrão do sistema.
+function jurosRateDiario(t){
+  return (t && t.jurosRatePctMes) ? (t.jurosRatePctMes/100)/30 : JUROS_RATE;
 }
 
 // ============================================================
@@ -99,7 +109,7 @@ function getTenantFinancials(t){
 
   // current penalties on remaining debt
   const multaApplied = R(last.multa) > 0;
-  const {multa:multaHoje, juros:jurosHoje} = calcPenalties(base, daysLate, multaApplied);
+  const {multa:multaHoje, juros:jurosHoje} = calcPenalties(base, daysLate, multaApplied, jurosRateDiario(t));
 
   const totalDue = remainingDebt + totalPending + (multaApplied ? R(last.multa):multaHoje) + jurosHoje;
 

@@ -129,7 +129,7 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
     entry.status = 'pago';
     // If paid late, compute actual penalties and note them
     if(late && entry.multa===0){
-      const {multa, juros} = calcPenalties(base, daysLate, false);
+      const {multa, juros} = calcPenalties(base, daysLate, false, jurosRateDiario(t));
       entry.multa = multa; entry.juros = juros;
       entry.valorCobrado = R2(base+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
     }
@@ -148,7 +148,7 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
 function _rollPenalties(t, ref, base, daysLate){
   const entry = t.history.find(h=>h.ref===ref);
   if(!entry) return;
-  const {multa, juros} = calcPenalties(base, daysLate, R(entry.multa)>0);
+  const {multa, juros} = calcPenalties(base, daysLate, R(entry.multa)>0, jurosRateDiario(t));
   entry.multa = R(entry.multa)||multa;
   entry.juros = juros;
 
