@@ -233,7 +233,7 @@ CEP 79820-030.
 | Unidade | Situação | Detalhes |
 |---|---|---|
 | Kitnet 01 | Ocupada pela mãe do usuário, **sem cobrança de aluguel** | Usuário paga integralmente IPTU, taxa de lixo, esgoto, água e energia. Fica fora do controle de ALUGUÉIS desta fase (é despesa, não receita) — registrar quando entrar a fase de despesas/imóveis. |
-| Kitnet 02 (= "Casa 02" no contrato) | **Alugada — Francisco Erivan Mota** | R$ 1.200,00/mês, vigência 01/07/2026-01/07/2029 (36 meses), vencimento dia 10 ("paga e mora"), garantia Fiador, reajuste anual IPCA. ⚠️ Multa/juros desse contrato usam **2% a.m.** (diferente do padrão 1% dos outros) — confirmar se é intencional. Telefone: pendente. |
+| Kitnet 02 (= "Casa 02" no contrato) | **Alugada — Francisco Erivan Mota** | R$ 1.200,00/mês, vigência 01/07/2026-01/07/2029 (36 meses), vencimento dia 10 ("paga e mora"), garantia Fiador, reajuste anual IPCA. Multa/juros desse contrato usam **2% a.m.** (diferente do padrão 1% dos outros, confirmado intencional pelo usuário). Telefone: +55 67 9625-6769 |
 
 Vagas de garagem do Santa Nonna II: existem, nenhuma alugada atualmente —
 fora de escopo, possível receita futura.
