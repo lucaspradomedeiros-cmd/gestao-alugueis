@@ -3791,8 +3791,15 @@ function filterDetHistory(t){
 
 function renderDet(){
   const t = tenants.find(x=>x.id===detTenantId);
-  if(!t||t.vago) return;
+  if(!t) return;
 
+  // 13/09/2026: antes saía aqui pra qualquer inquilino vago (locação
+  // encerrada), deixando o painel abrir vazio (sem cabeçalho nem histórico).
+  // O objetivo de "Encerrar Locação" sempre foi preservar o histórico
+  // consultável (extrato, recibo, contrato) — só a cobrança ativa que para.
+  // renderDetHeader/renderDetDebt/buildDetSummary/buildDetHistory já lidam
+  // bem com vago (status 'vago' tem label própria, e o bloco de débito só
+  // aparece se houver totalDue pendente), então basta deixar renderizar.
   const st = statusOf(t);
   renderDetHeader(t, st);
 
