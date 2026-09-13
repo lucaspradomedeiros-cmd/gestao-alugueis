@@ -437,11 +437,22 @@ lançamentos (4 inquilinos × 3 meses) aplicados via `applyPayment()` real,
 com overrides de condomínio/IPTU quando necessário pra bater exato com o
 valor histórico realmente cobrado.
 
-**🔴 Pendência real restante:** falta lançar a despesa de **agosto/2026**
-(água/energia) na tela de Condomínio — sem isso, o app não gera a cobrança
-de setembro dos 7 inquilinos do condomínio (Evelin, Adriano, Fernanda,
-Lorenza, Izabelly, Jorge, Thainara) sozinho. A planilha "Condomínio Geral"
-só ia até julho/2026 no momento deste cadastro.
+**✅ CONCLUÍDO em 13/09/2026:** agosto lançado (água R$480,04, energia
+R$79,71 — valores repassados pelo usuário direto das contas SANESUL/
+ENERGISA, não da planilha). Achado no processo: a conta da SANESUL rotulada
+"08/2026" (R$309,35) na verdade é o consumo de **julho** cobrado em agosto
+— bate exato com o valor que já tinha sido usado pra julho — enquanto a
+ENERGISA rotula pelo mês de consumo real (sem esse atraso). Confirmado com
+o usuário antes de lançar, para não duplicar/errar o mês. Setembro gerado
+com sucesso pros 7 inquilinos do condomínio (status "futuro", ainda não
+vencido), persistido e confirmado com reload.
+
+⚠️ Nota: o valor de condomínio de setembro (R$122,34) foi calculado pela
+fórmula atual do app (`condoCalc()`), que ainda tem a diferença de
+modelagem do IPTU já documentada acima (não corrigida no código). Não há
+planilha de setembro pra comparar ainda — se a diferença se confirmar
+quando os pagamentos de fato acontecerem, vai precisar do mesmo tipo de
+ajuste manual feito em maio-agosto.
 
 ### Achado técnico do teste ao vivo (relevante pra seção 0)
 Ao salvar formulários (Novo Condomínio, Novo Locatário, Editar Condomínio),
