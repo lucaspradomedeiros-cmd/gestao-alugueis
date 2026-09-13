@@ -264,3 +264,67 @@ condomínio (10% variável) somada: **~R$ 10.397,03/mês** (base julho/2026).
 - [ ] Decidir se os contratos das Salas devem ser atualizados pra bater com a prática real (sem rateio) ou deixar como está
 - [ ] Contrato da Sala 02 (Rodrigo) não existe por escrito em lugar nenhum — considerar formalizar
 - [ ] Total de unidades a cadastrar nesta fase: **12** (7 Santa Nonna I + 1 Santa Nonna II/Kitnet 02 + 4 Salas — Kitnet 01 fica fora por não ter receita)
+
+
+---
+
+## 11. Progresso Real de Cadastro (12/09/2026) — feito direto no app em produção
+
+Diferente do que o `dados.json` do git sugeria, o Drive já tinha dados mais
+atuais que o snapshot commitado. Ao abrir o app de verdade
+(gestao.vpadvogados.com.br) pra cadastrar os dados da seção 10, descobri:
+
+**Já estava correto no Drive (não mexido):** Sala 02 (Rodrigo, R$1.000),
+Sala 03 (Camargo, R$1.000), Sala 04 (Dundi, R$750), Apto 2/4/6/7/8
+(Evelin/Adriano/Fernanda/Lorenza/Thais).
+
+**Cadastrado hoje, pela interface real do app (não editando arquivo por
+trás):**
+- [x] Unidade "Sala 05" criada (grupo Escritório Salas: 4→5 unidades)
+- [x] Locatário Sala 05: Vagno Nunes de Oliveira e João Pedro Caseiro
+      Oliveira, R$750, sem garantia, vencimento dia 20
+- [x] Grupo "Residencial Santa Nonna II" (SN2) criado do zero, endereço
+      Rua Cider Cerzózimo de Souza 1360, Jardim Tropical, Dourados/MS,
+      unidade "Casa 02", sem rateio de despesas (autônomo)
+- [x] Locatário Casa 02: Francisco Erivan Mota, R$1.200, fiadores,
+      vencimento dia 10, início 01/07/2026, término 01/07/2029
+
+**App confirmado com 13 locatários no total após o cadastro.**
+
+### ❌ NÃO mexido de propósito — precisa de feature nova primeiro
+Apto 1 (Rafael Moura Dornelles), Apto 3 (Ana Carla Vieira Ferreira), Apto 5
+(Gabriely Vilhalva Mendonça) — inquilinos já trocaram (Izabelly/Jorge/
+Thainara são os atuais) mas o app **não tem função de "encerrar locação/
+marcar vago sem perder o histórico"**. Usuário confirmou (12/09): manter o
+histórico desses inquilinos, especialmente o do Rafael (dívida real ainda
+a cobrar); Ana Carla e Gabriely sem pendência. Sobrescrever o nome no mesmo
+registro colaria a dívida do antigo no novo inquilino — errado.
+
+- [ ] **NOVA FUNCIONALIDADE NECESSÁRIA:** "Encerrar locação" — permite marcar
+      um locatário como inativo/mudou-se, preservando 100% do histórico
+      antigo sob o nome dele, e liberar a unidade pra um cadastro de
+      locatário novo. Até essa feature existir, Apto 1/3/5 ficam com dado
+      desatualizado no app (mas a planilha continua certa nesse meio-tempo).
+
+### Achado técnico do teste ao vivo (relevante pra seção 0)
+Ao salvar formulários (Novo Condomínio, Novo Locatário, Editar Condomínio),
+o app dispara `alert()`/`confirm()` **nativos do navegador** em pelo menos
+alguns fluxos de salvamento. Isso não afeta um usuário humano normal (é só
+um popup pra clicar OK), mas trava qualquer automação/script. Não é o mesmo
+tipo de falha que causou o abandono de 4 meses (aquele quebrava o que a TELA
+MOSTRAVA pra um humano de verdade) — mas ainda assim, **alerta nativo é UX
+datada**; trocar por notificação in-page é melhoria de qualidade, não
+urgente.
+
+- [ ] Trocar `alert()`/`confirm()` nativos por notificação in-page nos fluxos
+      de salvamento (achado de baixa prioridade, cosmético/UX, não bloqueia
+      uso real).
+
+### Validação real de confiabilidade (seção 0) — resultado desta sessão
+Login funcionou normal (só um delay inicial de alguns segundos, sem erro).
+Painel Geral renderizou os dados corretos na primeira tentativa (11→13
+locatários, valores batendo). **Não se repetiu o bug do dashboard não
+renderizar** que causou o abandono original — é um sinal positivo, mas uma
+sessão de teste não é suficiente pra declarar confiabilidade restabelecida;
+o item da seção 0 (uso em paralelo com a planilha por 1-2 meses) continua
+sendo o critério real antes de confiar 100%.
