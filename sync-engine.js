@@ -146,14 +146,19 @@ const SYNC_ENGINE = {
       const changes = this.queue.slice(0, 10); // Sincronizar até 10 mudanças por vez
       const version = await this._createVersion(changes);
 
-      // Tentar enviar para Drive
+      // ⚠️ DESATIVADO (13/09/2026): este era um SEGUNDO caminho de upload pro
+      // Drive, rodando em paralelo ao de storage.js/saveToDrive() — que já é
+      // chamado pelas mesmas ações que disparam onChange() (saveTenant,
+      // encerrarLocacao, pagamento, etc). Esse upload aqui subia um snapshot
+      // de DRIVE_LOADER.getData() (nem sempre atualizado — dependia de alias
+      // de referência de objeto) com um campo `savedAt` desatualizado, o que
+      // colidia com a proteção de conflito por data adicionada em
+      // drive-loader.js/storage.js no mesmo dia (podia gerar falso conflito
+      // ou sobrescrever o Drive com dado velho). Mantido só o rastreamento
+      // local de mudanças (onChange/fila) abaixo; quem realmente salva no
+      // Drive agora é só storage.js. Ver PLANO_MELHORIAS.md seção 0/3.
       const startTime = Date.now();
-      const success = await DRIVE_LOADER.uploadFile({
-        ...currentData,
-        _version: this.version,
-        _hash: this.hash,
-        _syncedAt: new Date().toISOString()
-      });
+      const success = true;
 
       if (success) {
         const elapsed = Date.now() - startTime;
