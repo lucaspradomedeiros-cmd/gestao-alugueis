@@ -394,19 +394,31 @@ cadastrados). Relançado maio, junho e julho/2026 (dados reais da aba
 automaticamente as cobranças de junho/julho/agosto pra todo mundo do
 condomínio.
 
-**🔴 Achado de bug real (não corrigido no código ainda):** o rateio que o
-app calcula (`condoCalc()`) NÃO bate com a planilha — diferença sistemática
-de ~R$5,22/mês pra menos. Causa: a planilha inclui o IPTU dentro do total
-rateado antes de dividir por 8 condôminos; o app trata IPTU como cobrança
-individual por unidade, fora do rateio. Confirmado comparando os 3 meses
-relançados contra os valores reais que os inquilinos pagaram (bateu exato
-depois de corrigir manualmente `h.condo` de cada lançamento pra igualar a
-planilha). **Pendência real:** decidir qual modelo é o correto (IPTU
-pooled vs. individual) e corrigir `condoCalc()`/`saveCondoMonth()` de uma
-vez — enquanto isso, qualquer mês novo lançado pela tela vai gerar valores
-~R$5,22 menores que o real e vai precisar da mesma correção manual.
-**Também falta o lançamento de agosto/2026** (não tem na planilha ainda) —
-sem ele, setembro não pode ser gerado automaticamente pela tela.
+**✅ RESOLVIDO em 13/09/2026 (conclusão invertida da análise inicial):**
+achada divergência sistemática de ~R$5,22-5,23/mês entre o rateio do app
+(`condoCalc()`) e a planilha — a planilha soma o IPTU dentro do total
+rateado antes de dividir por 8 e taxar 10%; o app cobra o IPTU à parte,
+valor cheio, individual por unidade, sem incluir no rateio nem taxar.
+
+Numa primeira análise (12-13/09), corrigi manualmente maio-agosto/2026 (28
+lançamentos, 7 inquilinos × 4 meses) pra bater com a planilha, assumindo
+que ela estava certa. **Decisão final do usuário, revertendo essa
+suposição:** IPTU é imposto individual repassado (cada unidade já tem sua
+própria parcela, não é despesa compartilhada como água/limpeza), então não
+faz sentido ratear ele entre os 8 condôminos nem cobrar taxa de
+administração em cima — **o app estava certo, a planilha tem o erro**
+(soma + taxa indevida sobre IPTU).
+
+**Decisões tomadas:**
+- Maio-agosto: valores corrigidos (mais altos) **mantidos como estão** —
+  já foram efetivamente cobrados e recebidos dos inquilinos nesses valores,
+  reverter agora não traria o dinheiro de volta, só geraria confusão.
+- Setembro/2026 em diante: **NÃO corrigido** — o valor original do app
+  (R$122,34, sem IPTU no rateio) é o correto, fica como está.
+- Recomendado ao usuário corrigir a própria fórmula da planilha (parar de
+  somar+taxar IPTU no rateio) para consistência dali pra frente.
+- Nenhuma mudança de código necessária — `condoCalc()`/`saveCondoMonth()`
+  já calculam do jeito certo.
 
 **Pagamentos de setembro/2026 registrados** (dados passados pelo usuário em
 chat, aplicados via `applyPayment()` real — não edição direta de JSON):
