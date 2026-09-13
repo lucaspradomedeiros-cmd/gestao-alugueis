@@ -120,6 +120,14 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   entry.dataPagamento = dataPagamento;
   if(obs) entry.obs = obs;
 
+  // Histórico de pagamentos do mês (13/09/2026): registra cada pagamento
+  // individualmente (data+valor), preservando valorPago/dataPagamento (soma
+  // e data mais recente) já usados em todo o resto do app pra não quebrar
+  // nada. Só passa a existir de fato quando há mais de um pagamento no mês
+  // (ex: pagamento parcial completado depois em outra data).
+  if(!entry.pagamentos) entry.pagamentos = [];
+  entry.pagamentos.push({data: dataPagamento, valor: R(valorPago)});
+
   // Determine status
   const vencDate = entry.venc;
   const late = dataPagamento > vencDate;

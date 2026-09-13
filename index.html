@@ -2902,6 +2902,14 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   entry.dataPagamento = dataPagamento;
   if(obs) entry.obs = obs;
 
+  // Histórico de pagamentos do mês (13/09/2026): registra cada pagamento
+  // individualmente (data+valor), preservando valorPago/dataPagamento (soma
+  // e data mais recente) já usados em todo o resto do app pra não quebrar
+  // nada. Só passa a existir de fato quando há mais de um pagamento no mês
+  // (ex: pagamento parcial completado depois em outra data).
+  if(!entry.pagamentos) entry.pagamentos = [];
+  entry.pagamentos.push({data: dataPagamento, valor: R(valorPago)});
+
   // Determine status
   const vencDate = entry.venc;
   const late = dataPagamento > vencDate;
@@ -3644,6 +3652,13 @@ function buildDetSummary(filtered){
   </div>`;
 }
 
+function fmtPagamentos(h){
+  if(h.pagamentos && h.pagamentos.length > 1){
+    return h.pagamentos.map(p=>`${fmtDate(p.data)} · ${fmtBRL(p.valor)}`).join('<br>');
+  }
+  return h.dataPagamento ? `${fmtDate(h.dataPagamento)} · ${fmtBRL(h.valorPago)}` : '—';
+}
+
 function buildDetHistory(t, filtered, filteredRev){
   const rows = filteredRev.map(h=>{
     const isHighlighted = h.ref === detHighRef;
@@ -3698,7 +3713,7 @@ function buildDetHistory(t, filtered, filteredRev){
               </div>
               <div style="text-align:right;">
                 <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Pagamento</div>
-                <div style="font-size:13px;font-weight:600;color:${st2==='pago'?'var(--green)':st2==='parcial'?'var(--amber)':'var(--red)'};">${h.dataPagamento?fmtDate(h.dataPagamento)+' · '+fmtBRL(h.valorPago):'—'}</div>
+                <div style="font-size:13px;font-weight:600;color:${st2==='pago'?'var(--green)':st2==='parcial'?'var(--amber)':'var(--red)'};">${fmtPagamentos(h)}</div>
                 <div style="margin-top:4px;"><span class="pill ${pillCls}">${stTxt}</span></div>
               </div>
             </div>
@@ -3723,7 +3738,7 @@ function buildDetHistory(t, filtered, filteredRev){
       <td class="r" style="font-size:12px;">${R(h.condo)+R(h.iptu)+R(h.lixo)>0?fmtBRL(R(h.condo)+R(h.iptu)+R(h.lixo)):'—'}<br><span style="font-size:10px;color:var(--text-faint);">${R(h.condo)>0?'cond ':''}${R(h.iptu)>0?'iptu ':''}${R(h.lixo)>0?'lixo':''}</span></td>
       <td class="r" style="font-size:12px;color:${penalties>0?'var(--red)':'var(--text-faint)'};">${penalties>0?fmtBRL(penalties):'—'}</td>
       <td class="r" style="font-size:12px;font-weight:600;">${fmtBRL(h.valorCobrado)}</td>
-      <td class="r" style="font-size:12px;">${h.dataPagamento?`<div>${fmtDate(h.dataPagamento)}</div><div style="font-size:10px;color:var(--text-faint);">${fmtBRL(h.valorPago)}</div>`:'—'}</td>
+      <td class="r" style="font-size:12px;">${h.pagamentos && h.pagamentos.length>1 ? `<div style="font-size:10px;line-height:1.5;">${fmtPagamentos(h)}</div>` : (h.dataPagamento?`<div>${fmtDate(h.dataPagamento)}</div><div style="font-size:10px;color:var(--text-faint);">${fmtBRL(h.valorPago)}</div>`:'—')}</td>
       <td class="r" style="white-space:nowrap;">
         <span class="pill ${pillCls}">${stTxt}</span>
         ${(st2==='pago'||st2==='parcial')?`<div style="margin-top:4px;display:flex;gap:3px;justify-content:flex-end;">
