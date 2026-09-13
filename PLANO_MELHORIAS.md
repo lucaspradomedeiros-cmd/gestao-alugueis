@@ -366,9 +366,48 @@ a receita mensal alvo do levantamento (R$10.319,90) e a lista de 12 unidades
 da seção 10.** Verificado com reload completo (dado persistiu no Drive de
 verdade, não só na tela).
 
-Pendente do usuário: passar as datas de pagamento deste mês de cada
-inquilino assim que a planilha estiver atualizada (ainda não constava lá no
-momento do cadastro).
+### ✅ CONCLUÍDO em 13/09/2026 — Condomínio relançado e pagamentos de setembro registrados
+
+**Achado antes de registrar qualquer pagamento:** o rateio do condomínio do
+Santa Nonna I não era lançado desde abril/2026 (5 meses faltando), o que
+travava o histórico de TODOS os inquilinos do condomínio em maio — inclusive
+impedia qualquer cobrança de aparecer pra Izabelly/Jorge/Thainara (recém
+cadastrados). Relançado maio, junho e julho/2026 (dados reais da aba
+"Condomínio Geral" da planilha, água+energia+limpeza+IPTU), o que gerou
+automaticamente as cobranças de junho/julho/agosto pra todo mundo do
+condomínio.
+
+**🔴 Achado de bug real (não corrigido no código ainda):** o rateio que o
+app calcula (`condoCalc()`) NÃO bate com a planilha — diferença sistemática
+de ~R$5,22/mês pra menos. Causa: a planilha inclui o IPTU dentro do total
+rateado antes de dividir por 8 condôminos; o app trata IPTU como cobrança
+individual por unidade, fora do rateio. Confirmado comparando os 3 meses
+relançados contra os valores reais que os inquilinos pagaram (bateu exato
+depois de corrigir manualmente `h.condo` de cada lançamento pra igualar a
+planilha). **Pendência real:** decidir qual modelo é o correto (IPTU
+pooled vs. individual) e corrigir `condoCalc()`/`saveCondoMonth()` de uma
+vez — enquanto isso, qualquer mês novo lançado pela tela vai gerar valores
+~R$5,22 menores que o real e vai precisar da mesma correção manual.
+**Também falta o lançamento de agosto/2026** (não tem na planilha ainda) —
+sem ele, setembro não pode ser gerado automaticamente pela tela.
+
+**Pagamentos de setembro/2026 registrados** (dados passados pelo usuário em
+chat, aplicados via `applyPayment()` real — não edição direta de JSON):
+Izabelly R$1.044,06 (04/09), Evelin R$796,54 (02/09), Jorge R$1.044,06
+(04/09), Adriano R$994,06 (04/09), Thainara R$994,06 (01/09), Fernanda
+R$848,42 (05/09), Lorenza R$907,12 (04/09), Rodrigo R$1.000,00 (01/09),
+Cristiano R$750,00 (04/09), Vagno/Sala05 R$750,00 (02/09), Erivan **parcial**
+R$500,00 de R$1.200,00 (05/09, antes do vencimento dia 10 — sem multa/juros).
+Camargo: sem pagamento (Pendente, confirmado pelo usuário, nada alterado).
+
+**Thais** (já vago): por decisão do usuário, tratada como **sempre R$600,00
+cheio, paga em dia (dia 05)** em todos os meses em aberto — maio, junho,
+julho e agosto/2026 — ignorando os valores maiores que a planilha mostrava
+pra junho em diante (reajuste que na prática não chegou a valer pra ela).
+Campo `rent` mantido em R$600,00.
+
+Todos os lançamentos confirmados com reload completo após salvar (persistiu
+no Drive de verdade).
 
 ### Achado técnico do teste ao vivo (relevante pra seção 0)
 Ao salvar formulários (Novo Condomínio, Novo Locatário, Editar Condomínio),
