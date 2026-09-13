@@ -7193,6 +7193,16 @@ function gisLoaded(){
     scope: GAPI_SCOPES,
     callback: (resp)=>{
       if(resp.error){ console.warn('Erro OAuth:', resp); return; }
+      // 13/09/2026: faltava salvar o token pra reconexão silenciosa (o
+      // código abaixo já lia 'ga_drive_token' do localStorage, mas nada
+      // nunca gravava nele — por isso pedia login completo toda vez).
+      try{
+        const token = gapi.client.getToken();
+        if(token){
+          const expiresInMs = Number(resp.expires_in || 3600) * 1000;
+          localStorage.setItem('ga_drive_token', JSON.stringify({...token, expires_at: Date.now() + expiresInMs}));
+        }
+      }catch(e){ console.warn('Erro ao salvar token do Drive:', e); }
       onDriveConnected();
     }
   });
@@ -7211,7 +7221,12 @@ function gisLoaded(){
 
 function connectDrive(){
   if(!gapiReady || !gisReady){ alert('Aguarde o carregamento das APIs Google.'); return; }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  // 13/09/2026: 'consent' forçava a tela cheia do Google (com aviso de app
+  // não verificado) toda vez, mesmo quando já havia sessão/consentimento
+  // válido. Sem 'prompt' o Google decide sozinho — silencioso/rápido quando
+  // possível, só mostra a tela cheia quando realmente necessário (primeira
+  // vez, ou consentimento revogado).
+  tokenClient.requestAccessToken({});
 }
 
 function updateSyncStatus(){
