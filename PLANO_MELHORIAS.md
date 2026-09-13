@@ -409,6 +409,23 @@ Campo `rent` mantido em R$600,00.
 Todos os lançamentos confirmados com reload completo após salvar (persistiu
 no Drive de verdade).
 
+**✅ Achado e corrigido na sequência (mesma sessão):** maio, junho e julho de
+Evelin/Adriano/Fernanda/Lorenza NÃO estavam marcados como pagos no app,
+apesar de a planilha confirmar que sim (só agosto tinha sido registrado até
+esse ponto). Corrigido cruzando cada linha da planilha por VALOR e
+VENCIMENTO (não pelo texto da coluna "Período", que tem pelo menos um erro
+confirmado — a aba do Adriano tem o rótulo do período trocado, mas o
+vencimento e o valor batem certinho com o padrão dos demais). Os 12
+lançamentos (4 inquilinos × 3 meses) aplicados via `applyPayment()` real,
+com overrides de condomínio/IPTU quando necessário pra bater exato com o
+valor histórico realmente cobrado.
+
+**🔴 Pendência real restante:** falta lançar a despesa de **agosto/2026**
+(água/energia) na tela de Condomínio — sem isso, o app não gera a cobrança
+de setembro dos 7 inquilinos do condomínio (Evelin, Adriano, Fernanda,
+Lorenza, Izabelly, Jorge, Thainara) sozinho. A planilha "Condomínio Geral"
+só ia até julho/2026 no momento deste cadastro.
+
 ### Achado técnico do teste ao vivo (relevante pra seção 0)
 Ao salvar formulários (Novo Condomínio, Novo Locatário, Editar Condomínio),
 o app dispara `alert()`/`confirm()` **nativos do navegador** em pelo menos
