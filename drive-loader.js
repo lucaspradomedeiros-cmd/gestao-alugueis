@@ -23,6 +23,8 @@ const DRIVE_LOADER = {
   syncInProgress: false,
   retryCount: 0,
   maxRetries: 3,
+  conflict: null,       // { local, drive } quando dados locais mais novos que o Drive são detectados
+  _inFlightLoad: null,  // coalesce chamadas concorrentes de loadFromDrive()
 
   // ── Inicialização ──────────────────────────────────────
   async init() {
@@ -43,7 +45,21 @@ const DRIVE_LOADER = {
   },
 
   // ── Carregamento do Google Drive ────────────────────────
-  async loadFromDrive() {
+  // Coalesce: se já houver um load em andamento (comum, pois onDriveConnected()
+  // dispara este método por 3 caminhos diferentes ao mesmo tempo), reaproveita
+  // a mesma requisição em vez de disparar downloads/applies concorrentes.
+  loadFromDrive() {
+    if (this._inFlightLoad) {
+      console.log('[DriveLoader] loadFromDrive já em andamento, reaproveitando...');
+      return this._inFlightLoad;
+    }
+    this._inFlightLoad = this._doLoadFromDrive().finally(() => {
+      this._inFlightLoad = null;
+    });
+    return this._inFlightLoad;
+  },
+
+  async _doLoadFromDrive() {
     if (!gapi.client.drive) {
       console.warn('[DriveLoader] Google Drive API não inicializada');
       return false;
@@ -72,7 +88,14 @@ const DRIVE_LOADER = {
       if (!data) return false;
 
       // Validar e aplicar
-      if (this.applyData(data)) {
+      const result = this.applyData(data);
+      if (result === 'conflict') {
+        // Dados locais mais novos que os do Drive — não sobrescrever, deixar
+        // a camada de UI (storage.js) decidir com o usuário.
+        this.driveFileId = fileId;
+        return 'conflict';
+      }
+      if (result) {
         this.driveFileId = fileId;
         this.lastSyncTime = new Date();
         console.log('[DriveLoader] Dados carregados do Drive com sucesso');
@@ -83,7 +106,7 @@ const DRIVE_LOADER = {
       if (this.retryCount < this.maxRetries) {
         this.retryCount++;
         await this.delay(2000 * this.retryCount);
-        return this.loadFromDrive();
+        return this._doLoadFromDrive();
       }
     } finally {
       this.syncInProgress = false;
@@ -228,13 +251,31 @@ const DRIVE_LOADER = {
 
       // Proteção: não sobrescrever dados válidos locais com Drive vazio
       const driveHasData = data.tenants && data.tenants.length > 0;
-      const localData = localStorage.getItem('gestao_alugueis_v1');
-      const localHasData = localData && JSON.parse(localData).tenants?.length > 0;
+      const localRaw = localStorage.getItem('gestao_alugueis_v1');
+      const localParsed = localRaw ? JSON.parse(localRaw) : null;
+      const localHasData = localParsed && localParsed.tenants?.length > 0;
 
       if (!driveHasData && localHasData) {
         console.warn('[DriveLoader] ⚠ Drive tem dados vazios, mantendo dados locais');
         return false; // Não sobrescrever
       }
+
+      // Proteção (12/09/2026): não sobrescrever silenciosamente dados locais
+      // MAIS RECENTES que ainda não foram enviados ao Drive — isso acontecia,
+      // por exemplo, ao conectar o Drive depois de editar dados localmente
+      // (Drive "vencia" sempre, mesmo estando desatualizado). Agora, se o
+      // savedAt local for mais novo que o do Drive, sinaliza conflito em vez
+      // de aplicar, e quem decide é o usuário (ver loadFromDrive em storage.js).
+      if (localHasData && localParsed.savedAt && data.savedAt) {
+        const localTime = new Date(localParsed.savedAt).getTime();
+        const driveTime = new Date(data.savedAt).getTime();
+        if (localTime > driveTime + 1000) { // tolerância de 1s
+          console.warn('[DriveLoader] ⚠ Dados locais são mais recentes que o Drive — conflito, não sobrescrevendo');
+          this.conflict = { local: localParsed, drive: data };
+          return 'conflict';
+        }
+      }
+      this.conflict = null;
 
       // Salvar em localStorage como cache
       this.saveToLocalStorage(data);

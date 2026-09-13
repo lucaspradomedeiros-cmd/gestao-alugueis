@@ -92,6 +92,36 @@ async function loadFromDrive(){
   try {
     updateSaveStatus('☁ Carregando do Drive…', 'var(--blue)');
     const success = await DRIVE_LOADER.loadFromDrive();
+
+    if(success === 'conflict'){
+      const conflict = DRIVE_LOADER.conflict || {};
+      const local = conflict.local, drive = conflict.drive;
+      const fmt = iso => {
+        if(!iso) return '(sem data)';
+        const d = new Date(iso);
+        return `${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      };
+      const manterLocal = confirm(
+        `⚠ CONFLITO DE DADOS\n\n` +
+        `Os dados salvos neste navegador (${fmt(local && local.savedAt)}) são mais recentes que os do Google Drive (${fmt(drive && drive.savedAt)}).\n\n` +
+        `Isso costuma acontecer quando você edita dados sem o Drive conectado e conecta depois.\n\n` +
+        `OK = manter os dados deste navegador e enviá-los ao Drive agora (recomendado).\n` +
+        `Cancelar = descartar os dados deste navegador e usar os do Drive.`
+      );
+      if(manterLocal && local){
+        applyPayload(local);
+        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
+        await saveToDrive();
+        updateSaveStatus('☁ Conflito resolvido — dados locais enviados ao Drive', 'var(--green)');
+      } else if(drive){
+        DRIVE_LOADER.saveToLocalStorage(drive);
+        applyPayload(drive);
+        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
+        updateSaveStatus('☁ Conflito resolvido — dados do Drive aplicados', 'var(--amber)');
+      }
+      return true;
+    }
+
     if(success && window.DRIVE_DATA){
       // Aplicar dados carregados do Drive
       if(applyPayload(window.DRIVE_DATA)){
