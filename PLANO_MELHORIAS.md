@@ -1,6 +1,6 @@
 # Plano de Melhorias — Gestão de Aluguéis
 
-**Data:** 12/09/2026
+**Data:** 12/09/2026 (atualizado)
 **Autor:** Claude Code (Sonnet 5), a pedido de Lucas
 **Status:** Nenhum item deste plano foi implementado ainda — é só o plano.
 
@@ -19,12 +19,52 @@
 
 ---
 
-## 1. Segurança (prioridade máxima — antes de qualquer feature nova)
+## 0. Confiança e Confiabilidade — PRIORIDADE MÁXIMA, antes até de features
+
+**Diagnóstico da causa real do abandono do projeto (registrado 12/09/2026):**
+o projeto ficou 4 meses parado (04/05 → 12/09). O usuário confirmou o motivo:
+a planilha continua parecendo mais confiável e fácil de usar, apesar de mais
+manual — mas ele reconhece que precisa de algo melhor que a planilha.
+
+O git log explica o gatilho exato: **o último dia de atividade antes da pausa
+de 4 meses foi uma sessão inteira depurando um bug onde o dashboard não
+renderizava os dados corretamente** (5 commits de debug em sequência,
+terminando em "remove all debug logging, clean up code"). Uma planilha nunca
+"não renderiza" — você sempre vê exatamente o que está lá. O app quebrou,
+numa hora decisiva, a confiança básica de "os números na tela são os números
+reais". Depois disso, ninguém confia seu único controle financeiro a uma
+ferramenta que já mentiu uma vez — mesmo com o bug corrigido depois.
+
+**Isso muda a prioridade de tudo:** não adianta adicionar feature nenhuma
+(WhatsApp em lote, IA, PWA) numa ferramenta em que a confiança básica ainda
+não foi reconquistada. Antes de qualquer coisa da seção 5 em diante:
+
+- [ ] **Validar a confiabilidade de verdade**, não confiar no commit "debug:
+      remove all debug logging" como prova de que o bug do dashboard está
+      mesmo resolvido. Testar ativamente: os dados batem com a realidade toda
+      vez que abre? O dashboard sempre mostra o número certo, sem precisar de
+      F5 ou truque nenhum?
+- [ ] **Rodar em paralelo com a planilha por um período definido** (sugestão:
+      1-2 meses) antes de trocar de vez — registrar pagamentos/lançamentos
+      nos dois, comparar se os totais batem. Só migrar de fato depois de ver
+      funcionar direito, sessão após sessão, sem susto.
+- [ ] **Reduzir a fricção que a planilha não tem.** Cada tela de login, cada
+      "conectando ao Drive…", cada indicador de status de sync é atrito que a
+      planilha nunca teve. Mapear onde o app pede mais cliques/espera do que
+      simplesmente abrir um arquivo, e cortar o que der.
+- [ ] Enquanto a confiança não estiver reconquistada, **não prometer a si
+      mesmo mais uma "próxima fase"** que também vai ficar meses parada — se
+      o teste em paralelo não convencer depois de um tempo razoável, é sinal
+      honesto de que vale considerar simplificar o projeto (menos automação,
+      mais parecido com o que a planilha já faz bem) em vez de insistir em
+      mais camada de sofisticação.
+
+## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
 - [ ] **Remover o backdoor de senha em `js/auth.js`** — `const PASSWORD = '2'`
       e o fallback que aceita essa senha em texto puro quando `crypto.subtle`
       falha. Produção é 100% HTTPS (GitHub Pages), então esse fallback nunca é
-      necessário ali — só risco. É a correção mais urgente deste plano inteiro.
+      necessário ali — só risco.
 - [ ] Trocar a senha de acesso por algo mais longo/complexo, já que ela é a
       única barreira protegendo o cache local (`localStorage`), que agora
       inclui CPF (ver decisão da seção 2).
@@ -71,7 +111,7 @@ consistente claro/escuro) — não mexer na paleta.
 - [ ] Testar impressão de recibo em diálogo real de impressão mobile
       (iOS/Android) — só validado em desktop até agora.
 
-## 5. Funcionalidades
+## 5. Funcionalidades (SÓ depois da seção 0 estar resolvida)
 
 **Já existe e funciona:** motor financeiro completo (multa/juros/carry-over),
 múltiplos condomínios + imóveis autônomos, recibo (texto + impressão).
@@ -83,7 +123,7 @@ múltiplos condomínios + imóveis autônomos, recibo (texto + impressão).
       usuário, ajuda a rastrear erro de digitação
 - [ ] Mecanismo de exclusão de dados (apagar inquilino/cliente por completo)
 
-## 6. WhatsApp
+## 6. WhatsApp (SÓ depois da seção 0 estar resolvida)
 
 **Estado real:** `js/whatsapp.js` monta a mensagem de cobrança (com
 detalhamento de multa/juros dia-a-dia) e abre link `wa.me` — manual, um
@@ -135,11 +175,13 @@ recibo) também está implementado e funcional.
 
 ## Ordem recomendada de execução
 
-1. **Segurança** (seção 1) — rápido, resolve o maior risco
-2. **Corrigir documentação técnica** (`schema.json` + seção 18 do
+1. **Confiança e confiabilidade** (seção 0) — é isso que decide se o projeto
+   vinga ou continua como está agora, esquecido em favor da planilha
+2. **Segurança** (seção 1) — em paralelo, rápido, resolve o maior risco
+3. **Corrigir documentação técnica** (`schema.json` + seção 18 do
    `PROJETO_CONTEXTO.md`) — rápido, evita decisão errada em sessão futura
-3. **Consolidar docs** (seção 9) — uma tarde, paga dividendo em toda sessão
+4. **Consolidar docs** (seção 9) — uma tarde, paga dividendo em toda sessão
    futura
-4. **Terminar separação dados/código** (seção 3) — maior, mas destrava o resto
-5. Daí em diante: dashboard financeiro, WhatsApp em lote, reajuste automático
-   — na ordem que fizer mais sentido pro uso real
+5. Só depois de validar a seção 0 de verdade: terminar separação dados/código
+   (seção 3), dashboard financeiro, WhatsApp em lote, reajuste automático —
+   na ordem que fizer mais sentido pro uso real
