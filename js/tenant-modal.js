@@ -128,6 +128,27 @@ function openEditTenant(id){
   openOverlay('add-tenant-overlay');
 }
 
+// ============================================================
+// ENCERRAR LOCAÇÃO — marca o locatário como vago SEM apagar histórico.
+// A unidade fica livre para um novo cadastro (Novo Locatário na mesma
+// unidade); o registro antigo (nome, telefone, e todo o histórico de
+// pagamentos/dívidas) continua intacto, só deixa de aparecer nas listas
+// ativas, cobranças e relatórios (que já filtram por !t.vago).
+// ============================================================
+function encerrarLocacao(id){
+  const t = tenants.find(x=>x.id===id);
+  if(!t) return;
+  if(t.vago){ alert('Esta locação já está encerrada.'); return; }
+  const ok = confirm(`Encerrar a locação de ${t.name} (${t.unit})?\n\nO histórico completo (pagamentos, dívidas) será mantido, mas ele deixará de aparecer nas listas ativas, cobranças e relatórios.\n\nA unidade "${t.unit}" ficará disponível para cadastrar um novo locatário (use "+ Novo Locatário" normalmente).\n\nIsso pode ser desfeito depois se precisar.`);
+  if(!ok) return;
+  t.vago = true;
+  t.dataEncerramento = TODAY.toISOString().split('T')[0];
+  closeDet();
+  renderDashboard();
+  saveToStorage();
+  alert(`✓ Locação de ${t.name} encerrada. Histórico preservado — a unidade "${t.unit}" já pode receber um novo cadastro.`);
+}
+
 function closeAddTenant(){
   closeOverlay('add-tenant-overlay');
   editingTenantId = null;
