@@ -332,20 +332,43 @@ trás):**
 
 **App confirmado com 13 locatários no total após o cadastro.**
 
-### ❌ NÃO mexido de propósito — precisa de feature nova primeiro
-Apto 1 (Rafael Moura Dornelles), Apto 3 (Ana Carla Vieira Ferreira), Apto 5
-(Gabriely Vilhalva Mendonça) — inquilinos já trocaram (Izabelly/Jorge/
-Thainara são os atuais) mas o app **não tem função de "encerrar locação/
-marcar vago sem perder o histórico"**. Usuário confirmou (12/09): manter o
-histórico desses inquilinos, especialmente o do Rafael (dívida real ainda
-a cobrar); Ana Carla e Gabriely sem pendência. Sobrescrever o nome no mesmo
-registro colaria a dívida do antigo no novo inquilino — errado.
+### ✅ CONCLUÍDO em 13/09/2026 — Apto 1/3/5 trocados, app 100% reconciliado com a planilha
 
-- [ ] **NOVA FUNCIONALIDADE NECESSÁRIA:** "Encerrar locação" — permite marcar
-      um locatário como inativo/mudou-se, preservando 100% do histórico
-      antigo sob o nome dele, e liberar a unidade pra um cadastro de
-      locatário novo. Até essa feature existir, Apto 1/3/5 ficam com dado
-      desatualizado no app (mas a planilha continua certa nesse meio-tempo).
+A feature "Encerrar Locação" (seção acima, commit c0c6333) foi construída,
+testada ao vivo (Thais/Apto 8) e usada aqui pra resolver isso de vez.
+Executado direto no app em produção (via console JS autenticado, mesma
+lógica de `saveTenant()`/`encerrarLocacao()` do código-fonte — não editando
+o JSON do Drive por fora):
+
+- [x] Rafael (Apto 1), Ana Carla (Apto 3), Gabriely (Apto 5) → `vago=true`,
+      histórico 100% preservado (dívida do Rafael continua intacta).
+- [x] Izabelly Tertuliano Santana cadastrada (Apto 1, R$900, Fiador, início
+      25/07/2026).
+- [x] Jorge Willian Francisco de Souza cadastrado (Apto 3, R$900, Fiador,
+      início 09/07/2026).
+- [x] Thainara cadastrada (Apto 5, R$850, Adiantado, início 01/06/2026).
+- [x] Sala 05 (Vagno+João, R$750, registro único) e Casa 02/Santa Nonna II
+      (Francisco Erivan Mota, R$1.200, fiador, juros 2% a.m.) recadastrados
+      — eram os 2 perdidos no incidente de sync do Drive (12/09).
+- [x] Reajuste de junho/2026 aplicado: Fernanda R$666,88→R$704,36, Lorenza
+      R$722,46→R$763,06 (conferido na planilha, estava desatualizado no app).
+- [x] Achado e esclarecido: aba "Sala 02 - Ligia" na planilha é uma
+      inquilina ANTERIOR (contrato terminou 18/06/2025, ficou bem
+      inadimplente) — Rodrigo é o atual, confirmado pelo usuário. Planilha
+      só não foi atualizada, mesmo padrão do caso Darlei→Erivan.
+- [x] **NOVA FEATURE necessária pro Erivan:** taxa de juros por inquilino
+      (`jurosRatePctMes`, commit 8b9ed30) — antes o app só tinha 1% global
+      pra todo mundo; Erivan agora calcula 2% corretamente, resto do app
+      continua em 1% sem mudança de comportamento.
+
+**App confirmado com 16 registros totais, 12 ativos, batendo exatamente com
+a receita mensal alvo do levantamento (R$10.319,90) e a lista de 12 unidades
+da seção 10.** Verificado com reload completo (dado persistiu no Drive de
+verdade, não só na tela).
+
+Pendente do usuário: passar as datas de pagamento deste mês de cada
+inquilino assim que a planilha estiver atualizada (ainda não constava lá no
+momento do cadastro).
 
 ### Achado técnico do teste ao vivo (relevante pra seção 0)
 Ao salvar formulários (Novo Condomínio, Novo Locatário, Editar Condomínio),
