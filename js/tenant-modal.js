@@ -145,6 +145,7 @@ function encerrarLocacao(id){
   t.dataEncerramento = TODAY.toISOString().split('T')[0];
   closeDet();
   renderDashboard();
+  renderTenants(); // 13/09/2026: faltava atualizar a lista de Locatários já aberta
   saveToStorage();
   alert(`✓ Locação de ${t.name} encerrada. Histórico preservado — a unidade "${t.unit}" já pode receber um novo cadastro.`);
 }
