@@ -191,3 +191,77 @@ recibo) também está implementado e funcional.
 5. Só depois de validar a seção 0 de verdade: terminar separação dados/código
    (seção 3), dashboard financeiro, WhatsApp em lote, reajuste automático —
    na ordem que fizer mais sentido pro uso real
+
+
+---
+
+## 10. Dados Reais Levantados (12/09/2026) — pronto pra virar cadastro
+
+Levantamento completo feito nesta sessão: cruzando a planilha
+"Controle de Pagamentos e Condominio 2025.xlsx" (fonte confiável do usuário),
+contratos no Paperless e no filesystem do T110, e confirmação direta do
+usuário onde a documentação não bastou. **Escopo desta fase: só controle de
+aluguéis.** Despesas/receitas do escritório ficam para uma fase seguinte.
+
+### Santa Nonna I — 7 apartamentos (condomínio, rateio entre 8 unidades + taxa adm. 10%)
+⚠️ Apto 8 (Thais) sai dia 15/09/2026 — NÃO cadastrar agora, fica vago até novo inquilino.
+
+| Apto | Inquilino | Aluguel | Garantia | Telefone |
+|---|---|---|---|---|
+| 1 | Izabelly Tertuliano Santana | R$ 900,00 | Fiador | 9801-1411 |
+| 2 | Evelin Marcelly Caoni Soligo | R$ 652,48 | Fiadores | 67 9841-3611 |
+| 3 | Jorge Willian Francisco de Souza | R$ 900,00 | Fiador | 99651-6303 |
+| 4 | Adriano Ramoa Andrade | R$ 850,00 | Fiadores | 99868-0602 |
+| 5 | Thainara | R$ 850,00 | Adiantado | 99123-7272 |
+| 6 | Fernanda Duarte | R$ 704,36 | Seguro | 67 9310-1119 |
+| 7 | Lorenza (Malharia Sol de Verão) | R$ 763,06 | Fiadores | 67 9961-9424 |
+
+Taxa de administração do condomínio: 10% sobre despesas rateadas (energia,
+água, taxa de lixo, IPTU, limpeza) — variável mês a mês (~R$70-100/mês,
+R$77,13 em julho/2026, média histórica ~R$72,71).
+
+⚠️ Contratos de Evelin, Fernanda e Lorenza aparecem com vigência já vencida
+na planilha (2024/2023/jun-2026). **Confirmado pelo usuário: prazo
+indeterminado (prorrogação automática)** — valor do aluguel continua sendo
+atualizado conforme data de aniversário/reajuste do contrato, não precisa
+tratar como pendência de renovação.
+
+### Santa Nonna II — 2 kitinets (SEM condomínio, imóveis autônomos)
+Endereço: Rua Cider Cerzózimo de Souza, nº 1360, Jardim Tropical, Dourados/MS,
+CEP 79820-030.
+
+| Unidade | Situação | Detalhes |
+|---|---|---|
+| Kitnet 01 | Ocupada pela mãe do usuário, **sem cobrança de aluguel** | Usuário paga integralmente IPTU, taxa de lixo, esgoto, água e energia. Fica fora do controle de ALUGUÉIS desta fase (é despesa, não receita) — registrar quando entrar a fase de despesas/imóveis. |
+| Kitnet 02 (= "Casa 02" no contrato) | **Alugada — Francisco Erivan Mota** | R$ 1.200,00/mês, vigência 01/07/2026-01/07/2029 (36 meses), vencimento dia 10 ("paga e mora"), garantia Fiador, reajuste anual IPCA. ⚠️ Multa/juros desse contrato usam **2% a.m.** (diferente do padrão 1% dos outros) — confirmar se é intencional. Telefone: pendente. |
+
+Vagas de garagem do Santa Nonna II: existem, nenhuma alugada atualmente —
+fora de escopo, possível receita futura.
+
+### 4 Salas comerciais (escritório, SEM rateio na prática apesar do contrato)
+Todos os contratos escritos preveem energia+limpeza rateados entre salas
+(IPTU/água/internet inclusos no aluguel) — **usuário confirmou que isso não é
+cobrado na prática hoje**, valor é fixo e simples. Modelar como imóvel
+autônomo puro, sem componente de despesas.
+
+| Sala | Inquilino | Valor | Contrato encontrado? |
+|---|---|---|---|
+| 02 | Rodrigo | R$ 1.000,00/mês | ❌ Não encontrado em nenhum sistema (Paperless/T110/Lucas-linux) — sem contrato escrito localizado |
+| 03 | Camargo (Allison Tailan de Camargo, via CMG Soluções LTDA) | R$ 1.000,00/mês | ✅ Sim (valor do contrato original R$750 desatualizado — usar o valor real informado pelo usuário) |
+| 04 | Cristiano José Dundi | R$ 750,00/mês | ✅ Sim (valor do contrato original R$650 desatualizado — usar o valor real) |
+| 05 | Vagno Nunes de Oliveira + João Pedro Caseiro Oliveira | R$ 750,00/mês (total, conjunto) | ✅ Sim — **cadastrar como ÚNICO registro** (confirmado pelo usuário), não dois separados |
+
+Telefones das Salas e da Casa/Kitnet 02: **pendentes**, usuário vai passar
+depois.
+
+### Total de aluguéis (base, sem repasses de condomínio/IPTU)
+Santa Nonna I (7 aptos) R$ 5.619,90 + Santa Nonna II R$ 1.200,00 + Salas
+R$ 3.500,00 = **R$ 10.319,90/mês**. Com a taxa de administração do
+condomínio (10% variável) somada: **~R$ 10.397,03/mês** (base julho/2026).
+
+### Pendências antes do cadastro efetivo
+- [ ] Telefones de: Erivan, Rodrigo, Camargo, Cristiano, Vagno, João
+- [ ] Confirmar se a divergência de juros (2% no contrato do Erivan vs 1% padrão) é intencional
+- [ ] Decidir se os contratos das Salas devem ser atualizados pra bater com a prática real (sem rateio) ou deixar como está
+- [ ] Contrato da Sala 02 (Rodrigo) não existe por escrito em lugar nenhum — considerar formalizar
+- [ ] Total de unidades a cadastrar nesta fase: **12** (7 Santa Nonna I + 1 Santa Nonna II/Kitnet 02 + 4 Salas — Kitnet 01 fica fora por não ter receita)
