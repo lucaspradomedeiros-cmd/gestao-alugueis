@@ -99,6 +99,23 @@ só faz rastreamento local inofensivo (fila nunca foi realmente enviada de
 verdade — `uploadQueue()` já era só simulado, `// Simular envio`). Ver
 seção 3 (dead code).
 
+### ✅ CONCLUÍDO em 13/09/2026 — Reconexão silenciosa do Drive (fricção real reportada pelo usuário)
+
+Usuário reclamou: "muito chato ficar conectando ao Drive, sempre mostra
+aviso de app não verificado" — exatamente o tipo de fricção que a seção 0
+já mapeava ("cada 'conectando ao Drive…' é atrito que a planilha nunca
+teve"). Achado real (commit 6237364): `gisLoaded()` já lia
+`localStorage['ga_drive_token']` pra tentar reconectar sem popup, mas
+**nada nunca escrevia esse token** — o recurso existia pela metade. Além
+disso, `connectDrive()` forçava `prompt: 'consent'` sempre, obrigando a
+tela cheia do Google mesmo com sessão válida.
+
+Corrigido: o callback do OAuth agora salva o token com expiração; o botão
+não força mais 'consent'. **Testado ao vivo e confirmado funcionando**:
+numa aba nova, login só com senha do app + reload — reconectou ao Drive
+sozinho, sem clicar em nada e sem popup do Google (`driveConnected: true`,
+16 registros carregados certinho).
+
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
 - [x] **Remover o backdoor de senha em `js/auth.js`** — corrigido em
