@@ -261,7 +261,7 @@ condomínio (10% variável) somada: **~R$ 10.397,03/mês** (base julho/2026).
 
 ### Pendências antes do cadastro efetivo
 - [ ] Telefones de: Erivan, Rodrigo, Camargo, Cristiano, Vagno, João
-- [ ] Confirmar se a divergência de juros (2% no contrato do Erivan vs 1% padrão) é intencional
+- [x] Juros de 2% a.m. no contrato do Erivan (vs 1% padrão dos demais) — CONFIRMADO pelo usuário (12/09): é intencional, usar 2% conforme contrato só para essa unidade (Kitnet 02/Santa Nonna II).
 - [ ] Decidir se os contratos das Salas devem ser atualizados pra bater com a prática real (sem rateio) ou deixar como está
 - [ ] Contrato da Sala 02 (Rodrigo) não existe por escrito em lugar nenhum — considerar formalizar
 - [ ] Total de unidades a cadastrar nesta fase: **12** (7 Santa Nonna I + 1 Santa Nonna II/Kitnet 02 + 4 Salas — Kitnet 01 fica fora por não ter receita)
