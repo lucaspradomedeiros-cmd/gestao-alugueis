@@ -95,9 +95,15 @@ não foi reconquistada. Antes de qualquer coisa da seção 5 em diante:
       (só recalcula enquanto `h.condo===0`) é intencional. Se um lançamento
       passado for corrigido depois que meses futuros já consumiram o valor
       errado, hoje não há re-sincronização automática.
-- [ ] Decidir o que fazer com `clientes-adv` (módulo de advocacia) misturado
-      no mesmo app/dados de `gestao-alugueis` — manter junto de propósito (só
-      um usuário mesmo) ou isolar em namespace de dados próprio.
+- [x] `clientes-adv` + `financeiro.js` (controle financeiro do escritório de
+      advocacia) misturados no mesmo app/dados de `gestao-alugueis` — NÃO É
+      SCOPE CREEP ACIDENTAL. Usuário confirmou (12/09): é intencional, ele
+      administra as duas coisas (aluguéis + escritório) e quer controle
+      financeiro unificado num lugar só. Mantido como está.
+- [ ] Ainda vale, dentro dessa decisão: manter os dados de aluguel e os do
+      escritório bem organizados internamente (namespaces/seções claras no
+      JSON), mesmo compartilhando app/sessão/login — separação de
+      responsabilidades no código não exige separar em apps diferentes.
 
 ## 4. Estética e Design
 
