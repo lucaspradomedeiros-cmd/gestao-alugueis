@@ -4100,7 +4100,7 @@ function openWpp(id){
   document.getElementById('wpp-ref').value=ref;
 
   const tCondoId = t.condoId || activeCondoId;
-  const vencYM = getCondoVencYM(tCondoId, ref);
+  const vencYM = getRentVencYM(t, ref);
   document.getElementById('wpp-venc').value=entry?.venc||`${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
   document.getElementById('wpp-aluguel').value=t.rent||'';
 
@@ -4485,8 +4485,8 @@ function saveCondoMonth(){
       t.history.push(h);
       t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
     }
-    // vencimento: mês seguinte ou mês do aluguel, conforme config do condo
-    const vencYM = getCondoVencYM(tCondoId, billingRef);
+    // vencimento: regra do inquilino (contrato), não do condomínio
+    const vencYM = getRentVencYM(t, billingRef);
     const oldCondo = h.condo;
     h.venc  = `${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
     h.condo = R2(v.porAptoRateavel);

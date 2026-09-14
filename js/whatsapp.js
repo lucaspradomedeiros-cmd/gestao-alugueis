@@ -13,7 +13,7 @@ function openWpp(id){
   document.getElementById('wpp-ref').value=ref;
 
   const tCondoId = t.condoId || activeCondoId;
-  const vencYM = getCondoVencYM(tCondoId, ref);
+  const vencYM = getRentVencYM(t, ref);
   document.getElementById('wpp-venc').value=entry?.venc||`${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
   document.getElementById('wpp-aluguel').value=t.rent||'';
 

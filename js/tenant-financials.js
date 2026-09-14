@@ -35,8 +35,8 @@ function hydrateEntries(){
       if(!h.extras) h.extras=[];
       if(h.status==='futuro' && tCondoUnits.includes(t.unit)){
         const tCondoId = t.condoId || activeCondoId;
-        // Sempre recalcula vencimento conforme config do condo (para todas as entradas futuras)
-        const vencYM = getCondoVencYM(tCondoId, h.ref);
+        // Sempre recalcula vencimento conforme a regra do INQUILINO (para todas as entradas futuras)
+        const vencYM = getRentVencYM(t, h.ref);
         h.venc = `${vencYM}-${String(t.vencDia).padStart(2,'0')}`;
         // Só atualiza condo/iptu/lixo se ainda não foram calculados
         if(h.condo===0){
@@ -142,6 +142,19 @@ function getCondoVencYM(condoId, ref){
   return ref;
 }
 
+// 14/09/2026: achado real (usuário) — o vencimento do ALUGUEL estava usando
+// getCondoVencYM(), ou seja, a config de billing do CONDOMÍNIO (pensada pra
+// despesas rateadas, ex: água de agosto só é sabida/cobrada em setembro).
+// Mas o vencimento do aluguel é regra do CONTRATO de cada inquilino, não do
+// condomínio — e a regra é mista mesmo dentro do mesmo condomínio (ex:
+// Izabelly/Jorge/Thainara vencem no mesmo mês, mas Evelin/Fernanda/Lorenza
+// no mês seguinte, todos no Santa Nonna I). Por isso agora é por inquilino
+// (t.vencMesSeguinte), com padrão "mesmo mês" quando não especificado.
+// getCondoVencYM() continua existindo só pra cobrança de condomínio em si.
+function getRentVencYM(t, ref){
+  return t.vencMesSeguinte ? nextMonth(ref) : ref;
+}
+
 function getTenantCondoHistory(t){
   if(t.imovelId){ const im=getImovel(t.imovelId); if(im&&im.gestao==='autonomo') return []; }
   const cid = t.condoId || activeCondoId;
@@ -161,8 +174,7 @@ function getTenantCondoUnits(t){
 function buildMonthEntry(t, ref){
   const[ry,rm]=ref.split('-');
   const vencDia=String(t.vencDia).padStart(2,'0');
-  const tCondoId = t.condoId || activeCondoId;
-  const vencYM = getCondoVencYM(tCondoId, ref);
+  const vencYM = getRentVencYM(t, ref);
   const venc=`${vencYM}-${vencDia}`;
 
   // ── Autonomous imovel: get despesas do inquilino ──
