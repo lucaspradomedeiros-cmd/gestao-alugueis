@@ -1171,3 +1171,52 @@ extrato daquela pessoa especificamente.
 usuário):** criar uma seção separada — não misturar com "Inadimplentes"
 (esse é sobre quem está ocupando e não pagou o mês) — tipo "Ex-inquilinos
 com saldo devedor", visível no Painel Geral ou nos Alertas.
+
+✅ **CONCLUÍDO em 14/09/2026 (commit `b540f05`):** seção implementada nos
+Alertas — ver contador `alert-count`/`exComSaldo` em `updateSummary()`.
+
+
+## 14/09/2026 (continuação 11) — Ex-inquilino não conseguia registrar pagamento + forma de pagamento pré-selecionada
+
+Usuário reportou, testando a seção nova acima: no card da Ana Carla
+(Apto 03) e do Rafael (Apto 01) — ambos encerrados (`vago`) com saldo
+devedor — o botão "+ Registrar pgto" do próprio card não funcionava:
+elas não apareciam na lista de locatário do modal.
+
+**Causa (commit `6036c0b`):** `openRegModal()` montava o `<select>` com
+`tenants.filter(t=>!t.vago)`, excluindo TODO ex-inquilino incondicionalmente
+— mesmo quando o próprio botão do card passava o id dela como `presetId`.
+`sel.value=presetId` então não achava a opção e falhava silenciosamente.
+
+Agravante: mesmo corrigindo a lista, `onRegTenantChange()` usa
+`getTenantFinancials(t)`, que tem `if(t.vago) return {status:'vago'}` logo
+no início (acha nada mais) — a caixa de resumo do modal cairia sempre no
+ramo "✓ Sem débitos anteriores", mesmo com dívida real. Corrigido com um
+caminho próprio pra `t.vago`: mês de referência = o mais antigo com saldo
+em aberto (não "próximo mês", que não se aplica a quem já saiu); resumo
+mostra "Mês selecionado" + "Total devido (todos os meses)" em vez de
+Base/Multa+Juros/Total hoje (esse continua idêntico pra inquilino ativo
+— confirmado que o card do Erivan não mudou nada).
+
+**Segunda parte, pedido do usuário na mesma mensagem:** "quando eu clicar
+no registrar pagamento, já vir escolhida a forma de pagamento para aquele
+inquilino". Achado: esse modal nunca teve campo de forma de pagamento
+(existe em Recibo/Contrato/Serviço Avulso, mas não aqui). Adicionado
+`<select id="rm-forma">` (mesmas opções do resto do app: PIX/Transferência/
+Dinheiro/Cheque/Depósito), persistido em `entry.forma` via novo parâmetro
+de `applyPayment()`, e pré-selecionado em `onRegTenantChange()` com a
+última forma usada por aquele inquilino especificamente (fallback: PIX
+se nunca registrou nenhuma).
+
+`js/payment-modal.js` (sombreado pelas definições equivalentes em
+`index.html`, ver nota da seção 3) recebeu as mesmas mudanças pra manter
+paridade, como de costume.
+
+**Testado ao vivo antes do deploy**, mas isolado — servidor HTTP local
+(porta 8899) com Drive desconectado e um conjunto de inquilinos sintéticos
+injetado via console (nunca tocou nos dados reais/Drive de produção):
+confirmado que Erivan (ativo) manteve o resumo inalterado; Ana Carla
+(vago, sintética) passou a aparecer na lista marcada "(encerrado)",
+mostrar "Mês selecionado (Maio) / Total devido (todos os meses)"
+corretamente, e que a forma de pagamento ficou gravada e pré-selecionada
+corretamente numa segunda abertura do modal. Sem erro no console.
