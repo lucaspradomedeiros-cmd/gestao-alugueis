@@ -143,6 +143,46 @@ tem outro inquilino ativo. Discussão com o usuário levou a algo melhor:
   mostrar "encerrado" (mantém "vago" de verdade, que é informação
   acionável: dá pra alugar).
 
+### ✅ CONCLUÍDO em 14/09/2026 — Locatários: filtro por condomínio, exportar/imprimir, e bug grave de dívida invisível
+
+Continuação da sessão de busca/filtro em Locatários:
+- Filtro por condomínio/imóvel (dinâmico, pega condomínios novos sem
+  mexer no código — pensando em gerenciar mais de um no futuro) +
+  botão "🖨 Exportar/Imprimir" (mesma lista filtrada da tela, janela
+  nova, imprime/salva PDF sob demanda).
+
+**🔴 Achado grave (partiu de uma pergunta do usuário sobre o card do
+Erivan):** `getTenantFinancials()` — que define o status (pill) e o
+"TOTAL DEVIDO" de todo card de leitura (Painel Geral + Locatários) —
+sempre olhava só o ÚLTIMO mês do histórico do inquilino. Se esse último
+mês fosse "futuro" ou "pago", uma dívida real de um mês ANTERIOR
+(parcial/inadimplente/pendente) ficava **completamente invisível**, sem
+entrar no contador de Inadimplentes nem no valor "em aberto" do Painel
+Geral.
+
+Verificação em TODOS os inquilinos (pedido explícito do usuário) achou
+3 casos reais, não só o que ele notou:
+- Erivan: setembro/2026 parcial (R$700 faltando) escondido atrás de
+  outubro/futuro.
+- **Fernanda Duarte: abril/2026 nunca pago (R$827,76 base), escondido
+  atrás de setembro/futuro — invisível havia 5 meses**, mesmo com
+  maio-agosto pagos normalmente depois.
+- **Lorenza: mesma situação, abril/2026 nunca pago (R$883,34 base).**
+
+Corrigido: `getTenantFinancials()` agora usa o mesmo helper `getOpenEntry()`
+(prioriza dívida real sobre mês futuro) já criado pro fix anterior do
+card editável. `statusOf()` é só um wrapper dessa função, se beneficia
+automático.
+
+Confirmado ao vivo após o fix: Fernanda e Lorenza agora aparecem como
+"inadimplente" (R$946,96 e R$1.010,54, já com multa/juros acumulados
+nesses meses), Erivan como "parcial" (R$823,20). Painel Geral: contador
+de Inadimplentes 0→2, "em aberto" R$0→R$2.780,70, badge de Alertas 0→3.
+
+⚠️ **Pendência para o usuário:** decidir o que fazer com a dívida de
+abril da Fernanda e da Lorenza (cobrar, negociar, ou confirmar se já foi
+resolvido por fora do app e só falta registrar o pagamento).
+
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
 - [x] **Remover o backdoor de senha em `js/auth.js`** — corrigido em
