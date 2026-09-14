@@ -648,7 +648,18 @@ parte do "parecer um app"); Capacitor só se algum dia a limitação do
 WhatsApp/PDF incomodar de verdade ou quiser instalar via ícone de loja.
 
 
-## 13. Log de Auditoria do Sistema (ideia registrada, 14/09/2026 — não construída ainda)
+## 13. Log de Auditoria do Sistema (14/09/2026)
+
+✅ **CONCLUÍDO (commit `d8b0087`).** Ver detalhes de implementação/teste
+no commit; resumo: `js/audit-log.js` (novo) + `auditLog` em `js/state.js`
++ persistência em `js/storage.js` (payload version 5) + botão "Ver log"
+na sidebar. Instrumentado: pagamento registrado/editado/desfeito, mês
+criado automaticamente pelo sistema (`_rollPenalties`/
+`_creditarProximoMes`), e exclusões (cobrança extra, imóvel, despesa de
+imóvel, condomínio, lançamento de condomínio, cliente advocacia,
+processo, serviço, despesa/receita do escritório). Testado ao vivo
+isolado com dados sintéticos — fluxo completo gerou os 6 registros
+esperados, na ordem certa, com busca e persistência no payload ok.
 
 Ideia do usuário, motivada diretamente pelos incidentes reais desta mesma
 sessão (ver "continuação 12"): o mês fantasma de Junho na Ana Carla e o
@@ -658,22 +669,29 @@ nenhum jeito de ver "o que mudou, quando e por quê" sem abrir o console
 e ficar cruzando datas/valores manualmente (foi exatamente o trabalho
 que Claude teve que fazer na mão pra diagnosticar os dois casos).
 
-**Proposta:** um log de auditoria append-only, separado de `tenants`
-(ex: `auditLog: []` no mesmo objeto de dados salvo no Drive), registrando
-pelo menos:
-- [ ] **Exclusões** — remover um mês do histórico, excluir cobrança
-      extra, excluir locatário/imóvel, excluir despesa/receita.
-- [ ] **Pagamentos** — registrar (`applyPayment`), editar
-      (`saveEditPayModal`), desfazer (`desfazerPagamento`) — guardando
-      pelo menos `{data/hora, ref, valor antes, valor depois, quem/onde
-      (manual pela tela vs. gerado automático como crédito/rollPenalties)}`.
-- [ ] **Criações automáticas do sistema** — todo mês criado sozinho por
+**Proposta (implementada):** um log de auditoria append-only, separado de
+`tenants` (`auditLog: []` no mesmo objeto de dados salvo no Drive),
+registrando:
+- [x] **Exclusões** — cobrança extra, imóvel, despesa de imóvel,
+      condomínio, lançamento de condomínio, cliente (advocacia),
+      processo, serviço, despesa/receita do escritório. (Exclusão de
+      mês do histórico e de locatário não têm função de UI dedicada
+      hoje — ver nota abaixo.)
+- [x] **Pagamentos** — registrar (`applyPayment`), editar
+      (`saveEditPayModal`), desfazer (`desfazerPagamento`) — guarda
+      data/hora, ref, valor antes/depois e status antes/depois.
+- [x] **Criações automáticas do sistema** — todo mês criado sozinho por
       `_rollPenalties()` ou `_creditarProximoMes()` (exatamente o tipo de
-      coisa que causou o bug do mês fantasma — se tivesse log, o achado
-      teria sido muito mais rápido de confirmar/reverter).
-- [ ] Cada entrada guarda o suficiente pra reconstruir "antes → depois"
-      (não só "aconteceu algo"), pra dar pra reverter manualmente se
-      precisar, sem depender de backup completo.
+      coisa que causou o bug do mês fantasma) fica logado.
+- [x] Cada entrada guarda o suficiente pra reconstruir "antes → depois",
+      não só "aconteceu algo".
+
+⚠️ **Nota:** não existe hoje nenhuma função de UI pra excluir um mês do
+histórico direto (foi feito via console no incidente da Ana Carla) nem
+pra excluir um locatário (só `encerrarLocacao()`, que marca `vago`, não
+apaga) — então essas duas não têm um ponto de instrumentação natural
+ainda. Se um dia ganharem botão de exclusão na interface, logar lá
+também.
 
 **Uso esperado:** não precisa de tela bonita no v1 — um botão simples
 "Ver log" (lista cronológica, texto simples) ou até só incluir no
