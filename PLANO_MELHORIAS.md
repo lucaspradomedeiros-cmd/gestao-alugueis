@@ -808,3 +808,72 @@ git push --force origin main   # ⚠ reescreve o histórico remoto, usar com cui
   bloqueado pelo navegador) — confirmado funcionando com a Evelin (histórico
   de 53 meses): período curto lista mês a mês, "Todo o período" mostra só o
   resumo de totais.
+
+
+## 14/09/2026 (continuação 3) — Vencimento do aluguel usava config errada (condomínio em vez do contrato)
+
+Usuário reportou: "achei uma inconsistência... o aluguel do Vagno e João,
+Cristiano, Rodrigo e Camargo tem pagamento adiantado, e o vencimento de
+05/09 era pra pagar setembro." Investigado a fundo, achado real e corrigido.
+
+**Causa raiz:** o vencimento do ALUGUEL (`h.venc`) usava `getCondoVencYM()`
+— função pensada pra cobrança de CONDOMÍNIO (faz sentido a despesa de água/
+luz de um mês só ser sabida e cobrada no mês seguinte), aplicada por engano
+também ao vencimento do aluguel, que é regra do CONTRATO de cada inquilino
+(não tem nada a ver com o condomínio). Como o padrão da função é "mês
+seguinte", isso empurrava o vencimento do aluguel pra frente pra qualquer
+inquilino vinculado a um condomínio com essa config — o que incluía
+praticamente todo mundo.
+
+**Regra confirmada com o usuário (mista, por inquilino, não por condomínio):**
+- Mesmo mês: Izabelly, Thainara, Jorge, Erivan, Adriano, Rodrigo, Camargo,
+  Cristiano, Vagno/João
+- Mês seguinte: Evelin, Fernanda Duarte, Lorenza
+
+**Corrigido (commit `643fd97`):** nova função `getRentVencYM(t, ref)`, por
+inquilino (`t.vencMesSeguinte`), padrão "mesmo mês" quando não especificado
+— substituída em todos os 5 pontos que calculavam vencimento de aluguel
+(`hydrateEntries()`, `buildMonthEntry()`, `openWpp()` e sua cópia morta em
+`js/whatsapp.js`, gerador de cobrança em lote do condomínio).
+`getCondoVencYM()` não foi tocada — continua só pra cobrança de condomínio
+em si, que o usuário confirmou valer igual pra todos.
+
+**Dados corrigidos** (via script no navegador, `saveToLocalStorage()` antes
+de `saveToDrive()`, verificado com download direto do Drive depois — lição
+de 14/09 aplicada à risca): `vencMesSeguinte:true` em Evelin/Fernanda/
+Lorenza (histórico deles desde 2022 já estava certo, só faltava a flag pra
+continuar certo dali pra frente); vencimento corrigido pra mesmo mês em
+Rodrigo, Cristiano, Vagno/João, Izabelly, Jorge, Thainara e Adriano
+(incluindo Maio-Agosto/2026 do Adriano, que também estavam com o mês
+deslocado). Formato de `ref` com espaço extra ("2026 - 05") normalizado
+pra "2026-05" no Rodrigo/Cristiano — achado incidental, provavelmente de um
+código de geração antigo.
+
+**Armadilha real durante a correção:** a primeira tentativa de salvar
+rodou `hydrateEntries()` numa aba que ainda tinha o código ANTIGO carregado
+(a aba estava aberta desde antes do deploy do fix) — isso recalculou as
+entradas `'futuro'` de Izabelly/Jorge/Thainara/Adriano de volta pro padrão
+errado bem na hora de salvar. Resolvido recarregando a página (pegando o
+código novo) antes de reaplicar. **Lição adicional:** depois de publicar
+uma correção de código, sempre recarregar a aba de trabalho antes de rodar
+qualquer função que dependa desse código novo — não basta o deploy ter
+saído, a aba em uso também precisa estar com a versão nova carregada.
+
+**Pagamento de Setembro do Adriano registrado** (não existia no app, apesar
+de já pago na vida real): R$994,06 em 04/09/2026 — Aluguel R$850,00 + IPTU
+R$38,00 + Condomínio (ref. Agosto/2026) R$106,06. Nota: essa parcela de
+condomínio (R$106,06) é diferente da dos outros inquilinos do Santa Nonna I
+no mesmo mês (R$122,34 pra todos os outros) — valor informado diretamente
+pelo usuário, não investigado o porquê da diferença (pode ser legítimo,
+não foi levantado como dúvida pelo usuário).
+
+**Erro cometido e corrigido durante o processo:** uma chamada a
+`applyPayment(4, '2026-09', '2026-09-04', 994.06)` sem passar os parâmetros
+opcionais de override (condo/iptu/lixo/multa/juros) como `null` explícito
+zerou esses campos por engano — `applyPayment()` trata `undefined` como
+"tem override, aplica" (só `null`/`''` são tratados como "sem override").
+Recuperado comparando com o rateio de condomínio dos outros inquilinos do
+mesmo condomínio no mesmo mês (que resultou coincidir por acaso — o valor
+real, dado depois pelo usuário, era diferente). **Lição de API:** chamar
+`applyPayment()` sem os overrides opcionais deve passar `null` explicitamente
+para cada um, nunca omitir os argumentos.
