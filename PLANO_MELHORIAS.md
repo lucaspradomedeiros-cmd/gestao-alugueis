@@ -1091,3 +1091,31 @@ Aplicado na entrada de Setembro/2026 do Adriano: `condoRefLabel: "Julho/2026"`.
 O valor pago (R$106,06, R$994,06 total) continua exatamente o mesmo — só o
 texto ao lado passou a dizer o mês certo. Verificado renderizando o card
 de verdade: "Condomínio (Julho/2026)".
+
+
+## 14/09/2026 (continuação 9) — getOpenEntry() pegava o mês em aberto errado quando havia 2+
+
+Usuário reportou: no card da Evelin, com Setembro E Outubro ambos em
+aberto (`futuro`), só dava pra editar/lançar cobrança extra no mês mais
+distante (Outubro) — não no mais próximo (Setembro).
+
+**Causa (commit `167f6ba`):** `getOpenEntry()` usava `.reverse()` no
+fallback (quando não há status de dívida real tipo parcial/inadimplente/
+pendente), pegando o ÚLTIMO item da lista invertida em vez do PRIMEIRO em
+ordem cronológica normal. Como `t.history` já vem sempre ordenado do mais
+antigo pro mais novo, bastou remover o `.reverse()` desse fallback — o
+`find()` direto já encontra corretamente o primeiro mês em aberto.
+
+`getOpenEntry()` é usado em ~7 lugares (`getEntryForDisplay`, `renderCard`,
+`addExtra`, `removeExtra`, `renderExtras`, `saveCardCobr`, `buildWpp`) —
+corrigir a função na raiz corrige todos de uma vez. Testado ao vivo antes
+e depois do deploy: Evelin passou a mostrar/editar "Setembro" em vez de
+"Outubro" corretamente, confirmado tanto na função quanto visualmente no
+card do menu Locatários.
+
+**Nota:** a outra metade da função (busca por status de dívida real —
+parcial/inadimplente/pendente) continua com `.reverse()`, ou seja, ainda
+prioriza a entrada MAIS RECENTE quando há mais de uma com dívida real —
+não foi tocada porque não há evidência de que esteja errada (nenhum caso
+concreto reportado), mas vale ficar de olho se um inquilino algum dia
+tiver dívida em mais de um mês ao mesmo tempo.
