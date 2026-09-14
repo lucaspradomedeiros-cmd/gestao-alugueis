@@ -972,3 +972,60 @@ outros inquilinos — só o Adriano foi auditado a fundo porque foi o caso
 que o usuário trouxe pra investigar. Vale considerar uma auditoria
 sistemática (comparar `ref` sequencial de cada inquilino ativo, procurando
 buracos no histórico) numa sessão futura.
+
+
+## 14/09/2026 (continuação 6) — Auditoria completa do Santa Nonna I com as planilhas reais do usuário
+
+O usuário trouxe as planilhas pessoais de pagamento de Izabelly, Evelin,
+Jorge, Thainara e Lorenza (além da do Adriano já usada antes) e a planilha
+geral "Condomínio Geral", permitindo uma auditoria definitiva, ref por ref,
+de todo o Santa Nonna I — em vez de eu tentar recalcular/adivinhar sozinho
+(erro cometido duas vezes antes nesta mesma sessão).
+
+### Achado 1: o valor de Setembro é R$127,57, não R$122,34 (reverte decisão anterior)
+Com o IPTU incluído na base que recebe 10% de taxa de administração (fórmula
+da planilha, não a do app), Agosto fecha em R$106,06 (já confirmado, bate com
+pagamentos reais) e Setembro em **R$127,57** — confirmado por **5 fontes
+independentes**: planilha geral "Condomínio Geral" e as planilhas pessoais
+de Adriano, Izabelly, Evelin e Lorenza, todas com o mesmo número. A decisão
+anterior desta mesma sessão ("vamos lançar 122,34") foi tomada antes de eu
+ter acesso a essas planilhas e está revertida.
+
+### Achado 2: Izabelly e Jorge são "mês seguinte", não "mesmo mês"
+A informação original do usuário ("Izabelly - Thainara - Jorge = mesmo mês")
+estava parcialmente errada — confirmado pelas planilhas pessoais deles:
+Izabelly e Jorge vencem no mês seguinte (igual Evelin/Fernanda/Lorenza);
+só a Thainara é realmente "mesmo mês". `vencMesSeguinte` revertido pra
+`true` nos dois, vencimentos de Agosto/Setembro recalculados.
+
+### Achado 3: Thainara tinha o mesmo bug do Adriano — mês faltando
+Auditoria comparando `ref` sequencial com a planilha dela revelou: faltava
+**Junho/2026** (o primeiro mês dela, sem condomínio ainda, R$888,00, pago
+com 5 dias de atraso) — e tudo depois ficou rotulado um mês atrasado
+(Julho→"ref:06", Agosto→"ref:07", Setembro→"ref:08", Outubro→"ref:09").
+Corrigido do mesmo jeito que o Adriano: renomeadas as 4 entradas, lançado
+Junho que faltava, e a entrada que virou Outubro ajustada pro valor real
+da planilha (R$127,57).
+
+### Auditoria automática nos demais (buraco de sequência)
+Rodado um script comparando a sequência de `ref` de todos os inquilinos
+ativos do SN1 — **nenhum outro buraco encontrado**. Evelin, Fernanda e
+Lorenza tiveram o histórico de 2026 inteiro comparado ref-a-ref com as
+planilhas pessoais delas e bateram perfeitamente, sem nenhum desvio — só o
+Adriano e a Thainara tinham esse bug específico.
+
+### Estado final (verificado com download direto do Drive):
+| Unidade | Regra vencimento | Setembro (ou próxima cobrança em aberto) |
+|---|---|---|
+| Evelin, Fernanda, Lorenza | mês seguinte (já correto) | R$127,57, venc 05/10 |
+| Izabelly, Jorge | mês seguinte (revertido hoje) | R$127,57, venc 05/10 |
+| Thainara | mesmo mês (correto) | Outubro R$127,57, venc 05/10 (mês faltando corrigido) |
+| Adriano | mesmo mês (correto) | Setembro R$106,06 já pago (transação fechada, não mexida) |
+| Camargo | mesmo mês (correto) | Setembro R$1.000,00 pendente (sem condomínio, Sala) |
+
+**Lição de processo, reforçada:** só a planilha real do usuário resolveu de
+forma definitiva o que três tentativas minhas de calcular sozinho (122,34,
+depois 106,06, depois 122,34 de novo) não conseguiram. Nas próximas vezes,
+pedir a planilha/fonte real ANTES de aplicar qualquer valor calculado em
+dados financeiros de mais de um inquilino, em vez de perguntar "posso
+aplicar X" depois de já ter calculado X sozinho.
