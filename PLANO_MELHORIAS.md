@@ -1029,3 +1029,43 @@ depois 106,06, depois 122,34 de novo) não conseguiram. Nas próximas vezes,
 pedir a planilha/fonte real ANTES de aplicar qualquer valor calculado em
 dados financeiros de mais de um inquilino, em vez de perguntar "posso
 aplicar X" depois de já ter calculado X sozinho.
+
+
+## 14/09/2026 (continuação 7) — CORREÇÃO: R$127,57 estava errado, volta pra R$122,34
+
+A seção anterior ("Auditoria completa do Santa Nonna I") registrou R$127,57
+como o valor correto de Setembro, confirmado por 5 planilhas do usuário.
+**Isso estava errado.** O usuário esclareceu depois: a fórmula usada nas
+planilhas pessoais dele (IPTU incluído na base que recebe a taxa de 10%)
+**foi um erro de cálculo dele ao montar as planilhas** — não é a fórmula
+correta. A fórmula do APP (sem IPTU nessa conta, dando R$122,34) está certa.
+
+Isso é exatamente a mesma conclusão de uma sessão anterior (12/09,
+"não posso cobrar 10% sobre o IPTU né") que já tinha sido documentada e
+depois foi contrariada por engano nesta sessão, ao dar peso demais às
+planilhas do usuário sem confirmar se a fórmula delas em si estava certa.
+
+**Decisão final (repetida da sessão de 12/09, agora reconfirmada):**
+- Valores já cobrados/pagos até Agosto (fórmula com IPTU, ~R$106,06 sendo
+  na real referente a Julho, ~R$127,57-style referente a Agosto já pago
+  em alguns casos) **ficam como estão** — dinheiro já recebido, não mexe.
+- **A partir de Setembro, usa a fórmula do app: R$122,34.**
+
+**Revertido e verificado** (download direto do Drive): Evelin, Fernanda,
+Lorenza, Izabelly, Jorge — Setembro de volta pra R$122,34.
+
+**Pendência aberta:** a entrada de Outubro da Thainara (criada na correção
+do mês faltando) ainda está com R$127,57 — esse valor não se aplica aqui
+mesmo pela regra nova, porque o mês relevante pra ela é Setembro (que
+ainda não tem o lançamento de água completo no histórico de condomínio).
+Não foi corrigido ainda — precisa esperar o lançamento de Setembro ficar
+completo, ou uma decisão explícita do usuário sobre que valor usar
+provisoriamente.
+
+**Lição de processo, reforçada pela terceira vez:** cross-checar com uma
+planilha do usuário não é suficiente se a PRÓPRIA planilha pode estar
+errada — sempre perguntar "essa fórmula está certa?" antes de tratar um
+número de planilha como verdade absoluta, especialmente quando ele
+contradiz uma decisão JÁ documentada em sessão anterior. Deveria ter
+notado a contradição com a nota de 12/09 (já registrada neste mesmo
+arquivo) antes de reverter a decisão sozinho.
