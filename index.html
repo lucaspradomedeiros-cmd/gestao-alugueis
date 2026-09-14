@@ -2985,7 +2985,12 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   if(multaOverride!==null && multaOverride!=='') entry.multa = R(multaOverride);
   if(jurosOverride!==null && jurosOverride!=='') entry.juros = R(jurosOverride);
 
-  const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo);
+  // 14/09/2026: achado real (teste do usuário) — essa conta não incluía
+  // extras (cobranças extras/despesas parceladas lançadas via
+  // addExtraToRef/saveExtrasToRef), então registrar um pagamento apagava
+  // silenciosamente qualquer extra já lançada no mês do valorCobrado.
+  const extrasTotal = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo)+extrasTotal;
   const totalDue = R2(base + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
 
   entry.valorCobrado = totalDue;
@@ -3043,7 +3048,8 @@ function _rollPenalties(t, ref, base, daysLate){
   }
   nxt.pendingMulta = R2(R(entry.pendingMulta) + R(entry.multa));
   nxt.pendingJuros = R2(R(entry.pendingJuros) + juros);
-  nxt.valorCobrado = R2(R(nxt.aluguel)+R(nxt.condo)+R(nxt.iptu)+R(nxt.lixo)+R(nxt.multa)+R(nxt.juros)+R(nxt.pendingMulta)+R(nxt.pendingJuros));
+  const nxtExtrasTotal = (nxt.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  nxt.valorCobrado = R2(R(nxt.aluguel)+R(nxt.condo)+R(nxt.iptu)+R(nxt.lixo)+R(nxt.multa)+R(nxt.juros)+R(nxt.pendingMulta)+R(nxt.pendingJuros)+nxtExtrasTotal);
 }
 
 // ============================================================
@@ -4617,7 +4623,8 @@ function saveCondoMonth(){
     h.condo = R2(v.porAptoRateavel);
     h.iptu  = iptuPerApto;
     h.lixo  = lixoPerApto;
-    h.valorCobrado = R2(R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo)+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros));
+    const hExtrasTotal = (h.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+    h.valorCobrado = R2(R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo)+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+hExtrasTotal);
     // Registrar mudança de cobrança do inquilino
     if(oldCondo !== h.condo){
       SYNC_ENGINE.onChange(`tenants.${t.id}.history.${billingRef}.condo`, oldCondo, h.condo);

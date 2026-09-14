@@ -112,7 +112,10 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   if(multaOverride!==null && multaOverride!=='') entry.multa = R(multaOverride);
   if(jurosOverride!==null && jurosOverride!=='') entry.juros = R(jurosOverride);
 
-  const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo);
+  // 14/09/2026: sincronizado com index.html — inclui extras no total,
+  // que antes sumiam do valorCobrado ao registrar um pagamento.
+  const extrasTotal = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo)+extrasTotal;
   const totalDue = R2(base + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
 
   entry.valorCobrado = totalDue;
@@ -170,7 +173,8 @@ function _rollPenalties(t, ref, base, daysLate){
   }
   nxt.pendingMulta = R2(R(entry.pendingMulta) + R(entry.multa));
   nxt.pendingJuros = R2(R(entry.pendingJuros) + juros);
-  nxt.valorCobrado = R2(R(nxt.aluguel)+R(nxt.condo)+R(nxt.iptu)+R(nxt.lixo)+R(nxt.multa)+R(nxt.juros)+R(nxt.pendingMulta)+R(nxt.pendingJuros));
+  const nxtExtrasTotal = (nxt.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  nxt.valorCobrado = R2(R(nxt.aluguel)+R(nxt.condo)+R(nxt.iptu)+R(nxt.lixo)+R(nxt.multa)+R(nxt.juros)+R(nxt.pendingMulta)+R(nxt.pendingJuros)+nxtExtrasTotal);
 }
 
 // ============================================================
