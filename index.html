@@ -3741,13 +3741,18 @@ function updateSummary(){
   const inadList = ativos.filter(t=>{ const s=statusOf(t); return s==='inadimplente'||s==='parcial'; });
   const vInad  = inadList.reduce((s,t)=>{ const f=getTenantFinancials(t); return s+(f.totalDue||0); },0);
   const rej    = ativos.filter(t=>{ const d=daysUntilReajuste(t); return d!==null&&d>=0&&d<=60; });
+  // 14/09/2026: dívida de ex-inquilino (vago) conta no sininho de Alertas
+  // (pra bater com o que a página de Alertas realmente mostra), mas NUNCA
+  // no contador de "Inadimplentes" acima — esse é só sobre quem está
+  // ocupando e não pagou o mês.
+  const exComSaldo = tenants.filter(t=>t.vago && R2(t.history.reduce((s,h)=>s+Math.max(0, R(h.valorCobrado)-R(h.valorPago)), 0))>0.01);
   document.getElementById('sum-receita').textContent = fmtBRL(total);
   document.getElementById('sum-ocup').textContent    = ativos.length;
   document.getElementById('sum-ocup-sub').textContent= `de ${tenants.length} imóveis`;
   document.getElementById('sum-inad').textContent    = inadList.length;
   document.getElementById('sum-inad-sub').textContent= inadList.length>0?`${fmtBRL(vInad)} em aberto`:'Nenhuma inadimplência';
   document.getElementById('sum-rej').textContent     = rej.length;
-  document.getElementById('alert-count').textContent = inadList.length+rej.length;
+  document.getElementById('alert-count').textContent = inadList.length+rej.length+exComSaldo.length;
 }
 function renderDashboard(){
   const c=document.getElementById('dash-cards');
@@ -4798,6 +4803,20 @@ function renderAlerts(){
       al.push({type:'blue',icon:'↑',title:`${t.unit} — Reajuste em ${days} dias`,
         desc:`${t.name.split(' ')[0]} · Aluguel atual ${fmtBRL(t.rent)}`,
         value:fmtDate(t.reajuste),valueClass:'',tenant:t});
+    }
+  });
+  // 14/09/2026: achado real (usuário) — dívida de um ex-inquilino (vago)
+  // ficava completamente invisível em qualquer lugar do app, porque
+  // getTenantFinancials()/statusOf() sempre retornam 'vago' pra esses
+  // casos, não importa quanto a pessoa deva. Não conta no contador de
+  // "Inadimplentes" (esse é sobre quem está ocupando e não pagou o mês)
+  // — fica numa seção própria aqui nos Alertas, só pra visibilidade.
+  tenants.filter(t=>t.vago).forEach(t=>{
+    const saldoDevedor = R2(t.history.reduce((s,h)=>s+Math.max(0, R(h.valorCobrado)-R(h.valorPago)), 0));
+    if(saldoDevedor>0.01){
+      al.push({type:'red',icon:'📤',title:`${t.unit} — ${t.name.split(' ').slice(0,2).join(' ')} (ex-inquilino)`,
+        desc:'Saldo devedor de locação já encerrada',
+        value:fmtBRL(saldoDevedor),valueClass:'red',tenant:t});
     }
   });
   if(!al.length){list.innerHTML='<div style="text-align:center;padding:48px;color:var(--text-muted);">✓ Nenhum alerta no momento</div>';return;}
