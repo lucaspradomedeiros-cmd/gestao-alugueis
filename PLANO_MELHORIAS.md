@@ -1069,3 +1069,25 @@ número de planilha como verdade absoluta, especialmente quando ele
 contradiz uma decisão JÁ documentada em sessão anterior. Deveria ter
 notado a contradição com a nota de 12/09 (já registrada neste mesmo
 arquivo) antes de reverter a decisão sozinho.
+
+
+## 14/09/2026 (continuação 8) — Rótulo do condomínio do Adriano corrigido
+
+Usuário notou, comparando o card da Evelin com o do Adriano lado a lado
+(mesmo condomínio, ambos rotulados "Condomínio (Agosto/2026)"): a Evelin
+mostrava R$122,34 e o Adriano R$106,06 — a mesma etiqueta de mês, valores
+diferentes. Causa: o rótulo é sempre calculado como "mês da referência
+menos 1", mas o valor real cobrado do Adriano em Setembro usou (por
+engano, transação já paga, não alterada) o número que era de Julho, não
+de Agosto.
+
+**Corrigido (commit `40ba8ac`):** adicionado campo opcional
+`h.condoRefLabel` na entrada do histórico — quando presente, sobrescreve o
+cálculo automático do rótulo nos 3 lugares que o exibem (card do Painel
+Geral, card do menu Locatários, mensagem de WhatsApp). Sem o campo,
+comportamento inalterado.
+
+Aplicado na entrada de Setembro/2026 do Adriano: `condoRefLabel: "Julho/2026"`.
+O valor pago (R$106,06, R$994,06 total) continua exatamente o mesmo — só o
+texto ao lado passou a dizer o mês certo. Verificado renderizando o card
+de verdade: "Condomínio (Julho/2026)".
