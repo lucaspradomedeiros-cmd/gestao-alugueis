@@ -722,3 +722,23 @@ iframe apontando pra produção) antes de publicar:
    responsiva": no mobile, cada linha (mês) vira um cartão empilhado com o
    rótulo ao lado do valor (via `data-label` + `::before`), em vez de
    colunas espremidas. Desktop inalterado (só vale `<=760px`).
+
+
+## 14/09/2026 — v2.1.0 marcada como versão estável
+
+A pedido do usuário, `v2.1.0` (commit `29d2216`) foi marcada como o
+checkpoint estável atual, pra reversão/downgrade rápido em caso de problema
+futuro. Tag git anotada criada e publicada:
+
+```
+git tag -a v2.1.0 29d2216
+git push origin v2.1.0
+```
+
+**Para reverter pra esta versão**, se algo quebrar depois:
+```
+git checkout v2.1.0 -- .    # traz os arquivos desta versão pro working dir
+# ou, pra descartar tudo que veio depois dela:
+git reset --hard v2.1.0
+git push --force origin main   # ⚠ reescreve o histórico remoto, usar com cuidado
+```
