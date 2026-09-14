@@ -74,7 +74,13 @@ function saveToStorage(){
 }
 
 async function saveToDrive(){
-  if(!driveConnected) return;
+  // 14/09/2026: antes não retornava nada (sempre undefined), então quem
+  // chamava (ex: resolução de conflito) nunca sabia se o save realmente
+  // funcionou — achado real: um "Conflito resolvido — dados locais
+  // enviados ao Drive" apareceu na tela mesmo o upload tendo falhado por
+  // baixo dos panos, e os dados corrigidos nunca chegaram no Drive de
+  // verdade. Agora retorna true/false refletindo o resultado real.
+  if(!driveConnected) return false;
   try {
     updateSaveStatus('☁ Salvando no Drive…', 'var(--blue)');
     const payload = getPayload();
@@ -82,10 +88,12 @@ async function saveToDrive(){
     if(success){
       const now = new Date();
       updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
+      return true;
     } else {
       updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)');
+      return false;
     }
-  } catch(e){ console.warn('Erro ao salvar no Drive:', e); updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)'); }
+  } catch(e){ console.warn('Erro ao salvar no Drive:', e); updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)'); return false; }
 }
 
 async function loadFromDrive(){
@@ -111,8 +119,12 @@ async function loadFromDrive(){
       if(manterLocal && local){
         applyPayload(local);
         hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
-        await saveToDrive();
-        updateSaveStatus('☁ Conflito resolvido — dados locais enviados ao Drive', 'var(--green)');
+        const enviouOk = await saveToDrive();
+        if(enviouOk){
+          updateSaveStatus('☁ Conflito resolvido — dados locais enviados ao Drive', 'var(--green)');
+        } else {
+          updateSaveStatus('⚠ Conflito NÃO resolvido — falha ao enviar ao Drive, tente salvar de novo', 'var(--red)');
+        }
       } else if(drive){
         DRIVE_LOADER.saveToLocalStorage(drive);
         applyPayload(drive);
