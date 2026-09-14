@@ -185,6 +185,40 @@ tinha sido pago por fora do app, na data do vencimento — registrado
 05/05/2026 (data do vencimento, sem atraso, sem multa/juros). Ambas
 voltaram a status "futuro" normal. Confirmado com reload após salvar.
 
+### ✅ CONCLUÍDO em 14/09/2026 — Camargo zerada + auditoria Izabelly/Jorge/Thainara
+
+Pedido do usuário ao verificar o card da Camargo (que mostrava "Pago"
+incorretamente — na real ela nunca teve cobrança de setembro gerada, o
+app só olhava o último registro real, de maio, já quitado):
+
+- **Camargo**: histórico inteiro zerado a pedido do usuário — ficou só
+  um registro, setembro/2026, R$1.000,00, vencimento 05/09, pendente.
+  Status ao vivo: inadimplente (9 dias de atraso).
+- **Auditoria pedida pelo usuário** (Izabelly/Jorge/Thainara) — script
+  varreu TODO o app procurando entradas com status "futuro" mas venc já
+  vencido e saldo não quitado. Achados, confirmados isolados a esses 3
+  (mais ninguém no app tem esse padrão):
+  - Izabelly e Jorge: cobrança de julho/2026 (R$1.043,55 cada) **indevida**
+    — mesmo problema do achado anterior com junho (ainda não eram
+    inquilinos no mês inteiro). Removida.
+  - Thainara: junho (R$995,95) e julho (R$993,55) eram dívida REAL (ela
+    começou 01/06, mês cheio) — usuário confirmou que já foram pagos por
+    fora, na data do vencimento, valor cheio. Registrados via
+    `applyPayment()`.
+
+Confirmado com reload após salvar: Camargo inadimplente (correto),
+Izabelly/Jorge só com agosto(pago)+setembro(futuro), Thainara com
+junho/julho/agosto todos pagos + setembro futuro.
+
+⚠️ **Nota técnica registrada:** o campo `status` de uma cobrança não se
+recalcula sozinho com o tempo — só muda quando alguém tenta registrar um
+pagamento nela. Por isso uma cobrança criada como "futuro" pode passar
+do vencimento e continuar rotulada "futuro" indefinidamente, escondendo
+dívida real, até alguém mexer nela. Hoje resolvido caso a caso (auditoria
+manual); zero casos assim restantes no momento, mas pode voltar a
+acontecer com cobranças novas — vale considerar no futuro uma rotina que
+recalcule o status de tudo periodicamente, em vez de só sob demanda.
+
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
 - [x] **Remover o backdoor de senha em `js/auth.js`** — corrigido em
