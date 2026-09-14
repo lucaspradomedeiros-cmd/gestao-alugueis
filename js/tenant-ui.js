@@ -35,6 +35,8 @@ function renderCardDashboard(t, container){
   card.className = `tenant-card s-${st}`;
 
   if(t.vago){
+    const reocupado = tenants.some(x => x.unit === t.unit && x.id !== t.id && !x.vago);
+    if(reocupado) return;
     card.innerHTML=`<div class="card-header" style="cursor:pointer" onclick="openDet(${t.id})"><div class="card-avatar" style="background:#F0EFEA;color:var(--text-faint);font-size:20px;">🔑</div><div class="card-info"><div class="card-unit">${t.unit}</div><div class="card-name" style="color:var(--text-faint);font-style:italic;">Imóvel disponível</div></div><span class="s-badge s-vago">Vago</span></div><div style="text-align:center;padding:14px 0;color:var(--text-faint);font-size:13px;">Sem locatário ativo — clique para ver histórico</div>`;
     container.appendChild(card); return;
   }
@@ -299,6 +301,8 @@ function renderCard(t, container){
   card.className = `tenant-card s-${st}`;
 
   if(t.vago){
+    const reocupado = tenants.some(x => x.unit === t.unit && x.id !== t.id && !x.vago);
+    if(reocupado) return;
     card.innerHTML=`<div class="card-header" style="cursor:pointer" onclick="openDet(${t.id})"><div class="card-avatar" style="background:#F0EFEA;color:var(--text-faint);font-size:20px;">🔑</div><div class="card-info"><div class="card-unit">${t.unit}</div><div class="card-name" style="color:var(--text-faint);font-style:italic;">Imóvel disponível</div></div><span class="s-badge s-vago">Vago</span></div><div style="text-align:center;padding:16px 0;color:var(--text-faint);font-size:13px;">Sem locatário ativo — clique para ver histórico</div>`;
     container.appendChild(card); return;
   }
