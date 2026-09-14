@@ -3576,6 +3576,59 @@ function removeExtra(id, idx){
   recalcCard(id);
 }
 
+// ============================================================
+// COBRANÇA EXTRA EM QUALQUER MÊS DO EXTRATO (não só o mês "em aberto")
+// 14/09/2026: pedido do usuário — addExtra()/removeExtra() acima só mexem
+// no mês que getOpenEntry() escolhe. Quando um inquilino tem mais de um
+// mês em aberto (ou quando se quer lançar algo num mês futuro específico,
+// ou até corrigir um mês já passado), não dava pra escolher. Estas 3
+// funções operam direto na entrada do `ref` que o usuário tem aberta na
+// visão expandida do extrato (clicando na linha do mês desejado).
+// ============================================================
+function addExtraToRef(id, ref){
+  const t=tenants.find(x=>x.id===id); if(!t) return;
+  const h=t.history.find(x=>x.ref===ref); if(!h) return;
+  let i=0;
+  while(document.getElementById(`de-extra-row-${id}-${ref}-${i}`)) i++;
+  const container=document.getElementById(`de-extras-${id}-${ref}`);
+  if(!container) return;
+  const row=document.createElement('div');
+  row.id=`de-extra-row-${id}-${ref}-${i}`;
+  row.style.cssText='display:grid;grid-template-columns:1fr 90px 22px;gap:4px;margin-bottom:4px;';
+  row.innerHTML=`
+    <input class="cobr-inp" style="text-align:left;" type="text" placeholder="Descrição (ex: Conserto do portão)" id="de-extra-desc-${id}-${ref}-${i}">
+    <input class="cobr-inp" type="number" placeholder="0,00" id="de-extra-val-${id}-${ref}-${i}" step="0.01">
+    <button style="border:none;background:var(--red-bg);color:var(--red);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;" onclick="event.stopPropagation();this.parentElement.remove();">×</button>`;
+  container.appendChild(row);
+  row.querySelector('input[type=text]').focus();
+}
+function saveExtrasToRef(id, ref){
+  const t=tenants.find(x=>x.id===id); if(!t) return;
+  const h=t.history.find(x=>x.ref===ref); if(!h) return;
+  if(!h.extras) h.extras=[];
+  let i=0, adicionadas=0;
+  while(document.getElementById(`de-extra-row-${id}-${ref}-${i}`)){
+    const desc=document.getElementById(`de-extra-desc-${id}-${ref}-${i}`)?.value?.trim();
+    const val=R(document.getElementById(`de-extra-val-${id}-${ref}-${i}`)?.value);
+    if(desc && val>0){ h.extras.push({descricao:desc, valor:val}); adicionadas++; }
+    i++;
+  }
+  const base=R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo);
+  const extrasTotal=h.extras.reduce((s,ex)=>s+R(ex.valor),0);
+  h.valorCobrado=R2(base+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+extrasTotal);
+  if(adicionadas>0){ saveToStorage(); renderDet(); }
+}
+function removeExtraFromRef(id, ref, idx){
+  const t=tenants.find(x=>x.id===id); if(!t) return;
+  const h=t.history.find(x=>x.ref===ref); if(!h||!h.extras) return;
+  h.extras.splice(idx,1);
+  const base=R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo);
+  const extrasTotal=h.extras.reduce((s,ex)=>s+R(ex.valor),0);
+  h.valorCobrado=R2(base+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+extrasTotal);
+  saveToStorage();
+  renderDet();
+}
+
 function saveCardCobr(id){
   const t = tenants.find(x=>x.id===id);
   if(!t) return;
@@ -3848,6 +3901,22 @@ function buildDetHistory(t, filtered, filteredRev){
                 <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Pagamento</div>
                 <div style="font-size:13px;font-weight:600;color:${st2==='pago'?'var(--green)':st2==='parcial'?'var(--amber)':'var(--red)'};">${fmtPagamentos(h)}</div>
                 <div style="margin-top:4px;"><span class="pill ${pillCls}">${stTxt}</span></div>
+              </div>
+            </div>
+            <div style="margin-top:8px;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Outras cobranças / despesas deste mês</div>
+              ${(h.extras||[]).map((ex,i)=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);">
+                <span>${ex.descricao}</span>
+                <span style="display:flex;align-items:center;gap:8px;">
+                  <b>${fmtBRL(ex.valor)}</b>
+                  <button onclick="event.stopPropagation();removeExtraFromRef(${t.id},'${h.ref}',${i})" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;line-height:1;">×</button>
+                </span>
+              </div>`).join('') || '<div style="font-size:11px;color:var(--text-faint);padding:2px 0 6px;">Nenhuma cobrança extra lançada neste mês.</div>'}
+              <div id="de-extras-${t.id}-${h.ref}" style="margin-top:4px;"></div>
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();addExtraToRef(${t.id},'${h.ref}')">+ Adicionar linha</button>
+                <button class="btn btn-blue" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();saveExtrasToRef(${t.id},'${h.ref}')">💾 Salvar</button>
               </div>
             </div>
             <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
