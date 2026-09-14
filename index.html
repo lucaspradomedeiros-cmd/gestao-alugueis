@@ -474,7 +474,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 /* ===== MOBILE OPTIMIZATION ===== */
 @media(max-width:760px){
   .sidebar{display:none !important;}
-  .main{padding-bottom:72px !important;}
+  /* 14/09/2026: era um valor fixo (72px) que não considerava a área seguro do celular (barra de gestos/notch) — em telefones com essa barra maior, a barra de navegação inferior (fixa) ficava mais alta do que o espaço reservado, cobrindo o final da lista (ex: 'Situação atual' no Painel Geral), que ficava inacessível mesmo rolando. Agora soma a área segura real do aparelho. */
+  .main{padding-bottom:calc(64px + env(safe-area-inset-bottom) + 12px) !important;}
   .bottom-tab{display:flex !important;}
   .topbar{
     padding:12px 14px;
