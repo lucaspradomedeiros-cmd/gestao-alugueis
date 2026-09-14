@@ -116,6 +116,33 @@ numa aba nova, login só com senha do app + reload — reconectou ao Drive
 sozinho, sem clicar em nada e sem popup do Google (`driveConnected: true`,
 16 registros carregados certinho).
 
+### ✅ CONCLUÍDO em 14/09/2026 — Busca/filtro em Locatários + distinção Vago x Encerrado
+
+Reportado pelo usuário: depois de reocupar Apto 1/3/5 (Izabelly/Jorge/
+Thainara), o Painel Geral continuava mostrando "APTO 1 — Vago — Sem
+locatário ativo" mesmo já ocupado — o card "Vago" é renderizado por
+REGISTRO de inquilino, não por unidade, e o registro antigo (Rafael, ainda
+existe pra preservar histórico) continuava aparecendo como se a unidade
+estivesse disponível.
+
+Fix imediato (commit f7243bf): esconder o card fantasma quando a unidade já
+tem outro inquilino ativo. Discussão com o usuário levou a algo melhor:
+"Vago tem que ser realmente vago. Os outros seriam Baixados ou Encerrados"
+(commit 9f351cd):
+
+- Novo helper `categoriaTenant(t)`: `'ativo'` | `'vago'` (unidade realmente
+  sem ninguém, ex: Apto 8/Thais) | `'encerrado'` (locação encerrada mas a
+  unidade já foi reocupada, ex: Rafael/Ana Carla/Gabriely).
+- Locatários ganhou busca (nome/unidade) + filtro de status (Ativos
+  [padrão] / Vagos / Encerrados / Todos) — testado ao vivo, contagens
+  batendo exato (12 ativos, 3 encerrados, 1 vago, de 16 total).
+- Card "Encerrado": cinza, opacidade reduzida, nome real visível (antes
+  ficava escondido atrás de "Imóvel disponível"), badge "Encerrado" + data,
+  clicável pro histórico completo — testado, abre certo.
+- Painel Geral não ganhou busca/filtro (não é o lugar) — só parou de
+  mostrar "encerrado" (mantém "vago" de verdade, que é informação
+  acionável: dá pra alugar).
+
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
 - [x] **Remover o backdoor de senha em `js/auth.js`** — corrigido em
