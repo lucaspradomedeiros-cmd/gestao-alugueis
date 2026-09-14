@@ -576,6 +576,18 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   /* 14/09/2026 (2a parte): só empilhar em 1 coluna não bastou — a linha (rótulo+valor) é um flex row e, por padrão, um item de grid/flex se recusa a encolher abaixo do conteúdo (min-width:auto), então mesmo em 1 coluna a linha empurrava o card inteiro pra fora da tela em vez de quebrar o texto do rótulo. min-width:0 libera o encolhimento e o rótulo passa a quebrar linha normalmente. */
   .cobr-2col{grid-template-columns:1fr !important;}
   .cobr-2col>div{min-width:0 !important;}
+  /* 14/09/2026: histórico de condomínio no formato de cartão, mesmo padrão
+     usado no extrato do inquilino (pedido do usuário: "gostei muito... vamos
+     fazer o mesmo no condomínio"). Escopado a #condo-hist-body pra não afetar
+     outras tabelas que reaproveitam .rrow (relatório de receitas, lista de
+     garantias) com colunas diferentes. */
+  #condo-hist-body .rrow.rhdr{display:none !important;}
+  #condo-hist-body .rrow{display:block !important;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:8px 10px;background:var(--surface);}
+  #condo-hist-body .rrow>div{width:100% !important;flex:none !important;padding:3px 0;}
+  #condo-hist-body .rrow>div:first-child{padding-bottom:6px;margin-bottom:4px;border-bottom:1px dashed var(--border);font-size:13px;}
+  #condo-hist-body .rrow>div[data-label]{display:flex;justify-content:space-between;align-items:center;}
+  #condo-hist-body .rrow>div[data-label]::before{content:attr(data-label);font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;}
+  #condo-hist-body .rrow>div:last-child{justify-content:flex-end;margin-top:4px;padding-top:4px;border-top:1px dashed var(--border);}
   .expc3{grid-template-columns:1fr !important;gap:2px !important;margin-bottom:4px !important;}
   .expc2{grid-template-columns:1fr !important;gap:2px !important;margin-bottom:4px !important;}
   .exp-lbl{font-size:10px;margin-bottom:2px;}
@@ -4338,11 +4350,11 @@ function renderCondoHistory(){
     const por=R2((subRat+taxaRat)/CONDO_UNITS.length);
     return`<div class="rrow" style="cursor:pointer;font-size:13px;" onclick="loadRefAndGo('${h.ref}')">
       <div style="flex:1.5;font-weight:500">${monthName(h.ref)}${h.obs?` <span title="${h.obs}" style="cursor:help;color:var(--amber)">💬</span>`:''}</div>
-      <div style="flex:1;text-align:right;color:var(--text-muted)">${fmtBRL(h.agua)}</div>
-      <div style="flex:1;text-align:right;color:var(--text-muted)">${fmtBRL(h.energia)}</div>
-      <div style="flex:1;text-align:right;color:var(--text-muted)">${h.iptu?fmtBRL(h.iptu):'—'}</div>
-      <div style="flex:1;text-align:right;color:var(--text-muted)">${h.lixo?fmtBRL(h.lixo):'—'}</div>
-      <div style="flex:1.2;text-align:right;font-weight:600;color:var(--green)">${fmtBRL(por)}</div>
+      <div data-label="Água" style="flex:1;text-align:right;color:var(--text-muted)">${fmtBRL(h.agua)}</div>
+      <div data-label="Energia" style="flex:1;text-align:right;color:var(--text-muted)">${fmtBRL(h.energia)}</div>
+      <div data-label="IPTU" style="flex:1;text-align:right;color:var(--text-muted)">${h.iptu?fmtBRL(h.iptu):'—'}</div>
+      <div data-label="Lixo" style="flex:1;text-align:right;color:var(--text-muted)">${h.lixo?fmtBRL(h.lixo):'—'}</div>
+      <div data-label="Por apto" style="flex:1.2;text-align:right;font-weight:600;color:var(--green)">${fmtBRL(por)}</div>
       <div style="flex:.6;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:6px;">
         <span class="badge-saved">✓</span>
         <button onclick="event.stopPropagation();deleteCondoHistory('${h.ref}')" title="Excluir lançamento" style="background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:14px;padding:2px 4px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-faint)'">✕</button>
