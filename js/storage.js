@@ -21,11 +21,18 @@ function applyPayload(data){
   if(data.condominios && data.condominios.length) condominios = data.condominios;
   if(data.condoHistories){
     condoHistories = data.condoHistories;
-    const actId = data.activeCondoId||condominios[0]?.id||'c1';
-    activeCondoId = actId;
-    condoHistory = condoHistories[actId]||condoHistory;
-    const c = condominios.find(x=>x.id===actId)||condominios[0];
-    if(c){ CONDO_UNITS.length=0; c.units.forEach(u=>CONDO_UNITS.push(u)); }
+    activeCondoId = data.activeCondoId||condominios[0]?.id||'c1';
+    condoHistory = condoHistories[activeCondoId]||condoHistory;
+  } else if(data.activeCondoId){
+    activeCondoId = data.activeCondoId;
+  }
+  // 14/09/2026: popular CONDO_UNITS sempre que houver condominios carregados,
+  // independente de condoHistories existir no payload — achado real: um
+  // payload/cache sem esse campo deixava CONDO_UNITS vazio, e o histórico de
+  // condomínio dividia por zero ("Por apto" mostrava "R$ ∞").
+  if(condominios.length){
+    const c = condominios.find(x=>x.id===activeCondoId)||condominios[0];
+    if(c && c.units){ CONDO_UNITS.length=0; c.units.forEach(u=>CONDO_UNITS.push(u)); }
   }
   return true;
 }
