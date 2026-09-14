@@ -28,6 +28,12 @@ let tenants = [];
 // Log de auditoria (14/09/2026) — ver js/audit-log.js
 let auditLog = [];
 
+// Log técnico / modo diagnóstico (14/09/2026) — ver js/debug-log.js
+// NÃO entra no payload do Drive/backup — é local (localStorage), desligado
+// por padrão, só liga quando precisa investigar um bug (erro/tela/comando).
+let debugMode = false;
+let debugLog = [];
+
 // Payment modal
 let editPayTenantId = null;
 let editPayRef = null;

@@ -68,6 +68,7 @@
 <script src="js/auth.js"></script>
 <script src="js/state.js"></script>
 <script src="js/audit-log.js"></script>
+<script src="js/debug-log.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/tenant-financials.js"></script>
 <script src="js/imovel.js"></script>
@@ -771,8 +772,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     <button class="nav-item" onclick="connectDrive()" id="btn-drive-connect" style="color:var(--blue);font-weight:500;"><span class="icon">☁</span> Conectar Drive</button>
     <button class="nav-item" onclick="exportBackup()" style="color:var(--green);font-weight:500;"><span class="icon">⬇</span> Exportar backup</button>
     <button class="nav-item" onclick="document.getElementById('import-file').click()"><span class="icon">⬆</span> Importar backup</button>
-    <button class="nav-item" onclick="abrirAuditLog()"><span class="icon">📋</span> Ver log</button>
+    <button class="nav-item" onclick="abrirAuditLog()"><span class="icon">📋</span> Ver log (auditoria)</button>
     <button class="nav-item" id="btn-dark-toggle" onclick="toggleDarkMode()" style="margin-top:4px;"><span class="icon" id="dark-icon">◑</span> <span id="dark-label">Modo escuro</span></button>
+    <!-- 14/09/2026: log técnico p/ diagnosticar bug (tela que não abre,
+         comando que dá erro) — ver js/debug-log.js. Desligado por padrão. -->
+    <button class="nav-item" id="btn-debug-toggle" onclick="toggleDebugMode()"><span class="icon">🐞</span> <span id="debug-label">Modo diagnóstico</span></button>
+    <button class="nav-item" onclick="abrirDebugLog()"><span class="icon">🛠</span> Ver log técnico <span id="debug-log-badge" style="color:var(--red);font-weight:600;"></span></button>
     <button class="nav-item" style="color:var(--red);" onclick="confirmClearData()"><span class="icon">⊘</span> Limpar dados</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)">
   </div>
@@ -2080,6 +2085,26 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   </div>
 </div>
 
+<!-- LOG TÉCNICO / MODO DIAGNÓSTICO (14/09/2026) — ver js/debug-log.js -->
+<div class="overlay" id="debug-log-overlay" onclick="if(event.target===this)closeOverlay('debug-log-overlay')">
+  <div class="modal wide" style="max-width:680px;" onclick="event.stopPropagation()">
+    <div class="modal-title">🛠 Log Técnico</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+      Erros JS, falhas silenciosas de tela/modal e avisos técnicos — só
+      registra enquanto o <strong>Modo diagnóstico</strong> (menu lateral)
+      estiver ligado. Ligue, repita a ação que deu problema, e volte aqui.
+      Fica só neste navegador (não sincroniza pelo Drive).
+    </div>
+    <div id="debug-log-contagem" style="font-size:11px;color:var(--text-faint);margin-bottom:8px;">0 registro(s)</div>
+    <div id="debug-log-lista" style="max-height:55vh;overflow-y:auto;border-top:1px solid var(--border);margin-top:4px;"></div>
+    <div class="mfooter">
+      <button class="btn btn-red" onclick="limparDebugLog()" style="margin-right:auto;">🗑 Limpar</button>
+      <button class="btn" onclick="copiarDebugLog()">📋 Copiar tudo</button>
+      <button class="btn" onclick="closeOverlay('debug-log-overlay')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="edit-pay-overlay" onclick="if(event.target===this)closeEditPayModal()">
   <div class="modal wide">
     <div class="modal-title">Editar Pagamento</div>
@@ -2981,7 +3006,14 @@ function openPrintWindow(html, title='Relatório'){
 // Abrir overlay (modal/dialog)
 function openOverlay(id){
   const el = document.getElementById(id);
-  if(el) el.classList.add('open');
+  if(el){
+    el.classList.add('open');
+  } else if(typeof logDebug === 'function'){
+    // 14/09/2026: "tela que não abre" — hoje isso falhava calado (só o
+    // `if(el)` acima, sem avisar nada). Com o modo diagnóstico ligado,
+    // fica registrado qual modal foi pedido e não existe.
+    logDebug('tela', `openOverlay("${id}") — elemento não encontrado no DOM`);
+  }
 }
 
 // Fechar overlay (modal/dialog)

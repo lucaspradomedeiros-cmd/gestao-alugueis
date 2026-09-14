@@ -280,6 +280,11 @@ if(document.readyState === 'loading'){
 }
 
 function initializeApp(){
+  // 14/09/2026: instala a captura do log técnico o mais cedo possível,
+  // pra pegar até erro de inicialização (ver js/debug-log.js). Só grava
+  // de verdade se o usuário tiver ligado o modo diagnóstico antes.
+  if(typeof initDebugMode === 'function') initDebugMode();
+
   const _hadSavedData = loadFromLocalStorage();
   if(!condoHistories['c1'] || !condoHistories['c1'].length) condoHistories['c1'] = [...condoHistory];
   tenants.forEach(t=>{ if(!t.condoId) t.condoId = 'c1'; });
