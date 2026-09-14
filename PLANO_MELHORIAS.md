@@ -1119,3 +1119,55 @@ prioriza a entrada MAIS RECENTE quando há mais de uma com dívida real —
 não foi tocada porque não há evidência de que esteja errada (nenhum caso
 concreto reportado), mas vale ficar de olho se um inquilino algum dia
 tiver dívida em mais de um mês ao mesmo tempo.
+
+
+## 14/09/2026 (continuação 10) — Cobrança extra em qualquer mês + parcelamento automático
+
+Pedido do usuário: "posso ter que lançar despesas e ou cobrança extra em
+qualquer mes futuro... abre um campo no extrato do mes que estiver
+selecionado, fica mais fácil." Depois: "pode parcelar a cobrança? faz
+automático?"
+
+**`11dd9c0` — cobrança extra em qualquer mês:** adicionada uma seção
+"Outras cobranças / despesas deste mês" na visão expandida de um mês
+específico do extrato (clicar na linha do mês na tabela do histórico).
+Novas funções `addExtraToRef()`/`saveExtrasToRef()`/`removeExtraFromRef()`
+operam direto no `ref` escolhido, não em `getOpenEntry()` — funciona pra
+qualquer mês (futuro próximo, distante, ou até já passado).
+
+**`20bd15a` — parcelamento automático:** campo de "parcelas" na mesma
+linha. Informando mais de 1, o valor é dividido e distribuído
+automaticamente pelos meses seguintes, criando cada mês no histórico se
+ainda não existir, com "(1/N)", "(2/N)" etc. na descrição. **Caso
+especial** (pedido do usuário): se o inquilino já estiver `vago` no
+momento de lançar a parcela, os meses novos da parcela NÃO geram aluguel/
+condomínio/IPTU — só a própria parcela, já que a unidade não está mais
+ocupada.
+
+### Achado real durante o teste: applyPayment() apagava as extras
+Testando o cenário "inquilino saiu com dívida de R$3.000 não parcelada,
+paga aos poucos" — ao registrar um pagamento parcial, o valor da dívida
+(lançada como extra) **sumia do total cobrado**. Causa: `applyPayment()`
+recalculava `valorCobrado` sem somar `h.extras`. **Corrigido (`193766a`)**
+em 3 pontos com o mesmo problema: `applyPayment()`, `_rollPenalties()`
+(arrasto de multa/juros pro mês seguinte) e `saveCondoMonth()` (lançamento
+em lote do condomínio) — todos agora incluem extras na conta. Sincronizado
+também em `js/payment-modal.js` (código morto, mantido em sincronia).
+Testado ao vivo antes e depois do fix (dados reais, desfeitos depois):
+confirmado que o total agora se mantém corretamente após registrar
+pagamento.
+
+### Achado real: dívida de ex-inquilino é invisível em todo lugar
+Usuário perguntou se essa dívida (de alguém já `vago`) aparece nos
+"Inadimplentes" ou em algum lugar visível. **Resposta: não, em lugar
+nenhum hoje.** `getTenantFinancials()`, `statusOf()` e `hydrateEntries()`
+têm um `if(t.vago) return` logo no início, forçando status "vago" sempre
+— não importa quanto a pessoa deva. O valor fica gravado nos dados (é
+real), mas não conta no contador do Painel Geral, não aparece nos
+Alertas, e não tem nenhuma seção dedicada. Só é visível abrindo o
+extrato daquela pessoa especificamente.
+
+**Pendência aberta (não construída ainda, aguardando decisão do
+usuário):** criar uma seção separada — não misturar com "Inadimplentes"
+(esse é sobre quem está ocupando e não pagou o mês) — tipo "Ex-inquilinos
+com saldo devedor", visível no Painel Geral ou nos Alertas.
