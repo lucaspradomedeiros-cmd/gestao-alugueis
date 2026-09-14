@@ -237,6 +237,9 @@ function _resetPaymentEntry(t, ref){
   entry.multa = 0;
   entry.juros = 0;
   entry.obs = '';
+  // 14/09/2026: sincronizado com index.html — reset completo zera o log
+  // de pagamentos também, senão cada edição acumula entrada fantasma.
+  entry.pagamentos = [];
   const todayRef = TODAY.toISOString().slice(0,7);
   entry.status = ref <= todayRef ? 'pendente' : 'futuro';
 

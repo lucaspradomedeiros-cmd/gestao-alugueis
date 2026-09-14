@@ -3095,6 +3095,16 @@ function _resetPaymentEntry(t, ref){
   entry.multa = 0;
   entry.juros = 0;
   entry.obs = '';
+  // 14/09/2026: achado real (usuário, Ana Carla/Apto 03, mês de Abril) —
+  // editar um pagamento já registrado (Editar Pagamento chama
+  // _resetPaymentEntry() e depois applyPayment() de novo) empurrava mais
+  // uma entrada em entry.pagamentos SEM limpar as antigas, acumulando
+  // registros fantasma de pagamentos "duplicados" pro mesmo mês a cada
+  // edição (achado com 4 entradas pra um mês só, uma delas datada de
+  // hoje). valorPago/dataPagamento (usados no resto do app) sempre
+  // estavam corretos — só esse log de auditoria ficava poluído. Reset
+  // completo de verdade zera o log também.
+  entry.pagamentos = [];
   const todayRef = TODAY.toISOString().slice(0,7);
   entry.status = ref <= todayRef ? 'pendente' : 'futuro';
 
