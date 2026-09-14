@@ -928,3 +928,47 @@ Lorenza, Izabelly, Jorge, Thainara — Setembro `condo=122.34`, status
 mais de um inquilino, **perguntar primeiro**, mesmo quando a conta parece
 bater — esse foi o erro raiz: calculei sozinho duas vezes antes de
 confirmar, e errei as duas.
+
+
+## 14/09/2026 (continuação 5) — Mês de Maio/2026 do Adriano nunca foi lançado, cascata de meses mal rotulados
+
+Continuação direta da investigação do condomínio de Setembro: o usuário
+trouxe a planilha pessoal completa do Adriano (junho/2025 até outubro/2026)
+e, comparando linha por linha com o app, achou a causa raiz de verdade.
+
+**O que estava errado:** de jun/2025 a abr/2026, o histórico do Adriano no
+app batia perfeitamente com a planilha. A partir daí, **Maio/2026 nunca foi
+lançado** — sumiu — e toda cobrança seguinte ficou com o rótulo (`ref`) um
+mês atrasado em relação à realidade:
+
+| App mostrava (rótulo errado) | Na verdade era |
+|---|---|
+| `ref: 2026-05` | Junho |
+| `ref: 2026-06` | Julho |
+| `ref: 2026-07` | Agosto |
+| `ref: 2026-08` | Setembro |
+
+A entrada `ref: 2026-09` que eu tinha criado momentos antes (quando o
+usuário relatou o pagamento de Setembro) era, na prática, uma **duplicata**
+do que já existia — só que mal rotulado como Agosto.
+
+**Corrigido (dados, via script no navegador — Drive conectado por clique
+real do usuário, mesmo processo de sempre: `saveToLocalStorage()` antes de
+`saveToDrive()`, verificado com download direto do Drive depois):**
+1. Removida a duplicata (`ref: 2026-09` criado por engano).
+2. Renomeados os 4 rótulos: Maio→Junho, Junho→Julho, Julho→Agosto,
+   Agosto→Setembro (e o campo `venc` de cada um recalculado pro novo mês).
+3. Lançado Maio/2026, que estava faltando: Aluguel R$850 + IPTU R$38 +
+   Condomínio R$97,88 = R$985,88, pago em 05/05/2026 — valores exatos da
+   planilha do usuário.
+
+**Verificado:** histórico final do Adriano (16 lançamentos) bate 100% com
+a planilha pessoal dele, mês a mês, confirmado com download direto do
+Drive (não só cache local).
+
+**Pendência aberta, não investigada ainda:** não foi verificado se esse
+mesmo tipo de "mês faltando, cascata de rótulos errados" acontece com
+outros inquilinos — só o Adriano foi auditado a fundo porque foi o caso
+que o usuário trouxe pra investigar. Vale considerar uma auditoria
+sistemática (comparar `ref` sequencial de cada inquilino ativo, procurando
+buracos no histórico) numa sessão futura.
