@@ -1258,15 +1258,28 @@ tenants/meses via console): achado isolado, só abril da Ana Carla tinha
 1 registro batendo com valorPago/dataPagamento reais (R$809,10 em
 05/05/2026).
 
-**Ponto de design levantado pelo usuário nessa mesma conversa** (ainda
-não implementado — ver decisão pendente logo abaixo): o modelo atual de
-"múltiplos pagamentos pro mesmo mês" (parcial + complemento depois, ou
-edição/correção) não deveria só somar `valorPago` silenciosamente — se a
-soma passar do `valorCobrado`, o excedente devia virar **crédito**
-explícito (utilizável em mês futuro); se ficar abaixo, o restante já é
-o **débito** (isso o app já mostra via saldo devedor, mas talvez precise
-ficar mais explícito por pagamento, não só por mês). Pendente de decisão
-de design antes de implementar (ver conversa).
+✅ **CONCLUÍDO em 14/09/2026 (commit `381dc7c`):** ponto de design
+levantado pelo usuário na mesma conversa — "não pode aceitar vários
+pagamentos [silenciosamente], se ocorrer tem que mostrar que foi a
+mais, gerar créditos ou débitos". Decisão confirmada com o usuário:
+pagou A MAIS → abate automaticamente o próximo mês em aberto (sem ação
+manual); pagou A MENOS → comportamento atual (saldo devedor + status
+parcial) já é suficiente, não mudou nada aí.
+
+`applyPayment()`: quando o mês fica "pago" com sobra, trava o mês
+exatamente no valor cobrado e manda o excedente pra nova
+`_creditarProximoMes()` — cria o mês seguinte se preciso (mesmo
+princípio de `_rollPenalties()`), soma como pagamento (`credito:true`
+no log), recalcula status, e encadeia recursivamente se ainda sobrar
+(paga vários meses de uma vez). Ex-inquilino (`t.vago`) nunca cria mês
+novo pra crédito — mesmo princípio do fix da seção anterior — fica só
+documentado na observação, já que não existe "próximo mês" real pra
+quem já saiu.
+
+Testado ao vivo isolado (dados sintéticos): pagamento de R$1.600 num
+mês de R$500 (ativo) quitou 3 meses em cascata + R$100 parcial no 4º —
+bateu exato; ex-inquilino pagando R$50 a mais ficou só na observação,
+sem criar mês novo.
 
 `js/payment-modal.js` (sombreado pelas definições equivalentes em
 `index.html`, ver nota da seção 3) recebeu as mesmas mudanças pra manter
