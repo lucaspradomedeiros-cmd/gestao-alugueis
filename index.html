@@ -3079,8 +3079,18 @@ function desfazerPagamento(tenantId, ref){
 // READ-ONLY card for Painel Geral — reflects data, no editable fields
 // Garante uma entrada de exibição válida para o mês atual.
 // Se não há histórico, cria uma entrada temporária sem salvar.
+// 14/09/2026: um mês "futuro" (ainda não venceu) não pode aparecer na
+// frente de um mês com dívida real em aberto (parcial/inadimplente/
+// pendente) só por ser mais recente — senão a dívida some de vista
+// (ex: Erivan pagou parcial em setembro, mas o card mostrava outubro).
+function getOpenEntry(t){
+  const prioritarios = ['parcial','inadimplente','pendente'];
+  return t.history.slice().reverse().find(h=>prioritarios.includes(h.status))
+      || t.history.slice().reverse().find(h=>h.status!=='pago');
+}
+
 function getEntryForDisplay(t){
-  const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago') || t.history[t.history.length-1];
+  const openEntry = getOpenEntry(t) || t.history[t.history.length-1];
   if(openEntry) return openEntry;
   // Sem histórico: monta entrada do mês atual temporariamente
   const todayRef = `${TODAY.getFullYear()}-${String(TODAY.getMonth()+1).padStart(2,'0')}`;
@@ -3228,7 +3238,7 @@ function renderCard(t, container){
 
   // --- current month billing entry (the open/latest one) ---
   // find the latest non-paid entry, or the last entry
-  const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago') || t.history[t.history.length - 1];
+  const openEntry = getOpenEntry(t) || t.history[t.history.length - 1];
 
   // History dots (last 6) — clickable, show extrato for that month
   const histHTML = renderHistDots(t);
@@ -3429,7 +3439,7 @@ function recalcCard(id){
 
 function addExtra(id){
   const t=tenants.find(x=>x.id===id);if(!t)return;
-  const openEntry=t.history.slice().reverse().find(h=>h.status!=='pago');
+  const openEntry=getOpenEntry(t);
   if(openEntry && !openEntry.extras) openEntry.extras=[];
 
   // count current rows
@@ -3451,13 +3461,13 @@ function addExtra(id){
 
 function removeExtra(id, idx){
   const t=tenants.find(x=>x.id===id);if(!t)return;
-  const openEntry=t.history.slice().reverse().find(h=>h.status!=='pago');
+  const openEntry=getOpenEntry(t);
   if(openEntry&&openEntry.extras) openEntry.extras.splice(idx,1);
   // rebuild the card without full dashboard re-render
   const container=document.getElementById(`ci-extras-${id}`);
   if(!container)return;
   const t2=tenants.find(x=>x.id===id);
-  const e=t2.history.slice().reverse().find(h=>h.status!=='pago');
+  const e=getOpenEntry(t2);
   container.innerHTML=(e&&e.extras&&e.extras.length>0)?e.extras.map((ex,i)=>`
     <div style="display:grid;grid-template-columns:1fr 90px 22px;gap:4px;margin-bottom:4px;" id="ci-extra-row-${id}-${i}">
       <input class="cobr-inp" style="text-align:left;" type="text" value="${ex.descricao}" placeholder="Descrição" id="ci-extra-desc-${id}-${i}" oninput="recalcCard(${id})">
@@ -3497,7 +3507,7 @@ function saveCardCobr(id){
   }
 
   // update data model
-  const openEntry = t.history.slice().reverse().find(h=>h.status!=='pago');
+  const openEntry = getOpenEntry(t);
   if(openEntry){
     openEntry.aluguel = aluguel; openEntry.condo=condo; openEntry.iptu=iptu;
     openEntry.lixo=lixo; openEntry.multa=multa; openEntry.juros=juros;
@@ -4064,7 +4074,7 @@ function buildWpp(){
     // For condo: get manual extras from DOM or saved entry
     const cardExtras = getCardExtras(t.id);
     extras = cardExtras.length>0 ? cardExtras :
-      (t.history.slice().reverse().find(h=>h.status!=='pago')||t.history[t.history.length-1])?.extras||[];
+      (getOpenEntry(t)||t.history[t.history.length-1])?.extras||[];
     total = R2(aluguel+iptu+lixo+condo+multaVal+jurosVal+extras.reduce((s,e)=>s+R(e.valor),0));
   }
 
