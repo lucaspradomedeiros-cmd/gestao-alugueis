@@ -552,7 +552,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   #condo-hist-body td, #condo-hist-body th{padding:0 1px !important;}
   .section-header{margin-top:8px;margin-bottom:4px;}
   .section-title{font-size:12px !important;}
+  /* 14/09/2026: mesma causa raiz dos cards de inquilino (achado mais cedo
+     hoje) — .condo-layout é grid, e o item de grid (a div que envolve o
+     .condo-card) não encolhia abaixo do seu conteúdo mínimo (min-width:auto
+     padrão), empurrando o card inteiro pra fora da tela (botão "Salvar
+     lançamento" e valores como "480,04" cortados). Reportado pelo usuário
+     ("no menu condomínio também está saindo do padrão"). */
   .condo-layout{grid-template-columns:1fr;gap:4px;}
+  .condo-layout>*{min-width:0;}
   .expg{margin-bottom:4px;}
   .expg-title{font-size:8px;margin-bottom:2px;padding-bottom:0px;}
   .condo-card{padding:6px;margin-bottom:6px;}
