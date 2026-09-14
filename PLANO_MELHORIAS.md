@@ -701,3 +701,24 @@ mesmo que isso estoure o container. Testar com um iframe apontando pra
 produção (em vez de tentar redimensionar a janela do Chrome, que não
 funcionou neste ambiente) foi o jeito mais rápido de reproduzir e validar
 sem precisar do celular físico a cada tentativa.
+
+
+## 14/09/2026 (continuação) — Extrato do inquilino no celular
+
+Usuário: "quando abro o extrato completo do inquilino ele fica complicado
+de enquadrar no tamanho dada a quantidade de informações... dá pra melhorar
+um pouquinho?" Dois ajustes, ambos testados ao vivo (injeção de CSS num
+iframe apontando pra produção) antes de publicar:
+
+1. **`f457b24`** — botões de ação do cabeçalho (Enviar cobrança, Registrar
+   pgto, Emitir recibo, Contrato, Encerrar Locação) ficavam espremidos numa
+   linha só: o container `#d-badges` era `display:flex` sem `flex-wrap`
+   (o container irmão `#id-badges`, de imóveis, já tinha isso — só faltou
+   aqui). Adicionado `flex-wrap:wrap`.
+
+2. **`bf6bfa3`** — tabela do extrato (Referência, Aluguel, Encargos,
+   Multa/Juros, Total, Pagamento, Status — 7 colunas) ilegível no celular
+   mesmo com fonte reduzida. Convertida pro padrão clássico de "tabela
+   responsiva": no mobile, cada linha (mês) vira um cartão empilhado com o
+   rótulo ao lado do valor (via `data-label` + `::before`), em vez de
+   colunas espremidas. Desktop inalterado (só vale `<=760px`).
