@@ -622,6 +622,31 @@ sessão de teste não é suficiente pra declarar confiabilidade restabelecida;
 o item da seção 0 (uso em paralelo com a planilha por 1-2 meses) continua
 sendo o critério real antes de confiar 100%.
 
+## 12. App Mobile (SÓ quando o app estiver mais maduro — usuário pediu pra
+       guardar a ideia e lembrar depois, 14/09/2026)
+Usuário perguntou se o projeto poderia virar um app de celular no futuro.
+Resposta registrada aqui pra retomar quando fizer sentido (não antes da
+seção 0 estar resolvida — mesma regra do item 6/WhatsApp):
+
+- [ ] **PWA (recomendado como primeiro passo)** — adicionar `manifest.json`
+      + service worker simples. Ganha: ícone na tela inicial, abre em tela
+      cheia (sem barra de endereço), funciona offline pro app em si (dados
+      continuam vindo do Drive). Sem custo, sem loja de app, reaproveita
+      100% do código atual. Esforço baixo (~horas, não dias).
+- [ ] **App nativo via Capacitor** (passo 2, opcional) — empacota o mesmo
+      código web num app instalável de verdade (.apk), publicável na Play
+      Store se quiser. Reaproveita quase tudo do código. Resolveria de vez
+      a limitação atual de não conseguir anexar o PDF do extrato direto no
+      WhatsApp (via a folha de compartilhar nativa do celular, em vez de só
+      texto). Custo: Play Store US$25 único (Apple US$99/ano, dispensável
+      se for só uso pessoal Android).
+- [ ] **Não fazer:** reescrita nativa (React Native/Flutter) — esforço alto
+      sem ganho real pra um app de usuário único.
+
+**Recomendação registrada:** PWA primeiro (barato, rápido, resolve a maior
+parte do "parecer um app"); Capacitor só se algum dia a limitação do
+WhatsApp/PDF incomodar de verdade ou quiser instalar via ícone de loja.
+
 
 ## 14/09/2026 — Aba antiga sobrescrevendo o Drive + overflow no celular
 
