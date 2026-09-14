@@ -219,6 +219,36 @@ manual); zero casos assim restantes no momento, mas pode voltar a
 acontecer com cobranças novas — vale considerar no futuro uma rotina que
 recalcule o status de tudo periodicamente, em vez de só sob demanda.
 
+### 🔴 ACHADO GRAVE (14/09/2026) — Save no Drive podia falhar silenciosamente
+
+O usuário desconfiou que a correção da Camargo/Izabelly/Jorge/Thainara não
+tinha ido pro Drive de verdade — e tinha razão. Achado: `saveToDrive()`
+nunca retornava nada (sempre `undefined`, inclusive quando dava certo) —
+só atualizava o texto de status na tela por conta própria. A resolução de
+conflito (do mesmo dia, mais cedo) fazia `await saveToDrive()` e
+IMEDIATAMENTE mostrava "Conflito resolvido — dados locais enviados ao
+Drive" sem checar se o upload realmente aconteceu. Resultado: pelo menos
+uma correção real ficou só no localStorage de uma aba, nunca chegou no
+Drive, e a mensagem de sucesso escondeu isso completamente.
+
+**Corrigido (commit 315d3e6):** `saveToDrive()` agora retorna true/false
+refletindo o resultado real do upload; a resolução de conflito usa esse
+retorno pra decidir a mensagem (só afirma sucesso se realmente aconteceu).
+
+**Reaplicado e verificado de forma inequívoca** (não só reload — olhando
+direto `window.DRIVE_DATA`, populado só pelo download real da API, sem
+passar pelo cache local): Camargo (setembro pendente), Izabelly/Jorge
+(sem a cobrança indevida de julho), Thainara (junho/julho pagos) — todos
+confirmados persistidos no arquivo do Drive de verdade.
+
+⚠️ **Lição pro processo:** daqui pra frente, depois de qualquer edição
+direto via console/script (não pela UI), sempre chamar `saveToLocalStorage()`
+explicitamente ANTES de `saveToDrive()` (o simples `await saveToDrive()`
+sozinho não garante que o savedAt local está atualizado, o que pode fazer
+o Drive "vencer" um reconnect seguinte e reverter a edição em memória sem
+avisar). E sempre verificar `window.DRIVE_DATA` depois de salvar — não só
+o texto de status na tela, que já mentiu uma vez.
+
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
 - [x] **Remover o backdoor de senha em `js/auth.js`** — corrigido em
