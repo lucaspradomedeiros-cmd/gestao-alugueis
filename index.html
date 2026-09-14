@@ -577,6 +577,20 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   .dt-inp{margin-top:2px;padding:3px 5px !important;font-size:10px !important;}
   #condo-month{padding:3px 5px !important;font-size:10px !important;}
   .col-hdr{display:none;}
+  /* 14/09/2026: extrato do inquilino ("Ver extrato") — 7 colunas numa
+     tabela normal ficavam ilegíveis no celular mesmo com fonte reduzida
+     (pedido do usuário: "dá pra melhorar um pouquinho?"). Convertido pro
+     padrão clássico de "tabela responsiva": cada <tr> vira um cartão
+     empilhado, cada <td> mostra seu rótulo (data-label) ao lado do valor.
+     Desktop continua como tabela normal (essas regras só valem <=760px). */
+  .ptable thead{display:none;}
+  .ptable, .ptable tbody, .ptable tfoot, .ptable tr, .ptable td{display:block;width:100%;}
+  .ptable tbody tr, .ptable tfoot tr{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:8px 10px;background:var(--surface);}
+  .ptable tr:hover td{background:none;}
+  .ptable td{border-bottom:none !important;padding:4px 0 !important;}
+  .ptable td:first-child{padding-bottom:6px !important;margin-bottom:4px;border-bottom:1px dashed var(--border) !important;}
+  .ptable td.r{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;}
+  .ptable td.r::before{content:attr(data-label);font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;}
   .exp-inp, .dt-inp, #condo-month{width:100% !important;box-sizing:border-box !important;}
   * { box-sizing: border-box; }
   .condo-info-bar{padding:8px 10px;gap:6px;}
@@ -3794,12 +3808,12 @@ function buildDetHistory(t, filtered, filteredRev){
         <div style="font-weight:500;font-size:12px;">${monthName(h.ref)}</div>
         <div style="font-size:10px;color:var(--text-faint);">venc. ${fmtDate(h.venc)}</div>
       </td>
-      <td class="r" style="font-size:12px;">${fmtBRL(h.aluguel)}</td>
-      <td class="r" style="font-size:12px;">${R(h.condo)+R(h.iptu)+R(h.lixo)>0?fmtBRL(R(h.condo)+R(h.iptu)+R(h.lixo)):'—'}<br><span style="font-size:10px;color:var(--text-faint);">${R(h.condo)>0?'cond ':''}${R(h.iptu)>0?'iptu ':''}${R(h.lixo)>0?'lixo':''}</span></td>
-      <td class="r" style="font-size:12px;color:${penalties>0?'var(--red)':'var(--text-faint)'};">${penalties>0?fmtBRL(penalties):'—'}</td>
-      <td class="r" style="font-size:12px;font-weight:600;">${fmtBRL(h.valorCobrado)}</td>
-      <td class="r" style="font-size:12px;">${h.pagamentos && h.pagamentos.length>1 ? `<div style="font-size:10px;line-height:1.5;">${fmtPagamentos(h)}</div>` : (h.dataPagamento?`<div>${fmtDate(h.dataPagamento)}</div><div style="font-size:10px;color:var(--text-faint);">${fmtBRL(h.valorPago)}</div>`:'—')}</td>
-      <td class="r" style="white-space:nowrap;">
+      <td class="r" data-label="Aluguel" style="font-size:12px;">${fmtBRL(h.aluguel)}</td>
+      <td class="r" data-label="Encargos" style="font-size:12px;">${R(h.condo)+R(h.iptu)+R(h.lixo)>0?fmtBRL(R(h.condo)+R(h.iptu)+R(h.lixo)):'—'}<br><span style="font-size:10px;color:var(--text-faint);">${R(h.condo)>0?'cond ':''}${R(h.iptu)>0?'iptu ':''}${R(h.lixo)>0?'lixo':''}</span></td>
+      <td class="r" data-label="Multa/Juros" style="font-size:12px;color:${penalties>0?'var(--red)':'var(--text-faint)'};">${penalties>0?fmtBRL(penalties):'—'}</td>
+      <td class="r" data-label="Total" style="font-size:12px;font-weight:600;">${fmtBRL(h.valorCobrado)}</td>
+      <td class="r" data-label="Pagamento" style="font-size:12px;">${h.pagamentos && h.pagamentos.length>1 ? `<div style="font-size:10px;line-height:1.5;">${fmtPagamentos(h)}</div>` : (h.dataPagamento?`<div>${fmtDate(h.dataPagamento)}</div><div style="font-size:10px;color:var(--text-faint);">${fmtBRL(h.valorPago)}</div>`:'—')}</td>
+      <td class="r" data-label="Status" style="white-space:nowrap;">
         <span class="pill ${pillCls}">${stTxt}</span>
         ${(st2==='pago'||st2==='parcial')?`<div style="margin-top:4px;display:flex;gap:3px;justify-content:flex-end;">
           <button onclick="event.stopPropagation();openEditPayModal(${t.id},'${h.ref}')" style="font-size:10px;padding:2px 6px;border:1px solid var(--amber-light);border-radius:4px;background:var(--amber-bg);cursor:pointer;color:var(--amber);" title="Editar pagamento">✏️</button>
@@ -3818,12 +3832,12 @@ function buildDetHistory(t, filtered, filteredRev){
 
   const footerRow = filtered.length>1 ? `<tr style="background:var(--bg);font-weight:600;font-size:12px;">
     <td>Totais (${filtered.length} meses)</td>
-    <td class="r">${fmtBRL(totAluguel)}</td>
-    <td class="r">${fmtBRL(totEncargos)}</td>
-    <td class="r" style="color:${totPenalties>0?'var(--red)':'var(--text-faint)'};">${totPenalties>0?fmtBRL(totPenalties):'—'}</td>
-    <td class="r">${fmtBRL(totCobrado)}</td>
-    <td class="r" style="color:var(--green);">${fmtBRL(totPago)}</td>
-    <td class="r">${totSaldo>0?`<span class="pill inadimplente">${fmtBRL(totSaldo)}</span>`:`<span class="pill pago">Em dia</span>`}</td>
+    <td class="r" data-label="Aluguel">${fmtBRL(totAluguel)}</td>
+    <td class="r" data-label="Encargos">${fmtBRL(totEncargos)}</td>
+    <td class="r" data-label="Multa/Juros" style="color:${totPenalties>0?'var(--red)':'var(--text-faint)'};">${totPenalties>0?fmtBRL(totPenalties):'—'}</td>
+    <td class="r" data-label="Total">${fmtBRL(totCobrado)}</td>
+    <td class="r" data-label="Pago" style="color:var(--green);">${fmtBRL(totPago)}</td>
+    <td class="r" data-label="Saldo">${totSaldo>0?`<span class="pill inadimplente">${fmtBRL(totSaldo)}</span>`:`<span class="pill pago">Em dia</span>`}</td>
   </tr>` : '';
 
   return { rows, footerRow };
