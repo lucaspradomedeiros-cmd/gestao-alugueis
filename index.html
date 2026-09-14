@@ -3200,7 +3200,14 @@ function getCobrRows(t, e){
 
   // Condo imovel
   let condoRefLabel='—';
-  if(e?.ref){const[ry,rm]=e.ref.split('-');let pm=parseInt(rm)-1,py=parseInt(ry);if(pm<1){pm=12;py--;}condoRefLabel=`${MN[pm]}/${py}`;}
+  if(e?.condoRefLabel){
+    // 14/09/2026: achado real (Adriano) — o mês do condomínio embutido na
+    // cobrança pode não bater com "mês da referência menos 1" quando a
+    // cobrança real usou (por engano, já paga, não mexida) o número de um
+    // mês diferente. condoRefLabel salvo na própria entrada sobrescreve o
+    // cálculo automático, pra mostrar o mês que o valor realmente é.
+    condoRefLabel = e.condoRefLabel;
+  } else if(e?.ref){const[ry,rm]=e.ref.split('-');let pm=parseInt(rm)-1,py=parseInt(ry);if(pm<1){pm=12;py--;}condoRefLabel=`${MN[pm]}/${py}`;}
   const extras = (e?.extras||[]);
   return [
     {lbl:`Aluguel (${e?monthName(e.ref):'—'})`,  val:R(t.rent)},
@@ -3358,9 +3365,12 @@ function renderCard(t, container){
   const totalDisp  = R2(R(t.rent)+condoDisp+iptuDisp+lixoDisp+multaDisp+jurosDisp+extrasTotal);
   const vencDisp   = e ? e.venc : '';
 
-  // condomínio ref = mês anterior ao aluguel
+  // condomínio ref = mês anterior ao aluguel (sobrescrito por
+  // e.condoRefLabel quando a cobrança real usou outro mês — ver getCobrRows)
   let condoRefLabel = '—';
-  if(ref){
+  if(e?.condoRefLabel){
+    condoRefLabel = e.condoRefLabel;
+  } else if(ref){
     const[ry,rm]=ref.split('-');
     let pm=parseInt(rm)-1, py=parseInt(ry);
     if(pm<1){pm=12;py--;}
@@ -4177,7 +4187,10 @@ function buildWpp(){
   const saud=hora<12?'Bom dia':'Boa tarde';
 
   let condoRefLabel='—';
-  if(ref){const[ry,rm]=ref.split('-');let pm=parseInt(rm)-1,py=parseInt(ry);if(pm<1){pm=12;py--;}condoRefLabel=`${MN[pm]} ${py}`;}
+  const _entryParaLabel = t.history.find(h=>h.ref===ref);
+  if(_entryParaLabel?.condoRefLabel){
+    condoRefLabel = _entryParaLabel.condoRefLabel.replace('/',' ');
+  } else if(ref){const[ry,rm]=ref.split('-');let pm=parseInt(rm)-1,py=parseInt(ry);if(pm<1){pm=12;py--;}condoRefLabel=`${MN[pm]} ${py}`;}
 
   const lines=[`${saud}, ${firstName}!`,``,`Segue o valor do aluguel referente a ${monthName(ref)}, com vencimento em ${fmtDate(venc)}:`,``];
   lines.push(`Aluguel: ${fmtBRL(aluguel)}`);
