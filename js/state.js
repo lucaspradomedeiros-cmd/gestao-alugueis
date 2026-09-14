@@ -73,6 +73,12 @@ let reciboTid = null;
 // Google Drive and API
 let driveConnected = false;
 let _driveDebounce = null;
+// 14/09/2026: true = esta aba tem uma edição feita pelo usuário ainda não
+// confirmada como enviada ao Drive. Usado por saveToDrive() em storage.js
+// pra distinguir "aba parada só re-salvando por hábito" (autosave periódico,
+// beforeunload) de "aba com edição de verdade pendente" — só a segunda
+// justifica interromper com o diálogo de conflito.
+let _dirtyLocalEdit = false;
 let gapiReady = false;
 let gisReady = false;
 let tokenClient = null;

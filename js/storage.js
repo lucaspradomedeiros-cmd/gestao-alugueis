@@ -63,6 +63,7 @@ function loadFromLocalStorage(){
 // ── Google Drive ──────────────────────────────────────────────
 // Drive é a fonte principal. localStorage serve como cache local.
 function saveToStorage(){
+  _dirtyLocalEdit = true;
   saveToLocalStorage();
   if(driveConnected){
     clearTimeout(_driveDebounce);
@@ -82,10 +83,38 @@ async function saveToDrive(){
   // verdade. Agora retorna true/false refletindo o resultado real.
   if(!driveConnected) return false;
   try {
+    // 14/09/2026: achado real — uma aba antiga esquecida aberta (outro
+    // navegador/dispositivo) ficava sobrescrevendo o Drive com sua cópia
+    // desatualizada a cada autosave periódico (2 em 2 min), sem checar nada
+    // antes. Isso apagou silenciosamente uma correção feita em outro lugar
+    // (Erivan). Agora, antes de sobrescrever, confere se o Drive mudou desde
+    // a última vez que ESTA aba sincronizou com ele.
+    if(DRIVE_LOADER.lastKnownDriveSavedAt){
+      const remoteSavedAt = await DRIVE_LOADER.checkRemoteSavedAt();
+      if(remoteSavedAt && remoteSavedAt !== DRIVE_LOADER.lastKnownDriveSavedAt){
+        if(!_dirtyLocalEdit){
+          // Drive mudou, mas esta aba não tem edição pendente de verdade
+          // (autosave periódico numa aba parada, ou fechamento de aba sem
+          // ter mexido em nada). Em vez de sobrescrever, adota os dados
+          // novos do Drive silenciosamente — ninguém perde nada.
+          console.log('[saveToDrive] Drive mudou e esta aba não tem edição pendente — recarregando do Drive em vez de sobrescrever.');
+          await loadFromDrive();
+          return false; // não foi um save — foi uma auto-atualização
+        } else {
+          // Drive mudou E esta aba tem edição de verdade pendente — conflito
+          // genuíno, deixa o usuário decidir (mesma UI de sempre).
+          console.warn('[saveToDrive] Drive mudou E esta aba tem edição pendente — tratando como conflito.');
+          const drive = await DRIVE_LOADER.downloadFile(DRIVE_LOADER.driveFileId);
+          DRIVE_LOADER.conflict = { local: getPayload(), drive };
+          return await resolveDriveConflict();
+        }
+      }
+    }
     updateSaveStatus('☁ Salvando no Drive…', 'var(--blue)');
     const payload = getPayload();
     const success = await DRIVE_LOADER.uploadFile(payload);
     if(success){
+      _dirtyLocalEdit = false;
       const now = new Date();
       updateSaveStatus(`☁ Drive salvo às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, 'var(--blue)');
       return true;
@@ -96,41 +125,58 @@ async function saveToDrive(){
   } catch(e){ console.warn('Erro ao salvar no Drive:', e); updateSaveStatus('⚠ Erro ao salvar no Drive', 'var(--red)'); return false; }
 }
 
+// 14/09/2026: lógica de resolução de conflito extraída pra função própria —
+// antes só existia inline dentro de loadFromDrive(); agora saveToDrive()
+// também precisa dela (conflito genuíno detectado no meio de um autosave).
+async function resolveDriveConflict(){
+  const conflict = DRIVE_LOADER.conflict || {};
+  const local = conflict.local, drive = conflict.drive;
+  const fmt = iso => {
+    if(!iso) return '(sem data)';
+    const d = new Date(iso);
+    return `${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  };
+  const manterLocal = confirm(
+    `⚠ CONFLITO DE DADOS\n\n` +
+    `Os dados salvos neste navegador (${fmt(local && local.savedAt)}) são mais recentes que os do Google Drive (${fmt(drive && drive.savedAt)}).\n\n` +
+    `Isso costuma acontecer quando você edita dados sem o Drive conectado, ou quando outra aba/dispositivo salvou por cima.\n\n` +
+    `OK = manter os dados deste navegador e enviá-los ao Drive agora (recomendado).\n` +
+    `Cancelar = descartar os dados deste navegador e usar os do Drive.`
+  );
+  let ok;
+  if(manterLocal && local){
+    applyPayload(local);
+    hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
+    const success = await DRIVE_LOADER.uploadFile(getPayload());
+    if(success){
+      _dirtyLocalEdit = false;
+      updateSaveStatus('☁ Conflito resolvido — dados locais enviados ao Drive', 'var(--green)');
+    } else {
+      updateSaveStatus('⚠ Conflito NÃO resolvido — falha ao enviar ao Drive, tente salvar de novo', 'var(--red)');
+    }
+    ok = success;
+  } else if(drive){
+    DRIVE_LOADER.saveToLocalStorage(drive);
+    applyPayload(drive);
+    hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
+    DRIVE_LOADER.lastKnownDriveSavedAt = drive.savedAt || null;
+    _dirtyLocalEdit = false;
+    updateSaveStatus('☁ Conflito resolvido — dados do Drive aplicados', 'var(--amber)');
+    ok = true;
+  } else {
+    ok = false;
+  }
+  DRIVE_LOADER.conflict = null;
+  return ok;
+}
+
 async function loadFromDrive(){
   try {
     updateSaveStatus('☁ Carregando do Drive…', 'var(--blue)');
     const success = await DRIVE_LOADER.loadFromDrive();
 
     if(success === 'conflict'){
-      const conflict = DRIVE_LOADER.conflict || {};
-      const local = conflict.local, drive = conflict.drive;
-      const fmt = iso => {
-        if(!iso) return '(sem data)';
-        const d = new Date(iso);
-        return `${d.toLocaleDateString('pt-BR')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      };
-      const manterLocal = confirm(
-        `⚠ CONFLITO DE DADOS\n\n` +
-        `Os dados salvos neste navegador (${fmt(local && local.savedAt)}) são mais recentes que os do Google Drive (${fmt(drive && drive.savedAt)}).\n\n` +
-        `Isso costuma acontecer quando você edita dados sem o Drive conectado e conecta depois.\n\n` +
-        `OK = manter os dados deste navegador e enviá-los ao Drive agora (recomendado).\n` +
-        `Cancelar = descartar os dados deste navegador e usar os do Drive.`
-      );
-      if(manterLocal && local){
-        applyPayload(local);
-        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
-        const enviouOk = await saveToDrive();
-        if(enviouOk){
-          updateSaveStatus('☁ Conflito resolvido — dados locais enviados ao Drive', 'var(--green)');
-        } else {
-          updateSaveStatus('⚠ Conflito NÃO resolvido — falha ao enviar ao Drive, tente salvar de novo', 'var(--red)');
-        }
-      } else if(drive){
-        DRIVE_LOADER.saveToLocalStorage(drive);
-        applyPayload(drive);
-        hydrateEntries(); renderDashboard(); renderCondoSwitcher(); renderCondoInfoBar(); renderTenants();
-        updateSaveStatus('☁ Conflito resolvido — dados do Drive aplicados', 'var(--amber)');
-      }
+      await resolveDriveConflict();
       return true;
     }
 

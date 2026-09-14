@@ -25,6 +25,12 @@ const DRIVE_LOADER = {
   maxRetries: 3,
   conflict: null,       // { local, drive } quando dados locais mais novos que o Drive são detectados
   _inFlightLoad: null,  // coalesce chamadas concorrentes de loadFromDrive()
+  // 14/09/2026: savedAt que esta aba sabe que está atualmente gravado no
+  // Drive (do último load OU do último upload bem-sucedido feito por ela).
+  // saveToDrive() em storage.js compara isso com o savedAt real do Drive
+  // antes de sobrescrever, pra pegar o caso de outra aba/dispositivo ter
+  // salvo algo mais novo enquanto esta aba ficou parada.
+  lastKnownDriveSavedAt: null,
 
   // ── Inicialização ──────────────────────────────────────
   async init() {
@@ -98,6 +104,7 @@ const DRIVE_LOADER = {
       if (result) {
         this.driveFileId = fileId;
         this.lastSyncTime = new Date();
+        this.lastKnownDriveSavedAt = data.savedAt || null;
         console.log('[DriveLoader] Dados carregados do Drive com sucesso');
         return true;
       }
@@ -195,6 +202,7 @@ const DRIVE_LOADER = {
       }
 
       this.lastSyncTime = new Date();
+      this.lastKnownDriveSavedAt = data.savedAt || null;
       console.log('[DriveLoader] Arquivo salvo no Drive com sucesso');
       return true;
     } catch (e) {
@@ -202,6 +210,23 @@ const DRIVE_LOADER = {
       return false;
     } finally {
       this.syncInProgress = false;
+    }
+  },
+
+  // 14/09/2026: checagem leve do savedAt atual no Drive, usada por
+  // saveToDrive() (storage.js) ANTES de sobrescrever — sem isso, uma aba
+  // antiga esquecida aberta re-salva sua cópia velha por cima de dados mais
+  // novos a cada autosave periódico (2 em 2 min), silenciosamente. Retorna
+  // null se não der pra checar (sem arquivo ainda, erro de rede) — quem
+  // chama deve seguir em frente (falhar aberto) pra não travar o uso normal.
+  async checkRemoteSavedAt() {
+    if (!this.driveFileId) return null;
+    try {
+      const data = await this.downloadFile(this.driveFileId);
+      return (data && data.savedAt) || null;
+    } catch (e) {
+      console.warn('[DriveLoader] Erro ao checar savedAt remoto:', e);
+      return null;
     }
   },
 

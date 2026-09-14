@@ -104,6 +104,11 @@ body.dark{
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; transition: background-color .25s, color .25s; }
+/* 14/09/2026: trava geral contra rolagem lateral no celular — achado real:
+   modais (.mrow com campos de data lado a lado) podiam estourar a largura
+   da tela em telefones estreitos, e sem isso a página inteira ficava
+   arrastável para os lados. Ver também .mrow no bloco @media(max-width:760px). */
+html, body { overflow-x: hidden; max-width: 100vw; }
 .app { display: flex; min-height: 100vh; width: 100%; overflow: auto; }
 .sidebar { width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .main { flex: 1; min-width: 0; overflow: auto; }
@@ -547,6 +552,7 @@ body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sa
   .c-month-row label{font-size:9px;min-width:60px;}
   .c-month-row input{padding:4px 6px;font-size:11px;}
   .c-month-row .btn{padding:4px 8px;font-size:10px;}
+  .mrow{grid-template-columns:1fr !important;}
   .expc3{grid-template-columns:1fr !important;gap:2px !important;margin-bottom:4px !important;}
   .expc2{grid-template-columns:1fr !important;gap:2px !important;margin-bottom:4px !important;}
   .exp-lbl{font-size:10px;margin-bottom:2px;}
