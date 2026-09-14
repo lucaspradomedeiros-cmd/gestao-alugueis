@@ -87,7 +87,15 @@ function jurosRateDiario(t){
 
 function getTenantFinancials(t){
   if(t.vago) return {status:'vago'};
-  const last = t.history && t.history.length > 0 ? t.history[t.history.length - 1] : null;
+  // 14/09/2026: usava sempre o ÚLTIMO mês do histórico — se esse último mês
+  // fosse "pago" ou "futuro", uma dívida real de um mês ANTERIOR (parcial/
+  // inadimplente/pendente) ficava completamente invisível (achado real:
+  // Fernanda e Lorenza tinham abril/2026 pendente, nunca pago, escondido
+  // atrás de setembro/futuro; Erivan tinha setembro parcial escondido atrás
+  // de outubro/futuro). getOpenEntry(t) (definida em index.html) já resolve
+  // essa prioridade — usa ela se existir, senão cai pro último mês mesmo.
+  const last = (typeof getOpenEntry==='function' && getOpenEntry(t))
+    || (t.history && t.history.length > 0 ? t.history[t.history.length - 1] : null);
   if(!last) return {status:'futuro'};
 
   // Already paid / futuro
