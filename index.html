@@ -892,6 +892,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
         <option value="encerrados">Encerrados</option>
         <option value="todos">Todos</option>
       </select>
+      <select id="tenants-filtro-condo" onchange="renderTenants()" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:#fff;">
+        <option value="todos">Todos os condomínios/imóveis</option>
+      </select>
+      <button class="btn" onclick="printTenantsList()" style="font-size:13px;padding:8px 14px;">🖨 Exportar / Imprimir</button>
     </div>
     <div class="tenants-grid" id="tenants-cards"></div>
   </div>
@@ -4347,20 +4351,72 @@ function categoriaTenant(t){
   return reocupado ? 'encerrado' : 'vago';
 }
 
-function renderTenants(){
-  const c=document.getElementById('tenants-cards');c.innerHTML='';
+function popularFiltroCondo(){
+  const sel = document.getElementById('tenants-filtro-condo');
+  if(!sel) return;
+  const valorAtual = sel.value || 'todos';
+  const opcoes = ['<option value="todos">Todos os condomínios/imóveis</option>'];
+  condominios.forEach(cd=>opcoes.push(`<option value="condo:${cd.id}">${cd.nome}</option>`));
+  if(imoveis.some(im=>im.gestao==='autonomo')){
+    opcoes.push('<option value="autonomos">Imóveis autônomos</option>');
+  }
+  sel.innerHTML = opcoes.join('');
+  sel.value = [...sel.options].some(o=>o.value===valorAtual) ? valorAtual : 'todos';
+}
+
+function filtrarTenantsAtual(){
   const busca = (document.getElementById('tenants-busca')?.value || '').trim().toLowerCase();
-  const filtro = document.getElementById('tenants-filtro-status')?.value || 'ativos';
-  const filtrados = tenants.filter(t=>{
+  const filtroStatus = document.getElementById('tenants-filtro-status')?.value || 'ativos';
+  const filtroCondo = document.getElementById('tenants-filtro-condo')?.value || 'todos';
+  return tenants.filter(t=>{
     const cat = categoriaTenant(t);
-    if(filtro==='ativos' && cat!=='ativo') return false;
-    if(filtro==='vagos' && cat!=='vago') return false;
-    if(filtro==='encerrados' && cat!=='encerrado') return false;
+    if(filtroStatus==='ativos' && cat!=='ativo') return false;
+    if(filtroStatus==='vagos' && cat!=='vago') return false;
+    if(filtroStatus==='encerrados' && cat!=='encerrado') return false;
+    if(filtroCondo!=='todos'){
+      if(filtroCondo==='autonomos'){ if(!t.imovelId) return false; }
+      else if(filtroCondo.startsWith('condo:')){ if(t.condoId!==filtroCondo.slice(6)) return false; }
+    }
     if(busca && !`${t.name} ${t.unit}`.toLowerCase().includes(busca)) return false;
     return true;
   });
+}
+
+function renderTenants(){
+  popularFiltroCondo();
+  const c=document.getElementById('tenants-cards');c.innerHTML='';
+  const filtrados = filtrarTenantsAtual();
   filtrados.forEach(t=>renderCard(t,c));
   document.getElementById('tenants-count').textContent=`${filtrados.length} de ${tenants.length} locatários`;
+}
+
+function printTenantsList(){
+  const filtrados = filtrarTenantsAtual();
+  const linhas = filtrados.map(t=>{
+    const cat = categoriaTenant(t);
+    const statusTxt = cat==='ativo' ? (STATUS_LABELS[statusOf(t)]||statusOf(t)) : (cat==='vago' ? 'Vago' : 'Encerrado');
+    return `<tr><td>${t.unit}</td><td>${t.name}</td><td>${t.tel||'—'}</td><td>${cat==='ativo'?fmtBRL(t.rent):'—'}</td><td>${statusTxt}</td></tr>`;
+  }).join('');
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if(!w) return;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Locatários</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:24px;color:#1a1a1a;}
+      h1{font-size:18px;margin-bottom:4px;}
+      .sub{color:#666;font-size:12px;margin-top:0;margin-bottom:16px;}
+      table{width:100%;border-collapse:collapse;font-size:12.5px;}
+      th{text-align:left;background:#f5f5f5;padding:6px 8px;border-bottom:2px solid #ddd;}
+      td{padding:6px 8px;border-bottom:1px solid #eee;}
+      button{margin-bottom:16px;padding:8px 16px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+      @media print{button{display:none;}}
+    </style></head><body>
+    <button onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <h1>Locatários</h1>
+    <p class="sub">Gerado em ${new Date().toLocaleString('pt-BR')} — ${filtrados.length} registro(s)</p>
+    <table><thead><tr><th>Unidade</th><th>Nome</th><th>Telefone</th><th>Aluguel</th><th>Status</th></tr></thead>
+    <tbody>${linhas}</tbody></table>
+    </body></html>`);
+  w.document.close();
 }
 
 // ============================================================
