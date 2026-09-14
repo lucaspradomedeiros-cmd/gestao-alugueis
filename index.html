@@ -884,6 +884,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   <!-- TENANTS -->
   <div id="page-tenants" class="page content">
     <div class="section-header"><div class="section-title">Todos os Locatários</div><div class="section-count" id="tenants-count">—</div></div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <input id="tenants-busca" type="text" placeholder="🔎 Buscar por nome ou unidade..." oninput="renderTenants()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;">
+      <select id="tenants-filtro-status" onchange="renderTenants()" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:#fff;">
+        <option value="ativos" selected>Ativos</option>
+        <option value="vagos">Vagos</option>
+        <option value="encerrados">Encerrados</option>
+        <option value="todos">Todos</option>
+      </select>
+    </div>
     <div class="tenants-grid" id="tenants-cards"></div>
   </div>
 
@@ -3200,10 +3209,16 @@ function renderCard(t, container){
   card.className = `tenant-card s-${st}`;
 
   if(t.vago){
-    // 14/09/2026: mesma proteção — não mostra "Vago" se a unidade já foi
-    // reocupada por outro inquilino ativo.
+    // 14/09/2026: "Vago" só quando a unidade está realmente sem ninguém.
+    // Se outro inquilino ativo já ocupa a mesma unit, isto é só histórico
+    // de uma locação encerrada — mostra como "Encerrado", não "Vago".
     const reocupado = tenants.some(x => x.unit === t.unit && x.id !== t.id && !x.vago);
-    if(reocupado) return;
+    if(reocupado){
+      card.style.opacity = '0.6';
+      const dataEnc = t.dataEncerramento ? fmtDate(t.dataEncerramento) : '—';
+      card.innerHTML=`<div class="card-header" style="cursor:pointer" onclick="openDet(${t.id})"><div class="card-avatar" style="background:#e2e2e2;color:#888;">${initials(t.name)}</div><div class="card-info"><div class="card-unit">${t.unit}</div><div class="card-name" style="color:#777;">${t.name}</div></div><span class="s-badge" style="background:#e2e2e2;color:#666;">Encerrado</span></div><div style="text-align:center;padding:10px 0;color:#999;font-size:12px;">Encerrado em ${dataEnc} — clique para ver histórico</div>`;
+      container.appendChild(card); return;
+    }
     card.innerHTML=`<div class="card-header"><div class="card-avatar" style="background:#F0EFEA;color:var(--text-faint);font-size:20px;">🔑</div><div class="card-info"><div class="card-unit">${t.unit}</div><div class="card-name" style="color:var(--text-faint);font-style:italic;">Imóvel disponível</div></div><span class="s-badge s-vago">Vago</span></div><div style="text-align:center;padding:16px 0;color:var(--text-faint);font-size:13px;">Sem locatário ativo</div>`;
     container.appendChild(card); return;
   }
@@ -4316,10 +4331,26 @@ function initCondoPage(){
 // ============================================================
 // TENANTS PAGE
 // ============================================================
+function categoriaTenant(t){
+  if(!t.vago) return 'ativo';
+  const reocupado = tenants.some(x => x.unit === t.unit && x.id !== t.id && !x.vago);
+  return reocupado ? 'encerrado' : 'vago';
+}
+
 function renderTenants(){
   const c=document.getElementById('tenants-cards');c.innerHTML='';
-  tenants.forEach(t=>renderCard(t,c));
-  document.getElementById('tenants-count').textContent=`${tenants.length} locatários`;
+  const busca = (document.getElementById('tenants-busca')?.value || '').trim().toLowerCase();
+  const filtro = document.getElementById('tenants-filtro-status')?.value || 'ativos';
+  const filtrados = tenants.filter(t=>{
+    const cat = categoriaTenant(t);
+    if(filtro==='ativos' && cat!=='ativo') return false;
+    if(filtro==='vagos' && cat!=='vago') return false;
+    if(filtro==='encerrados' && cat!=='encerrado') return false;
+    if(busca && !`${t.name} ${t.unit}`.toLowerCase().includes(busca)) return false;
+    return true;
+  });
+  filtrados.forEach(t=>renderCard(t,c));
+  document.getElementById('tenants-count').textContent=`${filtrados.length} de ${tenants.length} locatários`;
 }
 
 // ============================================================
