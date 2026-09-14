@@ -742,3 +742,44 @@ git checkout v2.1.0 -- .    # traz os arquivos desta versão pro working dir
 git reset --hard v2.1.0
 git push --force origin main   # ⚠ reescreve o histórico remoto, usar com cuidado
 ```
+
+
+## 14/09/2026 (continuação 2) — Despesas/Condomínio no celular + robustez + extrato em PDF/WhatsApp
+
+- **`9a4d2e1`** — mesmo bug de `flex-wrap` ausente (visto em `#d-badges`) achado
+  também nas abas de "Despesas do Escritório" (Despesas/Receitas/A Receber/
+  Resultado/Comparativo) — corrigido.
+- **`4ef6d0d`** — mesma causa raiz do card de inquilino (`min-width:auto`
+  padrão do CSS Grid) achada no menu Condomínio: `.condo-layout` empurrava o
+  card "Despesas do mês de referência" pra fora da tela no celular (botão
+  "Salvar lançamento" e valores cortados). Corrigido com `min-width:0`.
+- **`0b346a0`** — a pedido do usuário ("gostei muito do extrato... vamos
+  fazer o mesmo no condomínio"), histórico de condomínio (`#condo-hist-body`)
+  também convertido pro formato de cartão empilhado no celular, mesmo padrão
+  do extrato do inquilino — escopado só a esse elemento pra não afetar outras
+  tabelas que reaproveitam a classe `.rrow` (relatório de receitas, lista de
+  garantias).
+- **`be052a7`** — achado ao testar o card do condomínio: "Por apto" podia
+  mostrar `R$ ∞` (divisão por zero). Causa: `CONDO_UNITS` só era populado
+  dentro de um bloco condicionado à existência de `condoHistories` no
+  payload carregado — um cache/payload sem esse campo deixava a lista de
+  unidades vazia. Reproduzido no navegador de teste (cache incompleto), não
+  confirmado no uso real (Drive sempre carrega o payload completo), mas é
+  uma fragilidade real corrigida: `CONDO_UNITS` agora é populado sempre que
+  há `condominios` carregados, independente de `condoHistories` existir.
+- **`b827e08`** — a pedido do usuário, dois botões novos no extrato do
+  inquilino (barra "Extrato — [período]"): **"🖨 Imprimir / PDF"** (janela
+  nova com o extrato formatado + botão manual de impressão, mesmo padrão de
+  `printTenantsList()`; "Salvar como PDF" funciona nativamente no diálogo de
+  impressão do navegador) e **"📲 Enviar resumo"** (modal com prévia
+  editável, mesmo padrão de "Enviar cobrança"; monta um resumo de WhatsApp
+  com totais e, se o período tiver ≤6 meses, a lista mês a mês — períodos
+  maiores mostram só o resumo, pra não virar uma mensagem gigante). Nota
+  técnica registrada: não é possível anexar um PDF automaticamente num link
+  `wa.me`, só texto — por isso o "enviar" é sempre um resumo em texto, não o
+  PDF em si. Ambos respeitam o período já selecionado nas abas do extrato.
+  Testado ao vivo com clique real (via `computer` tool, não `javascript_tool`
+  — `window.open()` chamado via script não conta como gesto do usuário e é
+  bloqueado pelo navegador) — confirmado funcionando com a Evelin (histórico
+  de 53 meses): período curto lista mês a mês, "Todo o período" mostra só o
+  resumo de totais.
