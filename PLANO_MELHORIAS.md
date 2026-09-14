@@ -621,3 +621,83 @@ renderizar** que causou o abandono original — é um sinal positivo, mas uma
 sessão de teste não é suficiente pra declarar confiabilidade restabelecida;
 o item da seção 0 (uso em paralelo com a planilha por 1-2 meses) continua
 sendo o critério real antes de confiar 100%.
+
+
+## 14/09/2026 — Aba antiga sobrescrevendo o Drive + overflow no celular
+
+### Achado grave: aba antiga esquecida sobrescrevia o Drive silenciosamente
+Depois de corrigir e verificar (via `window.DRIVE_DATA`) o bug do
+`saveToDrive()` que não retornava sucesso/falha (ver seção anterior), o
+usuário reportou: "encontrei um problema maior, loguei no asus, no
+navegador e puxou coisa diferente do drive." Investigando, e confirmado
+pelo próprio usuário ("Pode ser isso, uma aba velha salvando, pois não
+puxou a alteração do erivan"): o **autosave periódico** (`onDriveConnected()`
+em `js/storage.js`, `setInterval(...saveToDrive..., 2*60*1000)`) e o save no
+`beforeunload` chamavam `saveToDrive()` **sem checar nada antes** — uma aba
+antiga esquecida aberta (outro navegador/dispositivo/celular) sobrescrevia o
+Drive com sua cópia desatualizada a cada 2 minutos, apagando silenciosamente
+qualquer edição feita em outro lugar nesse meio tempo. Foi assim que a
+correção do pagamento parcial do Erivan sumiu depois de já salva e
+verificada.
+
+**Corrigido (commit `bf20032`):**
+- `DRIVE_LOADER` passa a rastrear `lastKnownDriveSavedAt` (do último load ou
+  save bem-sucedido) e ganhou `checkRemoteSavedAt()` pra conferir o savedAt
+  atual do Drive sem aplicar os dados.
+- `saveToDrive()` agora confere isso antes de sobrescrever: se o Drive mudou
+  sem esta aba saber e **não há edição pendente nela** (`_dirtyLocalEdit`),
+  recarrega do Drive silenciosamente em vez de sobrescrever (autocura,
+  ninguém perde nada); se há edição pendente de verdade, trata como conflito
+  genuíno (mesma UI de sempre, `confirm()`).
+- Lógica de resolução de conflito extraída para `resolveDriveConflict()`,
+  reaproveitada por `loadFromDrive()` e pelo novo caminho de conflito em
+  `saveToDrive()`.
+- Verificado após o fix: aba real reconectada ao Drive confirmou Erivan
+  ainda "parcial" (R$500 pago) e Camargo ainda "inadimplente" (R$1.000
+  pendente) — os dados corretos se mantiveram.
+
+### Overflow horizontal no celular — 3 causas raiz diferentes
+Usuário relatou rolagem lateral indevida no menu principal do celular.
+Investigado com um iframe de teste simulando larguras de celular (320-390px)
+direto na produção. Achadas e corrigidas 3 causas diferentes, em 3 commits:
+
+1. **`bf20032`/`c1fff1d`** — campos de data lado a lado nos modais (`.mrow`,
+   grid de 2 colunas) não encolhiam o suficiente em telas estreitas
+   (input nativo `type="month"`/`type="date"` tem largura mínima),
+   estourando a largura do modal pra fora da tela. Empilhado em 1 coluna no
+   celular (`.mrow{grid-template-columns:1fr !important}`), mais uma trava
+   geral `html,body{overflow-x:hidden}` como rede de segurança.
+
+2. **`c1fff1d`** — barra de navegação inferior (`.bottom-tab`, fixa) fica
+   mais alta em celulares com barra de gestos/notch
+   (`env(safe-area-inset-bottom)`), mas o espaço reservado embaixo do
+   conteúdo (`.main{padding-bottom:72px}`) era um valor fixo que não
+   considerava isso — cobria o final de listas longas (ex: seção "Situação
+   atual" no Painel Geral), tornando-as inacessíveis mesmo rolando até o
+   fim. Reportado pelo usuário como "situação atual para baixo fica fora da
+   tela". Corrigido somando a área segura real:
+   `padding-bottom: calc(64px + env(safe-area-inset-bottom) + 12px)`.
+
+3. **`799bd18`/`710623c`** — a causa mais séria, achada com o usuário
+   mostrando exatamente onde: o card do inquilino no Painel Geral
+   ("Situação atual") cortava a coluna de valores (ex: "Condomínio
+   (Agosto/2026)" aparecia sem o valor visível, cortado na borda). Raiz:
+   `.tenant-card` é item de grid dentro de `.tenants-grid`, e por padrão um
+   item de grid **não encolhe abaixo do seu conteúdo mínimo**
+   (`min-width:auto`) — algum texto interno não quebrava linha, e isso
+   empurrava o CARD INTEIRO pra fora da largura da tela (não só a grade
+   interna Aluguel/Condomínio/IPTU, que também foi empilhada em 1 coluna
+   via `.cobr-2col` no commit anterior, mas sozinho não bastou). Corrigido
+   com `min-width:0` em `.tenants-grid`, `.tenant-card` e nas linhas de
+   `.cobr-2col`. Validado com um iframe de teste em 375px direto na
+   produção antes e depois de cada tentativa — só a combinação dos dois
+   fixes (empilhar + min-width:0) resolveu de fato; confirmado por
+   screenshot com o card completo e legível.
+
+**Lição pro processo:** overflow em CSS Grid/Flexbox quase sempre precisa de
+`min-width:0` explícito no item que deveria encolher — o padrão do browser
+(`min-width:auto`) prioriza mostrar o conteúdo inteiro sem quebrar linha,
+mesmo que isso estoure o container. Testar com um iframe apontando pra
+produção (em vez de tentar redimensionar a janela do Chrome, que não
+funcionou neste ambiente) foi o jeito mais rápido de reproduzir e validar
+sem precisar do celular físico a cada tentativa.
