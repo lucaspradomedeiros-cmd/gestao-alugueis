@@ -512,7 +512,15 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   .summary-label{font-size:10px;}
   .summary-value{font-size:22px;}
   .section-title{font-size:16px;}
-  .tenants-grid{grid-template-columns:1fr;gap:10px;}
+  /* 14/09/2026 (3a parte): a causa raiz de verdade — .tenant-card é item
+     de grid dentro de .tenants-grid, e por padrão um item de grid não
+     encolhe abaixo do seu conteúdo mínimo (min-width:auto). Como algum
+     conteúdo interno do card não quebrava linha, isso forçava o CARD
+     INTEIRO (não só a grade de valores) pra fora da largura da tela.
+     min-width:0 no card e na grade libera o encolhimento de verdade —
+     confirmado visualmente (card do Apto 2, "Situação atual"). */
+  .tenants-grid{grid-template-columns:1fr;gap:10px;min-width:0;}
+  .tenant-card{min-width:0;}
   .tenant-card{padding:14px;gap:10px;}
   .card-avatar{width:36px;height:36px;font-size:12px;}
   .det-panel{width:100%;max-width:100vw;}
@@ -558,7 +566,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
      numa grade fixa de 2 colunas empurrava a coluna inteira pra fora da
      largura do card no celular, cortando o conteúdo (relatado pelo usuário:
      card do Apto 2 na tela "Situação atual" do Painel Geral). */
+  /* 14/09/2026 (2a parte): só empilhar em 1 coluna não bastou — a linha (rótulo+valor) é um flex row e, por padrão, um item de grid/flex se recusa a encolher abaixo do conteúdo (min-width:auto), então mesmo em 1 coluna a linha empurrava o card inteiro pra fora da tela em vez de quebrar o texto do rótulo. min-width:0 libera o encolhimento e o rótulo passa a quebrar linha normalmente. */
   .cobr-2col{grid-template-columns:1fr !important;}
+  .cobr-2col>div{min-width:0 !important;}
   .expc3{grid-template-columns:1fr !important;gap:2px !important;margin-bottom:4px !important;}
   .expc2{grid-template-columns:1fr !important;gap:2px !important;margin-bottom:4px !important;}
   .exp-lbl{font-size:10px;margin-bottom:2px;}
