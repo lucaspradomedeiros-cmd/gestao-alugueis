@@ -1531,6 +1531,29 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   </div>
 </div>
 
+<!-- EXTRATO WPP MODAL -->
+<div class="overlay" id="extrato-wpp-overlay">
+  <div class="modal wide">
+    <div class="modal-title">📲 Enviar resumo do extrato via WhatsApp</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="ew-info">—</div>
+    <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Prévia da mensagem</div>
+    <div class="wpp-preview" id="ew-preview">—</div>
+    <details style="margin-bottom:10px;">
+      <summary style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:500;">✏️ Editar mensagem diretamente</summary>
+      <textarea id="ew-edit" rows="10" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.7;color:var(--text);background:var(--bg);resize:vertical;" placeholder="Edite a mensagem aqui..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button class="btn" style="font-size:11px;" onclick="syncExtratoWppEdit()">↓ Copiar prévia para edição</button>
+        <button class="btn btn-blue" style="font-size:11px;" onclick="useExtratoWppEdit()">✓ Usar texto editado no WhatsApp</button>
+      </div>
+    </details>
+    <div class="mfooter">
+      <button class="btn" onclick="closeOverlay('extrato-wpp-overlay')">Fechar</button>
+      <button class="btn" onclick="copyExtratoWpp()" id="ew-copy">📋 Copiar</button>
+      <a class="btn-wpp" id="ew-link" href="#" target="_blank">WhatsApp ↗</a>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="ga-toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
@@ -3862,6 +3885,17 @@ function buildDetHistory(t, filtered, filteredRev){
   return { rows, footerRow };
 }
 
+// 14/09/2026: extraído de dentro de renderDet() pra ser reaproveitado também
+// por printExtrato() e buildExtratoWppMsg() (pedido do usuário: imprimir/
+// salvar PDF e enviar resumo por WhatsApp do extrato do inquilino).
+function getDetPeriodLabel(){
+  return detPeriod==='single'&&detHighRef ? monthName(detHighRef)
+    : detPeriod==='6m' ? 'Últimos 6 meses'
+    : detPeriod==='ano' ? `Ano ${TODAY.getFullYear()}`
+    : detPeriod==='custom' ? 'Período personalizado'
+    : 'Todo o período';
+}
+
 function filterDetHistory(t){
   const todayStr = TODAY.toISOString().split('T')[0].slice(0,7);
   let filtered = [...t.history];
@@ -3919,11 +3953,7 @@ function renderDet(){
   const summaryBlock = buildDetSummary(filtered);
   const { rows, footerRow } = buildDetHistory(t, filtered, filteredRev);
 
-  const periodLabel = detPeriod==='single'&&detHighRef ? monthName(detHighRef)
-    : detPeriod==='6m' ? 'Últimos 6 meses'
-    : detPeriod==='ano' ? `Ano ${TODAY.getFullYear()}`
-    : detPeriod==='custom' ? 'Período personalizado'
-    : 'Todo o período';
+  const periodLabel = getDetPeriodLabel();
 
   const condoName = (condominios.find(c=>c.id===(t.condoId||activeCondoId))||condominios[0])?.nome||'—';
 
@@ -3942,9 +3972,14 @@ function renderDet(){
     <div style="margin-bottom:18px;">
       <button class="btn" style="font-size:12px;" onclick="closeDet();openEditTenant(${t.id})">✏️ Editar dados do locatário</button>
     </div>
-    <div class="det-sec" style="display:flex;align-items:center;justify-content:space-between;">
+    <div class="det-sec" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <span>Extrato — ${periodLabel}</span>
-      <span style="font-size:11px;color:var(--text-muted);font-weight:400;">${filtered.length} registros</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400;">${filtered.length} registros</span>
+        ${filtered.length>0?`
+        <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="printExtrato()">🖨 Imprimir / PDF</button>
+        <button class="btn-wpp" style="font-size:11px;padding:4px 10px;" onclick="openExtratoWpp()">📲 Enviar resumo</button>`:''}
+      </div>
     </div>
     ${summaryBlock}
     ${filtered.length===0
@@ -4200,6 +4235,138 @@ function copyWpp(){
   navigator.clipboard.writeText(txt).then(()=>{
     const b=document.getElementById('wpp-copy');b.textContent='✓ Copiado!';b.style.color='var(--green)';
     setTimeout(()=>{b.textContent='📋 Copiar';b.style.color='';},2000);
+  });
+}
+
+// ============================================================
+// EXTRATO — IMPRIMIR/PDF E ENVIAR RESUMO POR WHATSAPP
+// 14/09/2026: pedido do usuário — "criar um botão ou função para salvar o
+// extrato do inquilino em pdf ou imprimir ou ainda encaminhar pelo
+// whatsapp, podendo ser o período selecionado ou todo o período". Ambos
+// respeitam o período já selecionado nas abas do extrato (filterDetHistory).
+// Não é possível anexar um PDF automaticamente num link de WhatsApp (wa.me
+// só pré-preenche texto) — por isso o WhatsApp envia um resumo em texto,
+// como já é feito em "Enviar cobrança" (buildWpp/openWpp).
+// ============================================================
+function printExtrato(){
+  const t = tenants.find(x=>x.id===detTenantId);
+  if(!t) return;
+  const filtered = filterDetHistory(t);
+  if(!filtered.length) return;
+  const periodLabel = getDetPeriodLabel();
+
+  const rows = filtered.map(h=>{
+    const stTxt = {pago:'Pago',parcial:'Parcial',inadimplente:'Inadimplente',pendente:'Pendente',futuro:'A vencer'}[h.status]||h.status;
+    const encargos = R(h.condo)+R(h.iptu)+R(h.lixo);
+    const penalties = R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros);
+    const pagamento = h.dataPagamento ? `${fmtDate(h.dataPagamento)} — ${fmtBRL(h.valorPago)}` : '—';
+    return `<tr><td>${monthName(h.ref)}</td><td>${fmtDate(h.venc)}</td><td class="r">${fmtBRL(h.aluguel)}</td><td class="r">${encargos>0?fmtBRL(encargos):'—'}</td><td class="r">${penalties>0?fmtBRL(penalties):'—'}</td><td class="r">${fmtBRL(h.valorCobrado)}</td><td>${pagamento}</td><td>${stTxt}</td></tr>`;
+  }).join('');
+
+  const totAluguel   = filtered.reduce((s,h)=>s+R(h.aluguel),0);
+  const totEncargos  = filtered.reduce((s,h)=>s+R(h.condo)+R(h.iptu)+R(h.lixo),0);
+  const totPenalties = filtered.reduce((s,h)=>s+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros),0);
+  const totCobrado   = filtered.reduce((s,h)=>s+R(h.valorCobrado),0);
+  const totPago      = filtered.reduce((s,h)=>s+R(h.valorPago),0);
+  const totSaldo     = totCobrado-totPago;
+
+  const w = window.open('', '_blank', 'width=960,height=720');
+  if(!w) return;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Extrato — ${t.name}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:24px;color:#1a1a1a;}
+      h1{font-size:18px;margin-bottom:2px;}
+      .sub{color:#666;font-size:12px;margin-top:0;margin-bottom:4px;}
+      table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px;}
+      th{text-align:left;background:#f5f5f5;padding:6px 8px;border-bottom:2px solid #ddd;}
+      td{padding:6px 8px;border-bottom:1px solid #eee;}
+      td.r, th.r{text-align:right;}
+      tfoot td{font-weight:700;background:#fafafa;border-top:2px solid #ddd;}
+      .resumo{display:flex;gap:24px;margin-top:16px;font-size:12.5px;}
+      .resumo b{display:block;font-size:16px;margin-top:2px;}
+      button{margin-bottom:16px;padding:8px 16px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+      @media print{button{display:none;}}
+    </style></head><body>
+    <button onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <h1>Extrato — ${t.unit} · ${t.name}</h1>
+    <p class="sub">${periodLabel} — gerado em ${new Date().toLocaleString('pt-BR')}</p>
+    <div class="resumo">
+      <div>Cobrado<b>${fmtBRL(totCobrado)}</b></div>
+      <div>Pago<b style="color:#1a7f37;">${fmtBRL(totPago)}</b></div>
+      <div>Saldo<b style="color:${totSaldo>0?'#c0392b':'#1a7f37'};">${fmtBRL(totSaldo)}</b></div>
+    </div>
+    <table><thead><tr><th>Mês</th><th>Vencimento</th><th class="r">Aluguel</th><th class="r">Encargos</th><th class="r">Multa/Juros</th><th class="r">Total</th><th>Pagamento</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="2">Totais (${filtered.length} meses)</td><td class="r">${fmtBRL(totAluguel)}</td><td class="r">${totEncargos>0?fmtBRL(totEncargos):'—'}</td><td class="r">${totPenalties>0?fmtBRL(totPenalties):'—'}</td><td class="r">${fmtBRL(totCobrado)}</td><td colspan="2"></td></tr></tfoot>
+    </table>
+    </body></html>`);
+  w.document.close();
+}
+
+let extratoWppTid = null;
+function openExtratoWpp(){
+  const t = tenants.find(x=>x.id===detTenantId);
+  if(!t) return;
+  extratoWppTid = t.id;
+  document.getElementById('ew-info').textContent = `${t.unit} · ${t.name} · ${t.tel}`;
+  buildExtratoWppMsg();
+  openOverlay('extrato-wpp-overlay');
+}
+function buildExtratoWppMsg(){
+  const t = tenants.find(x=>x.id===extratoWppTid);
+  if(!t) return;
+  const filtered = filterDetHistory(t);
+  const periodLabel = getDetPeriodLabel();
+  const totCobrado = filtered.reduce((s,h)=>s+R(h.valorCobrado),0);
+  const totPago    = filtered.reduce((s,h)=>s+R(h.valorPago),0);
+  const totSaldo   = totCobrado-totPago;
+
+  const firstName = t.name.split(' ')[0];
+  const hora = TODAY.getHours();
+  const saud = hora<12?'Bom dia':'Boa tarde';
+
+  const lines = [`${saud}, ${firstName}!`,``,`Segue o resumo do extrato de ${t.unit} — ${periodLabel}:`,``];
+  // Lista mês a mês só quando o período é curto o suficiente pra não virar
+  // uma mensagem gigante (ex: "Todo o período" de um inquilino com anos de
+  // histórico) — nesse caso só o resumo de totais é enviado.
+  if(filtered.length && filtered.length<=6){
+    [...filtered].reverse().forEach(h=>{
+      const stTxt = {pago:'✓ Pago',parcial:'Parcial',inadimplente:'✗ Inadimplente',pendente:'Pendente',futuro:'A vencer'}[h.status]||h.status;
+      lines.push(`${monthName(h.ref)}: ${fmtBRL(h.valorCobrado)} — ${stTxt}`);
+    });
+    lines.push(``);
+  }
+  lines.push(`Total cobrado: ${fmtBRL(totCobrado)}`);
+  lines.push(`Total pago: ${fmtBRL(totPago)}`);
+  if(totSaldo>0) lines.push(`*Saldo devedor: ${fmtBRL(totSaldo)}*`);
+  else lines.push(`Situação: em dia ✓`);
+  lines.push(``);
+  lines.push(`Qualquer dúvida estou à disposição. Obrigado! 😊`);
+
+  const msg = lines.join('\n');
+  document.getElementById('ew-preview').textContent = msg;
+  const tel = (t.tel||'').replace(/\D/g,'');
+  const enc = encodeURIComponent(msg);
+  document.getElementById('ew-link').href = tel&&tel.length>=8?`https://wa.me/55${tel}?text=${enc}`:`https://wa.me/?text=${enc}`;
+}
+function syncExtratoWppEdit(){
+  document.getElementById('ew-edit').value = document.getElementById('ew-preview').textContent;
+}
+function useExtratoWppEdit(){
+  const txt = document.getElementById('ew-edit').value.trim();
+  if(!txt) return;
+  document.getElementById('ew-preview').textContent = txt;
+  const t = tenants.find(x=>x.id===extratoWppTid);
+  const tel = t?(t.tel||'').replace(/\D/g,''):'';
+  const enc = encodeURIComponent(txt);
+  document.getElementById('ew-link').href = tel&&tel.length>=8?`https://wa.me/55${tel}?text=${enc}`:`https://wa.me/?text=${enc}`;
+}
+function copyExtratoWpp(){
+  const edited = document.getElementById('ew-edit').value.trim();
+  const txt = edited || document.getElementById('ew-preview').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const b = document.getElementById('ew-copy'); b.textContent='✓ Copiado!'; b.style.color='var(--green)';
+    setTimeout(()=>{b.textContent='📋 Copiar'; b.style.color='';},2000);
   });
 }
 
