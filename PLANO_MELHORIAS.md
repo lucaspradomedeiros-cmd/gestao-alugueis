@@ -648,6 +648,48 @@ parte do "parecer um app"); Capacitor só se algum dia a limitação do
 WhatsApp/PDF incomodar de verdade ou quiser instalar via ícone de loja.
 
 
+## 13. Log de Auditoria do Sistema (ideia registrada, 14/09/2026 — não construída ainda)
+
+Ideia do usuário, motivada diretamente pelos incidentes reais desta mesma
+sessão (ver "continuação 12"): o mês fantasma de Junho na Ana Carla e o
+log de pagamentos duplicado de Abril só foram descobertos porque o
+usuário reparou visualmente no extrato e perguntou — não existe hoje
+nenhum jeito de ver "o que mudou, quando e por quê" sem abrir o console
+e ficar cruzando datas/valores manualmente (foi exatamente o trabalho
+que Claude teve que fazer na mão pra diagnosticar os dois casos).
+
+**Proposta:** um log de auditoria append-only, separado de `tenants`
+(ex: `auditLog: []` no mesmo objeto de dados salvo no Drive), registrando
+pelo menos:
+- [ ] **Exclusões** — remover um mês do histórico, excluir cobrança
+      extra, excluir locatário/imóvel, excluir despesa/receita.
+- [ ] **Pagamentos** — registrar (`applyPayment`), editar
+      (`saveEditPayModal`), desfazer (`desfazerPagamento`) — guardando
+      pelo menos `{data/hora, ref, valor antes, valor depois, quem/onde
+      (manual pela tela vs. gerado automático como crédito/rollPenalties)}`.
+- [ ] **Criações automáticas do sistema** — todo mês criado sozinho por
+      `_rollPenalties()` ou `_creditarProximoMes()` (exatamente o tipo de
+      coisa que causou o bug do mês fantasma — se tivesse log, o achado
+      teria sido muito mais rápido de confirmar/reverter).
+- [ ] Cada entrada guarda o suficiente pra reconstruir "antes → depois"
+      (não só "aconteceu algo"), pra dar pra reverter manualmente se
+      precisar, sem depender de backup completo.
+
+**Uso esperado:** não precisa de tela bonita no v1 — um botão simples
+"Ver log" (lista cronológica, texto simples) ou até só incluir no
+"Exportar backup" já resolveria a maior parte do valor: poder auditar
+depois de qualquer suspeita ("isso aqui parece errado, o que aconteceu
+nesse mês?") sem depender de abrir o console e eu (Claude) cruzar dados
+manualmente como fiz hoje.
+
+**Prioridade:** não bloqueia nada, mas é complementar direto da seção 0
+(Confiança e Confiabilidade) — um log de auditoria é exatamente o tipo
+de rede de segurança que ajuda a reconquistar confiança num sistema que
+já teve bug de dado sumindo/duplicando antes. Fazer quando a seção 0
+estiver sendo revisitada, ou na próxima vez que aparecer um caso
+parecido de "isso não devia estar aqui".
+
+
 ## 14/09/2026 — Aba antiga sobrescrevendo o Drive + overflow no celular
 
 ### Achado grave: aba antiga esquecida sobrescrevia o Drive silenciosamente
