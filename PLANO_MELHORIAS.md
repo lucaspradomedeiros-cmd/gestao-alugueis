@@ -179,9 +179,11 @@ Confirmado ao vivo após o fix: Fernanda e Lorenza agora aparecem como
 nesses meses), Erivan como "parcial" (R$823,20). Painel Geral: contador
 de Inadimplentes 0→2, "em aberto" R$0→R$2.780,70, badge de Alertas 0→3.
 
-⚠️ **Pendência para o usuário:** decidir o que fazer com a dívida de
-abril da Fernanda e da Lorenza (cobrar, negociar, ou confirmar se já foi
-resolvido por fora do app e só falta registrar o pagamento).
+✅ **Resolvido pelo usuário (14/09/2026):** confirmado que abril já
+tinha sido pago por fora do app, na data do vencimento — registrado
+`applyPayment()` de R$827,76 (Fernanda) e R$883,34 (Lorenza), ambos em
+05/05/2026 (data do vencimento, sem atraso, sem multa/juros). Ambas
+voltaram a status "futuro" normal. Confirmado com reload após salvar.
 
 ## 1. Segurança (fazer de qualquer forma — é grátis e rápido, mas não é o que decide se o projeto vinga)
 
