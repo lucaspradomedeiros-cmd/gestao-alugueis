@@ -67,6 +67,7 @@
 </style>
 <script src="js/auth.js"></script>
 <script src="js/state.js"></script>
+<script src="js/audit-log.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/tenant-financials.js"></script>
 <script src="js/imovel.js"></script>
@@ -770,6 +771,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     <button class="nav-item" onclick="connectDrive()" id="btn-drive-connect" style="color:var(--blue);font-weight:500;"><span class="icon">☁</span> Conectar Drive</button>
     <button class="nav-item" onclick="exportBackup()" style="color:var(--green);font-weight:500;"><span class="icon">⬇</span> Exportar backup</button>
     <button class="nav-item" onclick="document.getElementById('import-file').click()"><span class="icon">⬆</span> Importar backup</button>
+    <button class="nav-item" onclick="abrirAuditLog()"><span class="icon">📋</span> Ver log</button>
     <button class="nav-item" id="btn-dark-toggle" onclick="toggleDarkMode()" style="margin-top:4px;"><span class="icon" id="dark-icon">◑</span> <span id="dark-label">Modo escuro</span></button>
     <button class="nav-item" style="color:var(--red);" onclick="confirmClearData()"><span class="icon">⊘</span> Limpar dados</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)">
@@ -2057,6 +2059,27 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   </div>
 </div>
 
+<!-- LOG DE AUDITORIA (14/09/2026) — ver js/audit-log.js -->
+<div class="overlay" id="audit-log-overlay" onclick="if(event.target===this)closeOverlay('audit-log-overlay')">
+  <div class="modal wide" style="max-width:680px;" onclick="event.stopPropagation()">
+    <div class="modal-title">📋 Log de Auditoria</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+      Registro automático de pagamentos (registrar/editar/desfazer), exclusões e
+      correções que o próprio sistema faz sozinho (ex: crédito de excedente, mês
+      criado por multa/juros em atraso) — pra auditar sem precisar de console.
+    </div>
+    <div class="mrow" style="align-items:end;">
+      <div class="mfield" style="margin-bottom:0;"><label>Buscar</label><input type="text" id="audit-log-busca" placeholder="🔎 filtrar por texto..." oninput="renderAuditLog()"></div>
+      <div style="font-size:11px;color:var(--text-faint);padding-bottom:9px;" id="audit-log-contagem">0 registro(s)</div>
+    </div>
+    <div id="audit-log-lista" style="max-height:55vh;overflow-y:auto;border-top:1px solid var(--border);margin-top:4px;"></div>
+    <div class="mfooter">
+      <button class="btn" onclick="copiarAuditLog()">📋 Copiar tudo</button>
+      <button class="btn" onclick="closeOverlay('audit-log-overlay')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="edit-pay-overlay" onclick="if(event.target===this)closeEditPayModal()">
   <div class="modal wide">
     <div class="modal-title">Editar Pagamento</div>
@@ -2309,6 +2332,8 @@ function saveImovel(){
 
 function deleteImovel(){
   if(!confirm('Excluir este imóvel e todas as suas despesas?')) return;
+  const _im = getImovel(editingImovelId);
+  logAudit(`Imóvel EXCLUÍDO — ${_im?.nome||editingImovelId} (e todas as suas despesas)`, { tipo:'exclusao' });
   imoveis = imoveis.filter(x=>x.id!==editingImovelId);
   closeOverlay('imovel-modal-overlay');
   renderImoveis();
@@ -2431,6 +2456,8 @@ function deleteDespesa(imovelId, despId){
   if(!confirm('Excluir esta despesa?')) return;
   const im = getImovel(imovelId);
   if(!im) return;
+  const _d = im.despesas.find(x=>x.id===despId);
+  if(_d) logAudit(`Despesa de imóvel EXCLUÍDA — ${im.nome} — "${_d.desc||_d.cat||'(sem descrição)'}" R$ ${R(_d.valor).toFixed(2)}`, { tipo:'exclusao' });
   im.despesas = im.despesas.filter(x=>x.id!==despId);
   hydrateEntries(); renderIdetBody(); saveToStorage(); renderImoveis(); renderDashboard();
 }
@@ -2694,6 +2721,8 @@ function saveCondoModal(){
 }
 function deleteCondo(){
   if(!confirm('Excluir este condomínio e todo o seu histórico?\n\nEsta ação não pode ser desfeita.')) return;
+  const _c = condominios.find(c=>c.id===editingCondoId);
+  logAudit(`Condomínio EXCLUÍDO — ${_c?.nome||editingCondoId} (e todo o histórico dele — ação irreversível)`, { tipo:'exclusao' });
   condoHistories[editingCondoId] = undefined;
   condominios = condominios.filter(c=>c.id!==editingCondoId);
   closeOverlay('condo-modal-overlay');
@@ -3009,6 +3038,9 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo)+extrasTotal;
   const totalDue = R2(base + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
 
+  const _auditValorPagoAntes = entry.valorPago;
+  const _auditStatusAntes = entry.status;
+
   entry.valorCobrado = totalDue;
   entry.valorPago   += R(valorPago);
   entry.dataPagamento = dataPagamento;
@@ -3058,6 +3090,14 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
     _rollPenalties(t, ref, base, daysLate);
   }
 
+  // 14/09/2026: log de auditoria (ver js/audit-log.js) — pagamento
+  // registrado. Só entra como "pagamento" pra buscar/filtrar; o
+  // resumo já traz antes/depois pra dar pra auditar sem abrir console.
+  logAudit(
+    `Pagamento registrado — ${t.unit} (${t.name}) — ${ref} — R$ ${R(valorPago).toFixed(2)} (valor pago no mês: R$ ${_auditValorPagoAntes.toFixed(2)} → R$ ${entry.valorPago.toFixed(2)}, status: ${_auditStatusAntes} → ${entry.status})`,
+    { tipo:'pagamento', tenantId, ref }
+  );
+
   renderDashboard();
 }
 
@@ -3074,6 +3114,7 @@ function _creditarProximoMes(t, ref, valor){
     nxt = buildMonthEntry(t, nxtRef);
     t.history.push(nxt);
     t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+    logAudit(`Mês criado automaticamente pelo sistema — ${t.unit} (${t.name}) — ${nxtRef} — pra receber crédito de R$ ${R2(valor).toFixed(2)} que sobrou de ${ref}`, { tipo:'mes_automatico', tenantId: t.id, ref: nxtRef });
   }
   if(!nxt.pagamentos) nxt.pagamentos = [];
   nxt.pagamentos.push({data: TODAY.toISOString().split('T')[0], valor: R2(valor), credito: true});
@@ -3119,6 +3160,11 @@ function _rollPenalties(t, ref, base, daysLate){
     nxt = buildMonthEntry(t, nxtRef);
     t.history.push(nxt);
     t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+    // 14/09/2026: log de auditoria — este é exatamente o ponto que criava
+    // o "mês fantasma" pra ex-inquilino antes do fix acima (guard t.vago).
+    // Logado pra ficar visível/auditável toda vez que o sistema cria um
+    // mês sozinho, mesmo sendo esperado pra inquilino ativo.
+    logAudit(`Mês criado automaticamente pelo sistema — ${t.unit} (${t.name}) — ${nxtRef} — multa/juros de ${ref} rolada pra cá`, { tipo:'mes_automatico', tenantId: t.id, ref: nxtRef });
   }
   nxt.pendingMulta = R2(R(entry.pendingMulta) + R(entry.multa));
   nxt.pendingJuros = R2(R(entry.pendingJuros) + juros);
@@ -3225,6 +3271,13 @@ function saveEditPayModal(){
     SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.valorPago`, oldValorPago, updatedEntry.valorPago);
   }
 
+  // 14/09/2026: log de auditoria — edição de pagamento já registrado
+  // (complementa o log genérico de applyPayment(), que sozinho não deixa
+  // claro que foi uma EDIÇÃO e não um registro novo do zero).
+  if(updatedEntry){
+    logAudit(`Pagamento EDITADO — ${t.unit} (${t.name}) — ${ref} — valor pago: R$ ${R(oldValorPago).toFixed(2)} → R$ ${R(updatedEntry.valorPago).toFixed(2)}, status: ${oldStatus} → ${updatedEntry.status}`, { tipo:'pagamento_editado', tenantId: tid, ref });
+  }
+
   saveToStorage();
   closeEditPayModal();
   renderDashboard();
@@ -3238,7 +3291,10 @@ function desfazerPagamento(tenantId, ref){
   if(!entry || !entry.dataPagamento) return;
   if(!confirm(`Desfazer pagamento de ${monthName(ref)} — ${t.unit}?\n\nIsso zerará o valor pago e retornará o mês para "Pendente".`)) return;
 
+  const _auditValorPagoAntes = entry.valorPago;
+  const _auditStatusAntes = entry.status;
   _resetPaymentEntry(t, ref);
+  logAudit(`Pagamento DESFEITO — ${t.unit} (${t.name}) — ${ref} — valor pago: R$ ${R(_auditValorPagoAntes).toFixed(2)} → R$ 0,00, status: ${_auditStatusAntes} → ${entry.status}`, { tipo:'pagamento_desfeito', tenantId, ref });
   saveToStorage();
   renderDashboard();
   renderDet();
@@ -3651,6 +3707,10 @@ function addExtra(id){
 function removeExtra(id, idx){
   const t=tenants.find(x=>x.id===id);if(!t)return;
   const openEntry=getOpenEntry(t);
+  if(openEntry&&openEntry.extras&&openEntry.extras[idx]){
+    const _ex=openEntry.extras[idx];
+    logAudit(`Cobrança extra EXCLUÍDA — ${t.unit} (${t.name}) — ${openEntry.ref} — "${_ex.descricao||'(sem descrição)'}" R$ ${R(_ex.valor).toFixed(2)}`, { tipo:'exclusao', tenantId:id, ref:openEntry.ref });
+  }
   if(openEntry&&openEntry.extras) openEntry.extras.splice(idx,1);
   // rebuild the card without full dashboard re-render
   const container=document.getElementById(`ci-extras-${id}`);
@@ -3747,6 +3807,10 @@ function saveExtrasToRef(id, ref){
 function removeExtraFromRef(id, ref, idx){
   const t=tenants.find(x=>x.id===id); if(!t) return;
   const h=t.history.find(x=>x.ref===ref); if(!h||!h.extras) return;
+  if(h.extras[idx]){
+    const _ex=h.extras[idx];
+    logAudit(`Cobrança extra EXCLUÍDA — ${t.unit} (${t.name}) — ${ref} — "${_ex.descricao||'(sem descrição)'}" R$ ${R(_ex.valor).toFixed(2)}`, { tipo:'exclusao', tenantId:id, ref });
+  }
   h.extras.splice(idx,1);
   const base=R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo);
   const extrasTotal=h.extras.reduce((s,ex)=>s+R(ex.valor),0);
@@ -4797,6 +4861,8 @@ function deleteCondoHistory(ref){
   // Remove da lista de histórico do condo ativo
   const idx = condoHistory.findIndex(c=>c.ref===ref);
   if(idx<0) return;
+  const _c = getActiveCondo();
+  logAudit(`Lançamento de condomínio EXCLUÍDO — ${_c?.nome||activeCondoId} — ${ref} (zerou condomínio/IPTU/lixo dos inquilinos desse mês de cobrança)`, { tipo:'exclusao', ref });
   condoHistory.splice(idx,1);
 
   // Zera condo/iptu/lixo nos inquilinos cujo billingRef = nextMonth(ref)
@@ -5829,6 +5895,7 @@ function salvarClienteAdv(){
 function excluirClienteAdvModal(){
   const c=clientesAdv.find(x=>x.id===_editCliId);
   if(!c||!confirm(`Excluir cliente "${c.nome}"? Esta ação não pode ser desfeita.`)) return;
+  logAudit(`Cliente (advocacia) EXCLUÍDO — ${c.nome} — ação irreversível`, { tipo:'exclusao' });
   clientesAdv=clientesAdv.filter(x=>x.id!==_editCliId);
   saveToStorage();
   fecharCliModal();
@@ -5838,6 +5905,7 @@ function excluirClienteAdvModal(){
 function excluirClienteAdv(){
   const c=clientesAdv.find(x=>x.id===clienteAdvAtualId);
   if(!c||!confirm(`Excluir cliente "${c.nome}"?`)) return;
+  logAudit(`Cliente (advocacia) EXCLUÍDO — ${c.nome}`, { tipo:'exclusao' });
   clientesAdv=clientesAdv.filter(x=>x.id!==clienteAdvAtualId);
   saveToStorage();
   gaToast('Cliente excluído.');
@@ -5900,6 +5968,8 @@ function excluirProcessoAdv(){
   if(!_editProcId||!confirm('Excluir este processo?')) return;
   const idx=clientesAdv.findIndex(x=>x.id===clienteAdvAtualId);
   if(idx<0) return;
+  const _p=(clientesAdv[idx].processos||[]).find(p=>p.id===_editProcId);
+  logAudit(`Processo EXCLUÍDO — ${clientesAdv[idx].nome} — ${_p?.numero||_p?.tipoAcao||'(sem número)'}`, { tipo:'exclusao' });
   clientesAdv[idx].processos=(clientesAdv[idx].processos||[]).filter(p=>p.id!==_editProcId);
   saveToStorage();
   fecharProcModal();
@@ -6189,6 +6259,8 @@ function excluirServicoAdv(){
   if(!_editSvId||!confirm('Excluir este serviço e seus pagamentos?')) return;
   const idx=clientesAdv.findIndex(x=>x.id===clienteAdvAtualId);
   if(idx<0) return;
+  const _sv=(clientesAdv[idx].servicos||[]).find(x=>x.id===_editSvId);
+  logAudit(`Serviço EXCLUÍDO — ${clientesAdv[idx].nome} — "${_sv?.tipo||_sv?.descricao||'(sem descrição)'}" (e seus pagamentos)`, { tipo:'exclusao' });
   clientesAdv[idx].servicos=(clientesAdv[idx].servicos||[]).filter(x=>x.id!==_editSvId);
   saveToStorage();
   fecharSvModal();
@@ -6866,6 +6938,8 @@ function marcarDespesaPaga(id){
 function excluirDespesaEscritorio(){
   if(!_editandoDespId) return;
   if(!confirm('Excluir esta despesa?')) return;
+  const _d = despesasEscritorio.find(x=>x.id===_editandoDespId);
+  if(_d) logAudit(`Despesa do escritório EXCLUÍDA — "${_d.descricao||_d.categoria||'(sem descrição)'}" R$ ${R(_d.valor).toFixed(2)}`, { tipo:'exclusao' });
   despesasEscritorio = despesasEscritorio.filter(x=>x.id!==_editandoDespId);
   saveToStorage();
   fecharDespesaModal();
@@ -7031,6 +7105,8 @@ function salvarReceita(){
 function excluirReceita(){
   if(!_editandoRecId) return;
   if(!confirm('Excluir esta receita?')) return;
+  const _r = receitasEscritorio.find(x=>x.id===_editandoRecId);
+  if(_r) logAudit(`Receita do escritório EXCLUÍDA — "${_r.descricao||_r.clienteNome||'(sem descrição)'}" R$ ${R(_r.valor).toFixed(2)}`, { tipo:'exclusao' });
   receitasEscritorio=receitasEscritorio.filter(x=>x.id!==_editandoRecId);
   saveToStorage();
   fecharReceitaModal();

@@ -25,6 +25,9 @@ let condoHistory = [];
 // Tenants
 let tenants = [];
 
+// Log de auditoria (14/09/2026) — ver js/audit-log.js
+let auditLog = [];
+
 // Payment modal
 let editPayTenantId = null;
 let editPayRef = null;

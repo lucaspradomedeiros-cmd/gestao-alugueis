@@ -154,6 +154,9 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo)+extrasTotal;
   const totalDue = R2(base + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
 
+  const _auditValorPagoAntes = entry.valorPago;
+  const _auditStatusAntes = entry.status;
+
   entry.valorCobrado = totalDue;
   entry.valorPago   += R(valorPago);
   entry.dataPagamento = dataPagamento;
@@ -200,6 +203,12 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
     _rollPenalties(t, ref, base, daysLate);
   }
 
+  // 14/09/2026: sincronizado com index.html.
+  logAudit(
+    `Pagamento registrado — ${t.unit} (${t.name}) — ${ref} — R$ ${R(valorPago).toFixed(2)} (valor pago no mês: R$ ${_auditValorPagoAntes.toFixed(2)} → R$ ${entry.valorPago.toFixed(2)}, status: ${_auditStatusAntes} → ${entry.status})`,
+    { tipo:'pagamento', tenantId, ref }
+  );
+
   renderDashboard();
 }
 
@@ -211,6 +220,7 @@ function _creditarProximoMes(t, ref, valor){
     nxt = buildMonthEntry(t, nxtRef);
     t.history.push(nxt);
     t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+    logAudit(`Mês criado automaticamente pelo sistema — ${t.unit} (${t.name}) — ${nxtRef} — pra receber crédito de R$ ${R2(valor).toFixed(2)} que sobrou de ${ref}`, { tipo:'mes_automatico', tenantId: t.id, ref: nxtRef });
   }
   if(!nxt.pagamentos) nxt.pagamentos = [];
   nxt.pagamentos.push({data: TODAY.toISOString().split('T')[0], valor: R2(valor), credito: true});
@@ -253,6 +263,7 @@ function _rollPenalties(t, ref, base, daysLate){
     nxt = buildMonthEntry(t, nxtRef);
     t.history.push(nxt);
     t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+    logAudit(`Mês criado automaticamente pelo sistema — ${t.unit} (${t.name}) — ${nxtRef} — multa/juros de ${ref} rolada pra cá`, { tipo:'mes_automatico', tenantId: t.id, ref: nxtRef });
   }
   nxt.pendingMulta = R2(R(entry.pendingMulta) + R(entry.multa));
   nxt.pendingJuros = R2(R(entry.pendingJuros) + juros);
@@ -352,6 +363,11 @@ function saveEditPayModal(){
     SYNC_ENGINE.onChange(`tenants.${tid}.history.${ref}.valorPago`, oldValorPago, updatedEntry.valorPago);
   }
 
+  // 14/09/2026: sincronizado com index.html.
+  if(updatedEntry){
+    logAudit(`Pagamento EDITADO — ${t.unit} (${t.name}) — ${ref} — valor pago: R$ ${R(oldValorPago).toFixed(2)} → R$ ${R(updatedEntry.valorPago).toFixed(2)}, status: ${oldStatus} → ${updatedEntry.status}`, { tipo:'pagamento_editado', tenantId: tid, ref });
+  }
+
   saveToStorage();
   closeEditPayModal();
   renderDashboard();
@@ -365,7 +381,10 @@ function desfazerPagamento(tenantId, ref){
   if(!entry || !entry.dataPagamento) return;
   if(!confirm(`Desfazer pagamento de ${monthName(ref)} — ${t.unit}?\n\nIsso zerará o valor pago e retornará o mês para "Pendente".`)) return;
 
+  const _auditValorPagoAntes = entry.valorPago;
+  const _auditStatusAntes = entry.status;
   _resetPaymentEntry(t, ref);
+  logAudit(`Pagamento DESFEITO — ${t.unit} (${t.name}) — ${ref} — valor pago: R$ ${R(_auditValorPagoAntes).toFixed(2)} → R$ 0,00, status: ${_auditStatusAntes} → ${entry.status}`, { tipo:'pagamento_desfeito', tenantId, ref });
   saveToStorage();
   renderDashboard();
   renderDet();

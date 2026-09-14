@@ -7,7 +7,7 @@ const STORAGE_KEY = 'gestao_alugueis_v1';
 // ── localStorage ──────────────────────────────────────────────
 function getPayload(){
   condoHistories[activeCondoId] = [...condoHistory];
-  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, despesasEscritorio, receitasEscritorio, clientesAdv, savedAt: new Date().toISOString(), version: 4 };
+  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, despesasEscritorio, receitasEscritorio, clientesAdv, auditLog, savedAt: new Date().toISOString(), version: 5 };
 }
 
 function applyPayload(data){
@@ -18,6 +18,10 @@ function applyPayload(data){
   if(data.despesasEscritorio) despesasEscritorio = data.despesasEscritorio;
   if(data.receitasEscritorio) receitasEscritorio = data.receitasEscritorio;
   if(data.clientesAdv) clientesAdv = data.clientesAdv;
+  // 14/09/2026: log de auditoria (ver js/audit-log.js) — payload antigo
+  // (version<5) não tem o campo, então mantém auditLog=[] já inicializado
+  // em vez de virar undefined.
+  if(Array.isArray(data.auditLog)) auditLog = data.auditLog;
   if(data.condominios && data.condominios.length) condominios = data.condominios;
   if(data.condoHistories){
     condoHistories = data.condoHistories;
