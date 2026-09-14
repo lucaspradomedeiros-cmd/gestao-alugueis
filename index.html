@@ -3594,13 +3594,20 @@ function addExtraToRef(id, ref){
   if(!container) return;
   const row=document.createElement('div');
   row.id=`de-extra-row-${id}-${ref}-${i}`;
-  row.style.cssText='display:grid;grid-template-columns:1fr 90px 22px;gap:4px;margin-bottom:4px;';
+  row.style.cssText='display:grid;grid-template-columns:1fr 80px 55px 22px;gap:4px;margin-bottom:4px;align-items:center;';
   row.innerHTML=`
     <input class="cobr-inp" style="text-align:left;" type="text" placeholder="Descrição (ex: Conserto do portão)" id="de-extra-desc-${id}-${ref}-${i}">
     <input class="cobr-inp" type="number" placeholder="0,00" id="de-extra-val-${id}-${ref}-${i}" step="0.01">
+    <input class="cobr-inp" type="number" placeholder="1x" title="Parcelar em quantos meses? (1 = à vista, só este mês)" min="1" step="1" id="de-extra-parc-${id}-${ref}-${i}">
     <button style="border:none;background:var(--red-bg);color:var(--red);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;" onclick="event.stopPropagation();this.parentElement.remove();">×</button>`;
   container.appendChild(row);
   row.querySelector('input[type=text]').focus();
+}
+// recalcula valorCobrado de uma entrada específica a partir de seus próprios campos + extras
+function _recalcEntryTotal(entry){
+  const base=R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo);
+  const extrasTotal=(entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  entry.valorCobrado=R2(base+R(entry.multa)+R(entry.juros)+R(entry.pendingMulta)+R(entry.pendingJuros)+extrasTotal);
 }
 function saveExtrasToRef(id, ref){
   const t=tenants.find(x=>x.id===id); if(!t) return;
@@ -3610,12 +3617,41 @@ function saveExtrasToRef(id, ref){
   while(document.getElementById(`de-extra-row-${id}-${ref}-${i}`)){
     const desc=document.getElementById(`de-extra-desc-${id}-${ref}-${i}`)?.value?.trim();
     const val=R(document.getElementById(`de-extra-val-${id}-${ref}-${i}`)?.value);
-    if(desc && val>0){ h.extras.push({descricao:desc, valor:val}); adicionadas++; }
+    const parcelas=Math.max(1, parseInt(document.getElementById(`de-extra-parc-${id}-${ref}-${i}`)?.value)||1);
+    if(desc && val>0){
+      if(parcelas>1){
+        // 14/09/2026: pedido do usuário — parcelar uma despesa/cobrança
+        // extra automaticamente pelos próximos meses (cria o mês se ainda
+        // não existir no histórico do inquilino, igual buildMonthEntry já
+        // faz pra cobrança normal).
+        const valorParcela=R2(val/parcelas);
+        let curRef=ref;
+        for(let p=1; p<=parcelas; p++){
+          let entry=t.history.find(x=>x.ref===curRef);
+          if(!entry){
+            // 14/09/2026: pedido do usuário — inquilino que já saiu (vago)
+            // mas parcelou uma despesa final não deve gerar aluguel/
+            // condomínio/IPTU novo nos meses seguintes da parcela, só a
+            // própria parcela.
+            entry = t.vago
+              ? {ref:curRef, venc:`${curRef}-${String(t.vencDia).padStart(2,'0')}`, aluguel:0, condo:0, iptu:0, lixo:0, multa:0, juros:0, pendingMulta:0, pendingJuros:0, extras:[], valorCobrado:0, valorPago:0, dataPagamento:null, status:'futuro'}
+              : buildMonthEntry(t, curRef);
+            t.history.push(entry);
+          }
+          if(!entry.extras) entry.extras=[];
+          entry.extras.push({descricao:`${desc} (${p}/${parcelas})`, valor:valorParcela});
+          _recalcEntryTotal(entry);
+          curRef=nextMonth(curRef);
+        }
+        t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+      } else {
+        h.extras.push({descricao:desc, valor:val});
+      }
+      adicionadas++;
+    }
     i++;
   }
-  const base=R(h.aluguel)+R(h.condo)+R(h.iptu)+R(h.lixo);
-  const extrasTotal=h.extras.reduce((s,ex)=>s+R(ex.valor),0);
-  h.valorCobrado=R2(base+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros)+extrasTotal);
+  _recalcEntryTotal(h);
   if(adicionadas>0){ saveToStorage(); renderDet(); }
 }
 function removeExtraFromRef(id, ref, idx){
