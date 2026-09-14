@@ -1208,6 +1208,66 @@ de `applyPayment()`, e pré-selecionado em `onRegTenantChange()` com a
 última forma usada por aquele inquilino especificamente (fallback: PIX
 se nunca registrou nenhuma).
 
+### 14/09/2026 (continuação 12) — Correções em produção: cobrança futura fantasma + log de pagamentos duplicado (Ana Carla)
+
+Depois do deploy acima, o usuário testou de verdade na Ana Carla (Apto 03,
+ex-inquilina) e reportou dois problemas novos:
+
+**1) "Não ficou muito bom a forma de pagamento"** — o campo novo ficava
+sozinho numa `mrow` (grid de 2 colunas), com a metade direita vazia.
+Reorganizado: pareado com "Valor Pago" (pareamento mais natural);
+Condomínio+IPTU e Taxa de Lixo+Multa viraram os novos pares; Juros ficou
+sozinho de linha inteira (mesmo estilo do campo Observações).
+
+**2) "Depois de registrar os pagamentos em aberto, ainda abriu cobrança
+automática futura, mesmo com o card marcado como Ex-inquilino"** — bug
+real e mais sério, commit `22f74cc`. Causa: `_rollPenalties()` (chamada
+por `applyPayment()` quando o pagamento fica parcial/não cobre o total)
+sempre criava o mês seguinte do zero via `buildMonthEntry()`, com
+aluguel+condomínio+IPTU novos — sem checar `t.vago`. **Confirmado com o
+usuário**: ex-inquilino não pode ter cobrança futura de aluguel (não se
+aplica — já não ocupa o imóvel), mas PODE ter cobrança futura de
+despesas extras/acordos parcelados (pintura etc.) — isso é outro
+caminho (`addExtraToRef()`, já tratado à parte desde a seção 10, não
+mexido). Fix: pra `t.vago`, `_rollPenalties()` não cria mais mês novo —
+a multa/juros fica só no próprio mês.
+
+**Limpeza em produção** (o fix impede que aconteça de novo, mas não
+desfaz o que já tinha sido criado antes do fix): usando o Chrome do
+próprio usuário (mesma sessão/Drive, sem inserir credencial nenhuma),
+Claude confirmou visualmente no extrato dela — "Junho 2026" cobrado do
+zero (R$788,95: aluguel 648,22+condomínio+IPTU), pago R$0, sem data —
+perfil exato de mês fantasma. Removido via console (`t.history = 
+t.history.filter(h=>h.ref!=='2026-06')` + `saveToStorage()`), confirmado
+no extrato: saldo devedor dela caiu de R$815,02 pra R$26,07 (o resto é
+saldo real em aberto de Maio, não bug).
+
+**3) "Verifica os pagamentos de abril"** — usuário notou 4 linhas de
+pagamento empilhadas no extrato de abril dela, uma datada de hoje. Achado
+(commit `d3dd98f`): `_resetPaymentEntry()` (chamado por
+`saveEditPayModal()` antes de reaplicar `applyPayment()`, e por
+`desfazerPagamento()`) zera valorPago/dataPagamento/multa/juros/obs mas
+nunca zerava `entry.pagamentos` (o log individual de pagamentos da seção
+10) — toda edição de um pagamento já registrado empilhava mais uma
+entrada no log sem remover as superadas. `valorPago`/`dataPagamento`
+oficiais (usados em todo o resto do app) sempre estavam certos — só o
+log de auditoria ficava poluído. Fix: `_resetPaymentEntry()` agora zera
+`entry.pagamentos = []` também. **Auditoria em produção** (todos os
+tenants/meses via console): achado isolado, só abril da Ana Carla tinha
+`pagamentos.length>=2` no projeto inteiro — consolidado manualmente pra
+1 registro batendo com valorPago/dataPagamento reais (R$809,10 em
+05/05/2026).
+
+**Ponto de design levantado pelo usuário nessa mesma conversa** (ainda
+não implementado — ver decisão pendente logo abaixo): o modelo atual de
+"múltiplos pagamentos pro mesmo mês" (parcial + complemento depois, ou
+edição/correção) não deveria só somar `valorPago` silenciosamente — se a
+soma passar do `valorCobrado`, o excedente devia virar **crédito**
+explícito (utilizável em mês futuro); se ficar abaixo, o restante já é
+o **débito** (isso o app já mostra via saldo devedor, mas talvez precise
+ficar mais explícito por pagamento, não só por mês). Pendente de decisão
+de design antes de implementar (ver conversa).
+
 `js/payment-modal.js` (sombreado pelas definições equivalentes em
 `index.html`, ver nota da seção 3) recebeu as mesmas mudanças pra manter
 paridade, como de costume.
