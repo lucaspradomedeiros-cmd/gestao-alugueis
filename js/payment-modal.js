@@ -180,6 +180,17 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
       entry.multa = multa; entry.juros = juros;
       entry.valorCobrado = R2(base+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
     }
+    // 14/09/2026: sincronizado com index.html — excedente vira crédito
+    // automático no próximo mês em aberto (inquilino ativo).
+    const excedente = R2(entry.valorPago - entry.valorCobrado);
+    if(excedente > 0.01){
+      entry.valorPago = entry.valorCobrado;
+      if(t.vago){
+        entry.obs = (entry.obs ? entry.obs+' | ' : '') + `Pago R$ ${excedente.toFixed(2)} a mais (ex-inquilino, sem mês futuro pra creditar)`;
+      } else {
+        _creditarProximoMes(t, ref, excedente);
+      }
+    }
   } else if(entry.valorPago > 0){
     entry.status = 'parcial';
     // Roll penalties to next month
@@ -190,6 +201,33 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   }
 
   renderDashboard();
+}
+
+// 14/09/2026: sincronizado com index.html.
+function _creditarProximoMes(t, ref, valor){
+  const nxtRef = nextMonth(ref);
+  let nxt = t.history.find(h=>h.ref===nxtRef);
+  if(!nxt){
+    nxt = buildMonthEntry(t, nxtRef);
+    t.history.push(nxt);
+    t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+  }
+  if(!nxt.pagamentos) nxt.pagamentos = [];
+  nxt.pagamentos.push({data: TODAY.toISOString().split('T')[0], valor: R2(valor), credito: true});
+  nxt.valorPago = R2(R(nxt.valorPago) + valor);
+  const nxtExtrasTotal = (nxt.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  nxt.valorCobrado = R2(R(nxt.aluguel)+R(nxt.condo)+R(nxt.iptu)+R(nxt.lixo)+R(nxt.multa)+R(nxt.juros)+R(nxt.pendingMulta)+R(nxt.pendingJuros)+nxtExtrasTotal);
+  if(nxt.valorPago >= nxt.valorCobrado - 0.01){
+    nxt.status = 'pago';
+    if(!nxt.dataPagamento) nxt.dataPagamento = TODAY.toISOString().split('T')[0];
+    const sobra = R2(nxt.valorPago - nxt.valorCobrado);
+    if(sobra > 0.01){
+      nxt.valorPago = nxt.valorCobrado;
+      _creditarProximoMes(t, nxtRef, sobra);
+    }
+  } else if(nxt.valorPago > 0){
+    nxt.status = 'parcial';
+  }
 }
 
 function _rollPenalties(t, ref, base, daysLate){
