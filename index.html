@@ -3167,8 +3167,15 @@ function desfazerPagamento(tenantId, ref){
 // (ex: Erivan pagou parcial em setembro, mas o card mostrava outubro).
 function getOpenEntry(t){
   const prioritarios = ['parcial','inadimplente','pendente'];
+  // 14/09/2026: achado real (usuário) — quando um inquilino tem mais de um
+  // mês 'futuro' em aberto ao mesmo tempo (ex: Setembro e Outubro), o
+  // fallback abaixo usava .reverse() e pegava o ÚLTIMO (mais distante) em
+  // vez do PRIMEIRO (mais próximo de vencer) — impedindo editar/lançar
+  // cobrança extra no mês certo (só dava pra mexer no mês mais longe).
+  // t.history já vem sempre ordenado do mais antigo pro mais novo, então
+  // o find() direto (sem reverse) já encontra o primeiro em aberto certo.
   return t.history.slice().reverse().find(h=>prioritarios.includes(h.status))
-      || t.history.slice().reverse().find(h=>h.status!=='pago');
+      || t.history.find(h=>h.status!=='pago');
 }
 
 function getEntryForDisplay(t){
