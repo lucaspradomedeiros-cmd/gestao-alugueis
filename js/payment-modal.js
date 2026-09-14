@@ -4,7 +4,11 @@
 
 function openRegModal(presetId){
   const sel=document.getElementById('rm-tenant');
-  sel.innerHTML=tenants.filter(t=>!t.vago).map(t=>`<option value="${t.id}">${t.unit} — ${t.name.split(' ')[0]}</option>`).join('');
+  // 14/09/2026: sincronizado com index.html — ex-inquilino com saldo
+  // devedor (ou o presetId do botão do card) agora entra na lista.
+  const comSaldo = t => t.vago && R2(t.history.reduce((s,h)=>s+Math.max(0, R(h.valorCobrado)-R(h.valorPago)), 0))>0.01;
+  const opts = tenants.filter(t=>!t.vago || t.id===presetId || comSaldo(t));
+  sel.innerHTML=opts.map(t=>`<option value="${t.id}">${t.unit} — ${t.name.split(' ')[0]}${t.vago?' (encerrado)':''}</option>`).join('');
   if(presetId){
     sel.value=presetId;
     regFromDetId=presetId;
@@ -23,18 +27,27 @@ function onRegTenantChange(){
   const t=tenants.find(x=>x.id===tid);
   if(!t) return;
   const fin=getTenantFinancials(t);
-  const last=t.history[t.history.length-1];
 
-  // Set ref to current open month
-  let ref=last?last.ref:'';
-  if(last && last.status==='pago'){
-    // suggest next month
-    ref=nextMonth(last.ref);
+  // 14/09/2026: sincronizado com index.html — ex-inquilino (vago) usa o
+  // mês mais antigo com saldo em aberto, não "próximo mês" (não se aplica).
+  let ref, entry;
+  if(t.vago){
+    const sorted=[...t.history].sort((a,b)=>a.ref.localeCompare(b.ref));
+    const aberto=sorted.find(h=>R2(R(h.valorCobrado)-R(h.valorPago))>0.01);
+    entry=aberto || sorted[sorted.length-1] || buildMonthEntry(t, TODAY.toISOString().slice(0,7));
+    ref=entry.ref;
+  } else {
+    const last=t.history[t.history.length-1];
+    ref=last?last.ref:'';
+    if(last && last.status==='pago'){
+      // suggest next month
+      ref=nextMonth(last.ref);
+    }
+    entry=t.history.find(h=>h.ref===ref)||buildMonthEntry(t,ref);
   }
   document.getElementById('rm-ref').value=ref;
 
   // Pre-fill amounts from entry
-  const entry=t.history.find(h=>h.ref===ref)||buildMonthEntry(t,ref);
   document.getElementById('rm-value').value='';
   document.getElementById('rm-condo').value=entry.condo||'';
   document.getElementById('rm-iptu').value=entry.iptu||'';
@@ -42,9 +55,27 @@ function onRegTenantChange(){
   document.getElementById('rm-multa').value=(R(entry.multa)+R(entry.pendingMulta))||'';
   document.getElementById('rm-juros').value=(R(entry.juros)+R(entry.pendingJuros))||'';
 
+  // 14/09/2026: pré-seleciona a forma de pagamento mais recente do inquilino
+  const formaSel=document.getElementById('rm-forma');
+  if(formaSel){
+    const ultimaForma=[...t.history].reverse().find(h=>h.forma)?.forma;
+    formaSel.value=ultimaForma||'PIX';
+  }
+
   // Show saldo box
   const box=document.getElementById('rm-saldo-box');
-  if(fin.totalDue && (fin.status==='inadimplente'||fin.status==='parcial')){
+  if(t.vago){
+    const saldoTotal=R2(t.history.reduce((s,h)=>s+Math.max(0, R(h.valorCobrado)-R(h.valorPago)), 0));
+    if(saldoTotal>0.01){
+      box.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px;">⚠ Ex-inquilino — saldo devedor acumulado</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+          <div><div style="color:var(--text-faint);font-size:10px;">MÊS SELECIONADO (${monthName(ref)})</div><div style="font-weight:600;">${fmtBRL(R2(R(entry.valorCobrado)-R(entry.valorPago)))}</div></div>
+          <div><div style="color:var(--text-faint);font-size:10px;">TOTAL DEVIDO (TODOS OS MESES)</div><div style="font-weight:600;color:var(--red);">${fmtBRL(saldoTotal)}</div></div>
+        </div>`;
+    } else {
+      box.innerHTML=`<div style="font-size:12px;color:var(--green);">✓ Sem saldo devedor registrado (ex-inquilino)</div>`;
+    }
+  } else if(fin.totalDue && (fin.status==='inadimplente'||fin.status==='parcial')){
     box.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px;">Débito em aberto — ${monthName(ref)}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;">
         <div><div style="color:var(--text-faint);font-size:10px;">BASE</div><div style="font-weight:600;">${fmtBRL(fin.base)}</div></div>
@@ -73,7 +104,8 @@ function saveRegModal(){
     document.getElementById('rm-lixo').value,
     document.getElementById('rm-multa').value,
     document.getElementById('rm-juros').value,
-    document.getElementById('rm-obs').value);
+    document.getElementById('rm-obs').value,
+    document.getElementById('rm-forma').value);
 
   // Registrar mudança de pagamento
   if(t && entry && oldStatus){
@@ -94,7 +126,7 @@ function saveRegModal(){
 // REGISTER PAYMENT (core logic)
 // ============================================================
 
-function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, iptuOverride, lixoOverride, multaOverride, jurosOverride, obs){
+function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, iptuOverride, lixoOverride, multaOverride, jurosOverride, obs, forma){
   const t = tenants.find(x=>x.id===tenantId);
   if(!t) return;
 
@@ -104,6 +136,10 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
     t.history.push(entry);
     t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
   }
+
+  // 14/09/2026: sincronizado com index.html — guarda a forma de pagamento
+  // usada, pra pré-selecionar da próxima vez pra esse inquilino.
+  if(forma) entry.forma = forma;
 
   // Override amounts if provided
   if(condoOverride!==null && condoOverride!=='') entry.condo = R(condoOverride);
