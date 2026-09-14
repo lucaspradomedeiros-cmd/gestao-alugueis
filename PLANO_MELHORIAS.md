@@ -708,6 +708,43 @@ estiver sendo revisitada, ou na próxima vez que aparecer um caso
 parecido de "isso não devia estar aqui".
 
 
+## 14. Log Técnico / Modo Diagnóstico (14/09/2026)
+
+✅ **CONCLUÍDO (commit `a06570c`).** Pedido do usuário, logo depois da
+seção 13: um log "tipo os logs do Linux, pra habilitar quando
+necessário, pra achar uma tela que não abre ou um comando que dá erro".
+Diferente do log de auditoria (seção 13 — sempre ativo, dado de
+negócio, sincroniza pelo Drive): este é **técnico**, **desligado por
+padrão**, e guarda só em `localStorage` (não é dado do usuário, não vai
+pro Drive nem pro backup).
+
+`js/debug-log.js` (novo) + `debugMode`/`debugLog` em `js/state.js`:
+- Captura erro JS não tratado (`window.onerror`), promise rejeitada sem
+  `catch` (`unhandledrejection`), e `console.error`/`console.warn`
+  (interceptados, continuam chamando o original também).
+- `openOverlay()` — o dispatcher central de todos os modais do app —
+  ganhou log de "tela que não abre": hoje falha calado (`if(el)` sem
+  `else`) quando o id não existe; agora fica registrado.
+- Toggle "Modo diagnóstico" + botão "Ver log técnico" (com contador) na
+  sidebar. Fluxo de uso: liga o modo → repete a ação que deu problema →
+  abre "Ver log técnico" → copia → manda pro Claude.
+
+Testado ao vivo isolado: liguei o modo, provoquei um erro JS real, uma
+tela inexistente, um `console.warn` e um `console.error` — os 4
+apareceram certinho, coloridos por tipo, com arquivo:linha quando
+disponível. Log e estado do toggle sobrevivem a reload (confirmado até
+por acidente — um erro de teste derrubou a sessão de propósito e o log
+continuou lá depois de logar de novo). Desligado, para de gravar. Não
+afeta o log de auditoria (são independentes).
+
+⚠️ **Cobertura parcial, registrada por transparência:** só `openOverlay()`
+foi instrumentado pra "tela que não abre" — é o caminho central da
+maioria dos modais, mas `showPage()` (troca de página inteira) não tem
+guarda nenhuma hoje (nem silenciosa — se o id não existir, já lança uma
+exceção de verdade, que o `window.onerror` já captura sozinho, então
+não precisou de instrumentação extra ali).
+
+
 ## 14/09/2026 — Aba antiga sobrescrevendo o Drive + overflow no celular
 
 ### Achado grave: aba antiga esquecida sobrescrevia o Drive silenciosamente
