@@ -877,3 +877,54 @@ mesmo condomínio no mesmo mês (que resultou coincidir por acaso — o valor
 real, dado depois pelo usuário, era diferente). **Lição de API:** chamar
 `applyPayment()` sem os overrides opcionais deve passar `null` explicitamente
 para cada um, nunca omitir os argumentos.
+
+
+## 14/09/2026 (continuação 4) — Confusão do valor de condomínio de Setembro (SN1), resolvida
+
+Depois da correção de vencimento, o usuário notou uma inconsistência maior:
+o valor de condomínio da cobrança de Setembro. Investigação com vários
+erros meus no caminho, registrados aqui pra não repetir.
+
+**Contexto que gerou a confusão:** o app calcula o rateio de condomínio
+EXCLUINDO o IPTU da base que recebe 10% de taxa de administração — essa
+fórmula já tinha sido confirmada correta numa sessão anterior (12/09,
+"não posso cobrar 10% sobre o IPTU né"). A planilha real do usuário, por
+outro lado, INCLUI o IPTU nessa base — dá um valor diferente. As duas
+existem em paralelo: o app usa a própria fórmula, não replica a planilha.
+
+**Meus dois erros, na ordem:**
+1. Calculei o rateio de Agosto (que entra no aluguel de Setembro, regra
+   "mês anterior") usando a fórmula do app → **R$122,34**. Certo em si, mas
+   apliquei antes de confirmar com o usuário.
+2. Quando o usuário contou que o Adriano tinha pago Setembro com
+   "condomínio referente a Agosto, R$106,06", apliquei R$106,06 nos outros
+   6 inquilinos também — **errado**: R$106,06 é o valor de Julho (que entra
+   no aluguel de AGOSTO, não Setembro), confirmado comparando com a
+   planilha real do usuário (colada na conversa). Essa tentativa de salvar
+   falhou por um erro técnico antes de persistir — sorte, evitou ter que
+   desfazer mais uma correção errada.
+
+**Investigação que resolveu:** comparando os pagamentos JÁ FEITOS (não os
+em aberto) dos 7 inquilinos ativos do Santa Nonna I, achei um padrão real e
+consistente: todos pagaram o aluguel de referência Agosto com condomínio
+R$106,06, entre 01-05/09 — isso está certo (R$106,06 = Julho, entra em
+Agosto). A única cobrança que usou R$106,06 indevidamente foi a de
+SETEMBRO do Adriano — reaproveitou por engano o número que tinha acabado
+de ser usado pra fechar Agosto, um deslize pontual, não um padrão.
+
+**Decisão final do usuário:** Setembro leva R$122,34 (fórmula do app, sem
+IPTU na taxa — não a da planilha). Agosto fica como está, R$106,06, já
+pago por todos. O registro do Adriano (Setembro pago com R$106,06 em vez
+de R$122,34) **não foi alterado** — é uma transação real já fechada.
+
+**Estado final, verificado com download direto do Drive:** Evelin, Fernanda,
+Lorenza, Izabelly, Jorge, Thainara — Setembro `condo=122.34`, status
+`futuro` (em aberto, correto). Adriano — Setembro `condo=106.06`, status
+`pago` `994.06` (mantido). Nenhuma edição foi necessária nessa rodada final
+— o estado já batia com a decisão do usuário.
+
+**Lição de processo:** antes de aplicar qualquer valor calculado por mim
+(fórmula do app, planilha, ou o que for) em dados financeiros reais de
+mais de um inquilino, **perguntar primeiro**, mesmo quando a conta parece
+bater — esse foi o erro raiz: calculei sozinho duas vezes antes de
+confirmar, e errei as duas.
