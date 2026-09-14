@@ -2028,10 +2028,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
       <div class="mfield"><label>Data do Pagamento</label><input type="date" id="rm-date"></div>
     </div>
     <div class="mrow">
-      <!-- 14/09/2026: pedido do usuário — ao registrar pagamento de um
-           inquilino específico, já vir pré-selecionada a forma que ele
-           costuma usar (última registrada no histórico dele), em vez de
-           sempre abrir em branco/no primeiro item. -->
+      <div class="mfield"><label>Valor Pago (R$)</label><input type="number" id="rm-value" step="0.01" oninput="onRegValueChange()"></div>
+      <!-- 14/09/2026: pedido do usuário — vem pré-selecionada com a forma
+           que esse inquilino costuma usar (última do histórico dele), em
+           vez de abrir sempre em branco/no primeiro item. Pareada com
+           Valor Pago (era sozinha numa linha própria, ficava com metade
+           da linha vazia — ajustado a pedido do usuário). -->
       <div class="mfield"><label>Forma de Pagamento</label>
         <select id="rm-forma">
           <option>PIX</option><option>Transferência bancária</option><option>Dinheiro</option><option>Cheque</option><option>Depósito</option>
@@ -2039,17 +2041,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
       </div>
     </div>
     <div class="mrow">
-      <div class="mfield"><label>Valor Pago (R$)</label><input type="number" id="rm-value" step="0.01" oninput="onRegValueChange()"></div>
       <div class="mfield"><label>Condomínio (R$)</label><input type="number" id="rm-condo" step="0.01" placeholder="0,00"></div>
-    </div>
-    <div class="mrow">
       <div class="mfield"><label>IPTU (R$)</label><input type="number" id="rm-iptu" step="0.01" placeholder="0,00"></div>
-      <div class="mfield"><label>Taxa de Lixo (R$)</label><input type="number" id="rm-lixo" step="0.01" placeholder="0,00"></div>
     </div>
     <div class="mrow">
+      <div class="mfield"><label>Taxa de Lixo (R$)</label><input type="number" id="rm-lixo" step="0.01" placeholder="0,00"></div>
       <div class="mfield"><label>Multa (R$)</label><input type="number" id="rm-multa" step="0.01" placeholder="0,00"></div>
-      <div class="mfield"><label>Juros (R$)</label><input type="number" id="rm-juros" step="0.01" placeholder="0,00"></div>
     </div>
+    <div class="mfield"><label>Juros (R$)</label><input type="number" id="rm-juros" step="0.01" placeholder="0,00"></div>
     <div class="mfield"><label>Observações</label><textarea id="rm-obs" rows="2"></textarea></div>
     <div class="mfooter">
       <button class="btn" onclick="closeOverlay('reg-modal-overlay')">Cancelar</button>
@@ -3054,6 +3053,18 @@ function _rollPenalties(t, ref, base, daysLate){
   const {multa, juros} = calcPenalties(base, daysLate, R(entry.multa)>0, jurosRateDiario(t));
   entry.multa = R(entry.multa)||multa;
   entry.juros = juros;
+
+  // 14/09/2026: achado real (usuário, Ana Carla/Apto 03) — isso criava uma
+  // cobrança nova do zero (aluguel+condomínio+IPTU) no mês seguinte pra
+  // ex-inquilino (vago), que não tem "mês seguinte" nenhum (já não ocupa
+  // o imóvel). Mesmo princípio já usado em addExtraToRef() pra parcelas:
+  // pra vago, a multa/juros fica só no próprio mês (já setada acima),
+  // refletida direto no valorCobrado dele — sem criar entrada nova.
+  if(t.vago){
+    const extrasTotal=(entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+    entry.valorCobrado=R2(base+R(entry.multa)+R(entry.juros)+R(entry.pendingMulta)+R(entry.pendingJuros)+extrasTotal);
+    return;
+  }
 
   // Find or create next month entry and carry over
   const nxtRef = nextMonth(ref);

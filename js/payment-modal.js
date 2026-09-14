@@ -199,6 +199,15 @@ function _rollPenalties(t, ref, base, daysLate){
   entry.multa = R(entry.multa)||multa;
   entry.juros = juros;
 
+  // 14/09/2026: sincronizado com index.html — pra ex-inquilino (vago),
+  // não cria cobrança nova de mês seguinte, só mantém multa/juros no
+  // próprio mês.
+  if(t.vago){
+    const extrasTotal=(entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+    entry.valorCobrado=R2(base+R(entry.multa)+R(entry.juros)+R(entry.pendingMulta)+R(entry.pendingJuros)+extrasTotal);
+    return;
+  }
+
   // Find or create next month entry and carry over
   const nxtRef = nextMonth(ref);
   let nxt = t.history.find(h=>h.ref===nxtRef);
