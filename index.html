@@ -4,6 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestão de Aluguéis — Lucas Prado</title>
+<script>
+// 14/09/2026: achado real (usuário, no Asus) — um Service Worker de uma
+// tentativa antiga de PWA (nunca adotada de vez, ver PLANO_MELHORIAS.md
+// seção 12) ficou registrado em pelo menos um navegador, cacheando
+// (ga-v1-assets/ga-v1-api) uma versão CONGELADA do site de dias atrás —
+// todas as correções feitas desde então ficavam invisíveis, sem nenhum
+// aviso (nem erro: tudo parecia funcionar normal, só que com código
+// velho). Não usamos Service Worker hoje — roda o mais cedo possível
+// (antes de qualquer outro script), pra não deixar o SW nem chegar a
+// interceptar os arquivos desta própria carga. Remove qualquer registro
+// leftover e recarrega uma vez, sozinho, sem precisar o usuário saber
+// disso ou rodar nada manualmente (era o que o clear-cache.html avulso
+// já fazia, só que exigia abrir aquela página à parte).
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    if(!regs.length) return;
+    Promise.all(regs.map(r=>r.unregister())).then(()=>{
+      if(window.caches) caches.keys().then(names=>names.forEach(n=>caches.delete(n)));
+      if(!sessionStorage.getItem('sw_limpo_2026_09_14')){
+        sessionStorage.setItem('sw_limpo_2026_09_14', '1');
+        location.reload();
+      }
+    });
+  });
+}
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 
