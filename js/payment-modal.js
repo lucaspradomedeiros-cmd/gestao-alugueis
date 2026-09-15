@@ -85,6 +85,114 @@ function onRegTenantChange(){
   } else {
     box.innerHTML=`<div style="font-size:12px;color:var(--green);">✓ Sem débitos anteriores — ${monthName(ref)} · Total: ${fmtBRL(R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo))}</div>`;
   }
+
+  // 14/09/2026: sincronizado com index.html.
+  const avanc=document.getElementById('rm-avancado');
+  if(avanc){ avanc.style.display='none'; }
+  const avancToggle=document.getElementById('rm-avancado-toggle');
+  if(avancToggle){ avancToggle.textContent='⚙ Ajustar valores do mês (avançado)'; }
+  const extrasNovasEl=document.getElementById('rm-extras-novas');
+  if(extrasNovasEl){ extrasNovasEl.innerHTML=''; }
+  renderRegExtrasExistentes(entry);
+  onRegValueChange();
+}
+
+function renderRegExtrasExistentes(entry){
+  const el=document.getElementById('rm-extras-existentes');
+  if(!el) return;
+  const extras=entry.extras||[];
+  el.innerHTML = extras.length
+    ? extras.map(ex=>`• ${ex.descricao||'(sem descrição)'} — ${fmtBRL(ex.valor)}`).join('<br>')
+    : '<span style="color:var(--text-faint);">Nenhuma cobrança extra lançada neste mês ainda.</span>';
+}
+
+function addRegExtra(){
+  let i=0;
+  while(document.getElementById(`rm-extra-row-${i}`)) i++;
+  const container=document.getElementById('rm-extras-novas');
+  if(!container) return;
+  const row=document.createElement('div');
+  row.id=`rm-extra-row-${i}`;
+  row.style.cssText='display:grid;grid-template-columns:1fr 90px 22px;gap:4px;margin-bottom:4px;align-items:center;';
+  row.innerHTML=`
+    <input class="cobr-inp" style="text-align:left;" type="text" placeholder="Descrição (ex: Conserto do portão)" id="rm-extra-desc-${i}" oninput="onRegValueChange()">
+    <input class="cobr-inp" type="number" placeholder="0,00" id="rm-extra-val-${i}" step="0.01" oninput="onRegValueChange()">
+    <button style="border:none;background:var(--red-bg);color:var(--red);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;" onclick="this.parentElement.remove();onRegValueChange();">×</button>`;
+  container.appendChild(row);
+  row.querySelector('input[type=text]').focus();
+}
+
+function _regExtrasNovasTotal(){
+  let i=0, total=0;
+  while(document.getElementById(`rm-extra-row-${i}`)){
+    total += R(document.getElementById(`rm-extra-val-${i}`)?.value);
+    i++;
+  }
+  return R2(total);
+}
+
+function toggleRegAvancado(){
+  const el=document.getElementById('rm-avancado');
+  const toggle=document.getElementById('rm-avancado-toggle');
+  if(!el) return;
+  const abrindo = el.style.display==='none';
+  el.style.display = abrindo ? 'block' : 'none';
+  if(toggle) toggle.textContent = abrindo ? '⚙ Ocultar valores avançados' : '⚙ Ajustar valores do mês (avançado)';
+}
+
+function onRegValueChange(){
+  const tid=parseInt(document.getElementById('rm-tenant')?.value);
+  const t=tenants.find(x=>x.id===tid);
+  const ref=document.getElementById('rm-ref')?.value;
+  const preview=document.getElementById('rm-preview-box');
+  if(!t || !ref || !preview) return;
+  const entry=t.history.find(h=>h.ref===ref);
+  if(!entry){ preview.innerHTML=''; return; }
+
+  const condo = document.getElementById('rm-condo')?.value;
+  const iptu  = document.getElementById('rm-iptu')?.value;
+  const lixo  = document.getElementById('rm-lixo')?.value;
+  const multaOv = document.getElementById('rm-multa')?.value;
+  const jurosOv = document.getElementById('rm-juros')?.value;
+  const dataPag = document.getElementById('rm-date')?.value;
+
+  const baseAluguel = R(entry.aluguel)
+    + (condo!==''&&condo!=null ? R(condo) : R(entry.condo))
+    + (iptu!==''&&iptu!=null ? R(iptu) : R(entry.iptu))
+    + (lixo!==''&&lixo!=null ? R(lixo) : R(entry.lixo));
+
+  // 14/09/2026: sincronizado com index.html — simula o mesmo cálculo de
+  // multa/juros que applyPayment() faria (sem gravar nada), pra prévia
+  // bater exato quando o pagamento é tardio e ainda não houve avaliação.
+  let multa = (multaOv!==''&&multaOv!=null) ? R(multaOv) : R(entry.multa);
+  let juros = (jurosOv!==''&&jurosOv!=null) ? R(jurosOv) : R(entry.juros);
+  if((multaOv===''||multaOv==null) && (jurosOv===''||jurosOv==null) && R(entry.multa)===0 && dataPag && entry.venc && dataPag>entry.venc){
+    const daysLate = daysDiff(entry.venc, dataPag);
+    const sim = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
+    multa = sim.multa; juros = sim.juros;
+  }
+  const extrasExistentes = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+  const extrasNovas = _regExtrasNovasTotal();
+  const totalCobrado = R2(baseAluguel + multa + juros + R(entry.pendingMulta) + R(entry.pendingJuros) + extrasExistentes + extrasNovas);
+
+  const valorDigitado = R(document.getElementById('rm-value')?.value);
+  const pagoDepois = R2(R(entry.valorPago) + valorDigitado);
+  const saldoDepois = R2(totalCobrado - pagoDepois);
+  const statusDepois = pagoDepois >= totalCobrado-0.01 ? 'Pago' : (pagoDepois>0 ? 'Parcial' : 'Pendente');
+  const corStatus = statusDepois==='Pago' ? 'var(--green)' : (statusDepois==='Parcial' ? 'var(--amber)' : 'var(--red)');
+
+  const extrasLinha = (extrasExistentes+extrasNovas)>0.009
+    ? `<div style="color:var(--text-faint);font-size:11px;margin-bottom:4px;">inclui ${fmtBRL(extrasExistentes+extrasNovas)} de outras cobranças</div>` : '';
+
+  preview.innerHTML = `
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Depois deste pagamento</div>
+    ${extrasLinha}
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div><div style="font-size:10px;color:var(--text-faint);">TOTAL DO MÊS</div><div style="font-weight:600;">${fmtBRL(totalCobrado)}</div></div>
+      <div><div style="font-size:10px;color:var(--text-faint);">FICA PAGO</div><div style="font-weight:600;">${fmtBRL(pagoDepois)}</div></div>
+      <div><div style="font-size:10px;color:var(--text-faint);">SALDO</div><div style="font-weight:600;color:${saldoDepois>0.009?'var(--red)':'var(--green)'};">${fmtBRL(saldoDepois)}</div></div>
+      <div><div style="font-size:10px;color:var(--text-faint);">STATUS</div><div style="font-weight:600;color:${corStatus};">${statusDepois}</div></div>
+    </div>`;
 }
 
 function saveRegModal(){
@@ -94,9 +202,32 @@ function saveRegModal(){
   const value=document.getElementById('rm-value').value;
   if(!ref||!date||!value){alert('Preencha Referência, Data e Valor Pago.');return;}
   const t=tenants.find(x=>x.id===tid);
-  const entry = t?.history.find(h=>h.ref===ref);
+  // Garante que a entry do mês já exista e esteja no histórico ANTES de
+  // lançar as cobranças extras abaixo (sincronizado com index.html).
+  let entry = t?.history.find(h=>h.ref===ref);
+  if(t && !entry){
+    entry = buildMonthEntry(t, ref);
+    t.history.push(entry);
+    t.history.sort((a,b)=>a.ref.localeCompare(b.ref));
+  }
   const oldStatus = entry ? entry.status : null;
   const oldValorPago = entry ? entry.valorPago : 0;
+
+  // 14/09/2026: sincronizado com index.html — cobrança extra lançada
+  // direto neste modal, aplicada antes de applyPayment().
+  if(entry){
+    let i=0;
+    while(document.getElementById(`rm-extra-row-${i}`)){
+      const desc=document.getElementById(`rm-extra-desc-${i}`)?.value?.trim();
+      const val=R(document.getElementById(`rm-extra-val-${i}`)?.value);
+      if(desc && val>0){
+        if(!entry.extras) entry.extras=[];
+        entry.extras.push({descricao:desc, valor:val});
+        logAudit(`Cobrança extra ADICIONADA — ${t.unit} (${t.name}) — ${ref} — "${desc}" ${fmtBRL(val)} (lançada direto no Registrar Pagamento)`, {tipo:'extra_adicionada', tenantId:tid, ref});
+      }
+      i++;
+    }
+  }
 
   applyPayment(tid,ref,date,value,
     document.getElementById('rm-condo').value,
