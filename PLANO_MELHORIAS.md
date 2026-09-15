@@ -1448,3 +1448,44 @@ clicou em "Conectar" quando o pedido chegou, e a partir daí as ações
 de browser desta sessão passaram a mirar o Chrome do Asus em vez do
 lucas-linux. Útil pra qualquer situação futura em que o usuário estiver
 numa máquina diferente da que a sessão de terminal está rodando.
+
+
+## 14/09/2026 (continuação 14) — Modal de Registrar Pagamento mais didático
+
+✅ **CONCLUÍDO (commit `4ae9e0b`).** Pedido do usuário: pensar em como
+melhorar a tela de Registrar Pagamento pra ser mais didática. 3
+problemas reais identificados a partir do próprio caso do Rafael desta
+sessão:
+1. Condomínio/IPTU/Lixo/Multa/Juros apareciam como campos normais,
+   indistinguíveis de "Valor Pago" — ninguém adivinha que em branco =
+   usa o cálculo automático.
+2. Nenhuma prévia do resultado — só via o saldo ANTES de pagar, nunca
+   o que ia acontecer depois de confirmar.
+3. Cobrança extra só dava pra lançar saindo do modal, indo no extrato,
+   clicando no mês, rolando até "Outras cobranças".
+
+Usuário escolheu implementar as 3 juntas (opção "Tudo junto" entre as
+propostas). Resultado:
+- Condomínio/IPTU/Lixo/Multa/Juros escondidos atrás de um link "⚙
+  Ajustar valores do mês (avançado)", fechado por padrão. Multa/Juros
+  ganharam nota "em branco = calcula sozinho".
+- Nova caixa "Depois deste pagamento", sempre visível, atualizada ao
+  vivo conforme digita valor/data/extras/avançado — mostra Total do
+  mês, Fica pago, Saldo e Status resultantes. **Achado no meio do
+  trabalho:** o `oninput` de "Valor Pago" já chamava `onRegValueChange()`
+  desde uma sessão anterior, mas essa função nunca tinha sido
+  implementada — sempre falhou silenciosamente (`ReferenceError`
+  engolido pelo navegador). Virou a função real da prévia agora.
+- Nova seção "Outras cobranças deste mês" direto no modal, mesmo
+  mecanismo de `addExtraToRef()`/`saveExtrasToRef()` do extrato
+  (seção 10), namespace próprio (`rm-extra-*`) pra não colidir.
+
+**Achado no próprio teste** (antes do deploy): a prévia inicialmente
+não simulava o cálculo de multa/juros que `applyPayment()` faz quando
+o pagamento é tardio e o mês ainda não teve avaliação — previa
+R$2.573,54 mas o resultado real batia R$2.690,59 (com multa/juros de
+verdade). Corrigido replicando o mesmo `calcPenalties()` na prévia
+(dry-run, sem gravar nada) — testado de novo, prévia e resultado real
+bateram idênticos.
+
+`js/payment-modal.js` sincronizado com as mesmas mudanças.
