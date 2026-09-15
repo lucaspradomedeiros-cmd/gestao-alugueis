@@ -71,6 +71,21 @@ const DRIVE_LOADER = {
       return false;
     }
 
+    // 15/09/2026: achado real (erro 403 "unregistered callers" no console,
+    // Erro ao procurar dados.json / gestao_alugueis_dados.json) — gapiLoaded()
+    // e gisLoaded() carregam em paralelo (dois <script> do Google
+    // independentes, sem ordem garantida). Se gapiLoaded() terminar primeiro,
+    // este método rodava ANTES do token OAuth ser restaurado por gisLoaded()
+    // (ou de "Conectar Drive" ser clicado) — a busca saía sem autenticação
+    // nenhuma, o Google respondia 403, e o código errava a interpretação
+    // ("nenhum arquivo encontrado"). Sem token ainda, nem tenta: cai pro
+    // fallback (localStorage) e espera onDriveConnected() chamar
+    // loadFromDrive() de novo, dessa vez autenticado de verdade.
+    if (!gapi.client.getToken()) {
+      console.log('[DriveLoader] Sem token OAuth ainda — aguardando autenticação antes de tentar o Drive.');
+      return false;
+    }
+
     try {
       this.syncInProgress = true;
       console.log('[DriveLoader] Procurando arquivo no Drive...');
