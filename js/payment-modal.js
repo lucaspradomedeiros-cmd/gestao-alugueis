@@ -54,6 +54,8 @@ function onRegTenantChange(){
   document.getElementById('rm-lixo').value=entry.lixo||'';
   document.getElementById('rm-multa').value=(R(entry.multa)+R(entry.pendingMulta))||'';
   document.getElementById('rm-juros').value=(R(entry.juros)+R(entry.pendingJuros))||'';
+  const semPenalidadeEl=document.getElementById('rm-sem-penalidade');
+  if(semPenalidadeEl) semPenalidadeEl.checked = !!entry.semMultaJuros;
 
   // 14/09/2026: pré-seleciona a forma de pagamento mais recente do inquilino
   const formaSel=document.getElementById('rm-forma');
@@ -164,12 +166,20 @@ function onRegValueChange(){
   // 14/09/2026: sincronizado com index.html — simula o mesmo cálculo de
   // multa/juros que applyPayment() faria (sem gravar nada), pra prévia
   // bater exato quando o pagamento é tardio e ainda não houve avaliação.
-  let multa = (multaOv!==''&&multaOv!=null) ? R(multaOv) : R(entry.multa);
-  let juros = (jurosOv!==''&&jurosOv!=null) ? R(jurosOv) : R(entry.juros);
-  if((multaOv===''||multaOv==null) && (jurosOv===''||jurosOv==null) && R(entry.multa)===0 && dataPag && entry.venc && dataPag>entry.venc){
-    const daysLate = daysDiff(entry.venc, dataPag);
-    const sim = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
-    multa = sim.multa; juros = sim.juros;
+  // 14/09/2026 (2ª parte): sincronizado com index.html — mês isento
+  // (checkbox) fica sempre em 0, sem simular multa/juros nenhuma.
+  const semPenalidade = document.getElementById('rm-sem-penalidade')?.checked;
+  let multa, juros;
+  if(semPenalidade){
+    multa = 0; juros = 0;
+  } else {
+    multa = (multaOv!==''&&multaOv!=null) ? R(multaOv) : R(entry.multa);
+    juros = (jurosOv!==''&&jurosOv!=null) ? R(jurosOv) : R(entry.juros);
+    if((multaOv===''||multaOv==null) && (jurosOv===''||jurosOv==null) && R(entry.multa)===0 && !entry.semMultaJuros && dataPag && entry.venc && dataPag>entry.venc){
+      const daysLate = daysDiff(entry.venc, dataPag);
+      const sim = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
+      multa = sim.multa; juros = sim.juros;
+    }
   }
   const extrasExistentes = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
   const extrasNovas = _regExtrasNovasTotal();
@@ -212,6 +222,16 @@ function saveRegModal(){
   }
   const oldStatus = entry ? entry.status : null;
   const oldValorPago = entry ? entry.valorPago : 0;
+
+  // 14/09/2026: sincronizado com index.html — grava a isenção de multa/
+  // juros no mês antes de applyPayment()/_rollPenalties() rodarem.
+  if(entry){
+    const semPenalidadeAntes = !!entry.semMultaJuros;
+    entry.semMultaJuros = document.getElementById('rm-sem-penalidade')?.checked || false;
+    if(entry.semMultaJuros && !semPenalidadeAntes){
+      logAudit(`Mês isentado de multa/juros por acordo — ${t.unit} (${t.name}) — ${ref}`, {tipo:'ajuste_manual', tenantId:tid, ref});
+    }
+  }
 
   // 14/09/2026: sincronizado com index.html — cobrança extra lançada
   // direto neste modal, aplicada antes de applyPayment().
@@ -311,7 +331,8 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   if(entry.valorPago >= totalDue - 0.01){
     entry.status = 'pago';
     // If paid late, compute actual penalties and note them
-    if(late && entry.multa===0){
+    // 14/09/2026: sincronizado com index.html — guard !entry.semMultaJuros.
+    if(late && entry.multa===0 && !entry.semMultaJuros){
       const {multa, juros} = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
       entry.multa = multa; entry.juros = juros;
       entry.valorCobrado = R2(baseAluguel+extrasTotal+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
@@ -376,9 +397,19 @@ function _creditarProximoMes(t, ref, valor){
 function _rollPenalties(t, ref, base, daysLate){
   const entry = t.history.find(h=>h.ref===ref);
   if(!entry) return;
-  const {multa, juros} = calcPenalties(base, daysLate, R(entry.multa)>0, jurosRateDiario(t));
-  entry.multa = R(entry.multa)||multa;
-  entry.juros = juros;
+
+  // 14/09/2026: sincronizado com index.html — mês isento (entry.semMultaJuros)
+  // fica sempre em 0, sem recalcular nem rolar nada pro mês seguinte.
+  let multa, juros;
+  if(entry.semMultaJuros){
+    multa = 0; juros = 0;
+    entry.multa = 0; entry.juros = 0;
+  } else {
+    const calc = calcPenalties(base, daysLate, R(entry.multa)>0, jurosRateDiario(t));
+    multa = calc.multa; juros = calc.juros;
+    entry.multa = R(entry.multa)||multa;
+    entry.juros = juros;
+  }
 
   // 14/09/2026: sincronizado com index.html — pra ex-inquilino (vago),
   // não cria cobrança nova de mês seguinte, só mantém multa/juros no

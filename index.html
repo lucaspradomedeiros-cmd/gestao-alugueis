@@ -2107,6 +2107,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
         <div class="mfield"><label>Multa (R$) <span style="font-weight:400;text-transform:none;color:var(--text-faint);">— em branco = calcula sozinho</span></label><input type="number" id="rm-multa" step="0.01" placeholder="0,00" oninput="onRegValueChange()"></div>
       </div>
       <div class="mfield"><label>Juros (R$) <span style="font-weight:400;text-transform:none;color:var(--text-faint);">— em branco = calcula sozinho</span></label><input type="number" id="rm-juros" step="0.01" placeholder="0,00" oninput="onRegValueChange()"></div>
+      <!-- 14/09/2026: achado real (usuário, Rafael) — sem essa opção, um
+           mês "isentado" de multa/juros por acordo negociado (zerado uma
+           vez) tinha a penalidade recalculada do zero na próxima vez que
+           um pagamento passasse por ele. Marcando aqui, fica isento pra
+           sempre nesse mês, gravado em entry.semMultaJuros. -->
+      <div class="mfield">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-weight:400;">
+          <input type="checkbox" id="rm-sem-penalidade" onchange="onRegValueChange()" style="width:auto;">
+          <span>Isentar este mês de multa/juros (acordo negociado) — nunca calcula automaticamente, mesmo em atraso</span>
+        </label>
+      </div>
     </div>
     <div class="mfield"><label>Observações</label><textarea id="rm-obs" rows="2"></textarea></div>
     <div class="mfooter">
@@ -3155,7 +3166,14 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   if(entry.valorPago >= totalDue - 0.01){
     entry.status = 'pago';
     // If paid late, compute actual penalties and note them
-    if(late && entry.multa===0){
+    // 14/09/2026: achado real (usuário, Rafael/Apto 01) — este "if" existe
+    // pra avaliar a multa/juros na PRIMEIRA vez que um mês atrasado é
+    // quitado (entry.multa===0 = "nunca avaliado ainda"). Mas um mês
+    // isento por acordo negociado (ver checkbox "Isentar de multa/juros"
+    // em onRegTenantChange/onRegValueChange) TAMBÉM fica com multa===0 —
+    // e sem o guard `!entry.semMultaJuros`, pagar esse mês reativava a
+    // multa/juros do zero, mesmo o acordo dizendo "sem penalidade".
+    if(late && entry.multa===0 && !entry.semMultaJuros){
       const {multa, juros} = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
       entry.multa = multa; entry.juros = juros;
       entry.valorCobrado = R2(baseAluguel+extrasTotal+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
@@ -3233,9 +3251,23 @@ function _creditarProximoMes(t, ref, valor){
 function _rollPenalties(t, ref, base, daysLate){
   const entry = t.history.find(h=>h.ref===ref);
   if(!entry) return;
-  const {multa, juros} = calcPenalties(base, daysLate, R(entry.multa)>0, jurosRateDiario(t));
-  entry.multa = R(entry.multa)||multa;
-  entry.juros = juros;
+
+  // 14/09/2026: achado real (usuário, Rafael/Apto 01) — mesmo problema do
+  // "if" de applyPayment() acima: sem esse guard, um mês isento de multa/
+  // juros por acordo (entry.semMultaJuros, multa===0 de propósito) tinha
+  // a penalidade recalculada do zero aqui toda vez que um pagamento
+  // parcial/atrasado passava por ele. Isento: fica sempre em 0, sem
+  // rolar nada pro mês seguinte (juros=0 não soma pendingJuros de nada).
+  let multa, juros;
+  if(entry.semMultaJuros){
+    multa = 0; juros = 0;
+    entry.multa = 0; entry.juros = 0;
+  } else {
+    const calc = calcPenalties(base, daysLate, R(entry.multa)>0, jurosRateDiario(t));
+    multa = calc.multa; juros = calc.juros;
+    entry.multa = R(entry.multa)||multa;
+    entry.juros = juros;
+  }
 
   // 14/09/2026: achado real (usuário, Ana Carla/Apto 03) — isso criava uma
   // cobrança nova do zero (aluguel+condomínio+IPTU) no mês seguinte pra
@@ -4435,6 +4467,8 @@ function onRegTenantChange(){
   document.getElementById('rm-lixo').value=entry.lixo||'';
   document.getElementById('rm-multa').value=(R(entry.multa)+R(entry.pendingMulta))||'';
   document.getElementById('rm-juros').value=(R(entry.juros)+R(entry.pendingJuros))||'';
+  const semPenalidadeEl=document.getElementById('rm-sem-penalidade');
+  if(semPenalidadeEl) semPenalidadeEl.checked = !!entry.semMultaJuros;
 
   // 14/09/2026: pré-seleciona a forma de pagamento mais recente já usada
   // por esse inquilino (fallback: PIX), em vez de sempre abrir na 1ª opção.
@@ -4565,12 +4599,24 @@ function onRegValueChange(){
   // (calcPenalties) quando o pagamento é tardio. Sem replicar isso aqui,
   // a prévia ficava menor que o resultado real depois de confirmar.
   // Simula o mesmo cálculo (sem gravar nada) pra prévia bater exato.
-  let multa = (multaOv!==''&&multaOv!=null) ? R(multaOv) : R(entry.multa);
-  let juros = (jurosOv!==''&&jurosOv!=null) ? R(jurosOv) : R(entry.juros);
-  if((multaOv===''||multaOv==null) && (jurosOv===''||jurosOv==null) && R(entry.multa)===0 && dataPag && entry.venc && dataPag>entry.venc){
-    const daysLate = daysDiff(entry.venc, dataPag);
-    const sim = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
-    multa = sim.multa; juros = sim.juros;
+  //
+  // 14/09/2026 (2ª parte): achado real (usuário, Rafael) — um mês isento
+  // por acordo (checkbox "Isentar de multa/juros") também tem multa===0,
+  // e sem esse guard a simulação acima "reativava" a penalidade na
+  // prévia mesmo com a isenção marcada. Isento: fica sempre 0, sem
+  // simular nada.
+  const semPenalidade = document.getElementById('rm-sem-penalidade')?.checked;
+  let multa, juros;
+  if(semPenalidade){
+    multa = 0; juros = 0;
+  } else {
+    multa = (multaOv!==''&&multaOv!=null) ? R(multaOv) : R(entry.multa);
+    juros = (jurosOv!==''&&jurosOv!=null) ? R(jurosOv) : R(entry.juros);
+    if((multaOv===''||multaOv==null) && (jurosOv===''||jurosOv==null) && R(entry.multa)===0 && !entry.semMultaJuros && dataPag && entry.venc && dataPag>entry.venc){
+      const daysLate = daysDiff(entry.venc, dataPag);
+      const sim = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
+      multa = sim.multa; juros = sim.juros;
+    }
   }
   const extrasExistentes = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
   const extrasNovas = _regExtrasNovasTotal();
@@ -4613,6 +4659,19 @@ function saveRegModal(){
   }
   const oldStatus = entry ? entry.status : null;
   const oldValorPago = entry ? entry.valorPago : 0;
+
+  // 14/09/2026: achado real (usuário, Rafael) — grava a isenção de multa/
+  // juros no próprio mês ANTES de applyPayment()/_rollPenalties() rodarem,
+  // pra elas respeitarem o acordo em vez de recalcular a penalidade do
+  // zero (era exatamente o bug: R$117,05 de multa/juros reaparecendo
+  // numa dívida negociada sem penalidade).
+  if(entry){
+    const semPenalidadeAntes = !!entry.semMultaJuros;
+    entry.semMultaJuros = document.getElementById('rm-sem-penalidade')?.checked || false;
+    if(entry.semMultaJuros && !semPenalidadeAntes){
+      logAudit(`Mês isentado de multa/juros por acordo — ${t.unit} (${t.name}) — ${ref}`, {tipo:'ajuste_manual', tenantId:tid, ref});
+    }
+  }
 
   // 14/09/2026: pedido do usuário — cobrança extra lançada direto neste
   // modal (rm-extra-desc-N/rm-extra-val-N), sem precisar sair pro extrato.
