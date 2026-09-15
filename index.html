@@ -7901,7 +7901,15 @@ function renderDashboardEscritorio(){
 
 function openRecibo(id){
   const t = tenants.find(x=>x.id===id);
-  if(!t||t.vago) return;
+  // 14/09/2026: achado real (usuário, "botão emitir recibo está quebrado")
+  // — o botão "🧾 Emitir recibo" sempre aparece no cabeçalho da ficha
+  // (renderDetHeader), pra qualquer inquilino, mas essa guarda recusava
+  // silenciosamente (clicava e nada acontecia) quando o inquilino era
+  // ex-inquilino (vago). Isso fazia sentido antes, quando ex-inquilino
+  // não tinha uso relevante de recibo — mas hoje trabalhamos bastante com
+  // pagamentos reais de ex-inquilinos (Ana Carla, Rafael) que merecem
+  // comprovante igual qualquer outro. Removida a restrição.
+  if(!t) return;
   reciboTid = id;
   document.getElementById('recibo-info').textContent = `${t.unit} · ${t.name}`;
 
