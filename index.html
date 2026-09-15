@@ -1261,7 +1261,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 <!-- RECIBO MODAL -->
 <div class="overlay" id="recibo-overlay" role="dialog" aria-modal="true" aria-labelledby="recibo-title" onclick="if(event.target===this)closeOverlay('recibo-overlay')">
-  <div class="modal wide" style="max-width:640px;" onclick="event.stopPropagation()">
+  <div class="modal wide" style="max-width:680px;" onclick="event.stopPropagation()">
     <div class="modal-title" id="recibo-title">🧾 Emitir Recibo de Pagamento</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="recibo-info">—</div>
     <div class="mrow">
@@ -1276,11 +1276,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
         </select>
       </div>
     </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Prévia do recibo</div>
-    <div id="recibo-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:12px;line-height:1.8;font-family:'DM Sans',sans-serif;white-space:pre-wrap;max-height:320px;overflow-y:auto;"></div>
+
+    <!-- 14/09/2026: achado real (usuário) — a prévia antiga desenhava uma
+         "caixa" ASCII (bordas ╔═╗) com alinhamento por espaços, mas o
+         container usa fonte DM Sans (proporcional, não monoespaçada) —
+         ficava desalinhada até aqui dentro do app, e pior ainda depois de
+         colar num app de mensagens (WhatsApp não é monoespaçado). Duas
+         saídas separadas agora: uma prévia visual de verdade (HTML, igual
+         ao PDF) e um texto plano pronto pra WhatsApp (sem caixa nenhuma,
+         só *negrito* e •tópicos, que funcionam em qualquer app). -->
+    <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📄 Prévia (impressão/PDF)</div>
+    <div id="recibo-preview" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:12px;line-height:1.6;font-family:'DM Sans',sans-serif;max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
+
+    <div style="font-size:10px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">💬 Mensagem (copiar e colar no WhatsApp)</div>
+    <div id="recibo-wpp-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:12.5px;line-height:1.6;font-family:'DM Sans',sans-serif;white-space:pre-wrap;max-height:200px;overflow-y:auto;"></div>
+
     <div class="mfooter">
       <button class="btn" onclick="closeOverlay('recibo-overlay')">Fechar</button>
-      <button class="btn" onclick="copyRecibo()" id="rb-copy">📋 Copiar texto</button>
+      <button class="btn" onclick="copyRecibo()" id="rb-copy">📋 Copiar mensagem</button>
       <button class="btn btn-primary" onclick="printRecibo()">🖨 Imprimir / PDF</button>
     </div>
   </div>
@@ -1879,7 +1892,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
       <div class="mfield"><label>Tipo de Ação / Processo</label><input type="text" id="gd-tipo-acao" placeholder="Ex: Ação de Cobrança, Indenização por Danos..."></div>
     </div>
     <div class="mrow">
-      <div class="mfield"><label>Local da assinatura</label><input type="text" id="gd-local" placeholder="Ex: Dourados/MS" value="Campo Grande/MS"></div>
+      <div class="mfield"><label>Local da assinatura</label><input type="text" id="gd-local" placeholder="Ex: Dourados/MS" value="Dourados/MS"></div>
       <div class="mfield"><label>Data da assinatura</label><input type="text" id="gd-data" placeholder="Ex: 03 de abril de 2026"></div>
     </div>
 
@@ -1985,7 +1998,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
         <div class="mfield"><label>Endereço do locatário (antes da locação / atual)</label><input type="text" id="f-end-loc" placeholder="Rua, número, bairro"></div>
         <div class="mrow">
           <div class="mfield"><label>Bairro</label><input type="text" id="f-bairro-loc" placeholder="Centro"></div>
-          <div class="mfield"><label>Cidade/UF</label><input type="text" id="f-cidade-uf" placeholder="Campo Grande/MS"></div>
+          <div class="mfield"><label>Cidade/UF</label><input type="text" id="f-cidade-uf" placeholder="Dourados/MS"></div>
         </div>
         <div class="mrow">
           <div class="mfield"><label>CEP</label><input type="text" id="f-cep-loc" placeholder="00000-000"></div>
@@ -6605,7 +6618,7 @@ function excluirServicoAdv(){
 const ADVOGADO_ADV = {
   nome:    'LUCAS PRADO MEDEIROS PERIN',
   oab:     'OAB/MS 21.380',
-  cidade:  'Campo Grande/MS',
+  cidade:  OWNER_CIDADE,
   end:     'Rua: Monte Alegre, 1334 – Jd. América — Dourados/MS — CEP 79.824-070 — Tel: (67) 99814-9075',
   pix:     'Chave PIX/CPF: 702.738.471-04',
   banco:   'Banco Nubank — Agência 0001 — Conta Corrente 1384796-6',
@@ -6728,7 +6741,7 @@ function abrirGerarDocModal(){
   document.getElementById('gd-cliente-info').textContent='Cliente: '+c.nome+(c.cpf?' — CPF: '+c.cpf:'');
   ['gd-chk-proc','gd-chk-hon','gd-chk-hipo','gd-chk-recibo'].forEach(id=>{document.getElementById(id).checked=false;});
   document.getElementById('gd-tipo-acao').value='';
-  document.getElementById('gd-local').value='Campo Grande/MS';
+  document.getElementById('gd-local').value=OWNER_CIDADE;
   document.getElementById('gd-data').value='';
   document.getElementById('gd-poderes').value='';
   document.getElementById('gd-hon-total').value='';
@@ -6776,7 +6789,7 @@ async function gerarDocAdv(){
   const d={
     clientes:[c],
     tipoAcao:document.getElementById('gd-tipo-acao').value,
-    localAssinatura:document.getElementById('gd-local').value||'Campo Grande/MS',
+    localAssinatura:document.getElementById('gd-local').value||OWNER_CIDADE,
     dataAssinatura:document.getElementById('gd-data').value,
     poderesProcuracao:document.getElementById('gd-poderes').value,
     honorariosTotal:document.getElementById('gd-hon-total').value,
@@ -6944,7 +6957,7 @@ function docBuildHonorarios(d,cW){
     secao('IX — CONTRATAÇÃO DE MEIOS'),spacer(),
     cl('A presente contratação é de meio, não se obrigando o CONTRATADO a garantir resultado eventualmente esperado pelo(a) CONTRATANTE, cuja não-obtenção não implicará em qualquer infração ética ou indenização.'),spacer(),
     secao('X — DO FORO DE ELEIÇÃO'),spacer(),
-    cl('Fica eleito o foro da cidade de Campo Grande/MS para dirimir qualquer dúvida ou conflito inerente ao presente contrato.'),spacer(),
+    cl(`Fica eleito o foro da cidade de ${OWNER_CIDADE} para dirimir qualquer dúvida ou conflito inerente ao presente contrato.`),spacer(),
     secao('XI — DA FIRMA DESTE CONTRATO'),spacer(),
     cl('As partes, estando de pleno acordo com os termos e condições estabelecidos, firmam este instrumento em 2 (duas) vias de igual teor e forma.'),spacer(),
     pu('As partes reconhecem que este contrato poderá ser assinado por meio de assinatura digital, considerando-a válida e eficaz para todos os fins de direito.'),spacer(),spacer(),
@@ -7078,7 +7091,10 @@ async function docxBuildContrato(t,im){
 
   const garantia=t.garantia||'Sem Garantia';
   const fiadores=t.fiadores||[];
-  const cidade=im?.endereco?.split('/')?.pop()?.trim()||'Campo Grande/MS';
+  // 15/09/2026: achado real (usuário) — essa variável era calculada mas
+  // nunca usada em lugar nenhum da função; o foro/assinatura abaixo tinham
+  // "Campo Grande/MS" cravado direto (o escritório é em Dourados/MS).
+  // Removida a variável morta, usa OWNER_CIDADE direto onde precisa.
 
   const content=[
     par([new TextRun({text:'CONTRATO DE LOCAÇÃO RESIDENCIAL',font:FONT,size:SZt,bold:true})],{alignment:AlignmentType.CENTER,spacing:{before:240,after:480,line:240,lineRule:'auto'}}),
@@ -7139,12 +7155,12 @@ async function docxBuildContrato(t,im){
 
     // XI — DO FORO
     secao('XI — DO FORO'),spacer(),
-    cl(`Fica eleito o foro da comarca de Campo Grande/MS para dirimir quaisquer dúvidas ou litígios oriundos do presente contrato, renunciando as partes a qualquer outro, por mais privilegiado que seja.`),spacer(),
+    cl(`Fica eleito o foro da comarca de ${OWNER_CIDADE} para dirimir quaisquer dúvidas ou litígios oriundos do presente contrato, renunciando as partes a qualquer outro, por mais privilegiado que seja.`),spacer(),
 
     // XII — DAS ASSINATURAS
     secao('XII — DAS ASSINATURAS'),spacer(),
     cl(`As partes, por si e por seus herdeiros, firmam o presente contrato em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo identificadas, obrigando-se ao fiel cumprimento de todas as cláusulas e condições aqui estabelecidas.`),spacer(),spacer(),
-    par([run(`Campo Grande/MS, ${dataHoje}.`)],{alignment:AlignmentType.RIGHT}),spacer(),spacer(),spacer(),
+    par([run(`${OWNER_CIDADE}, ${dataHoje}.`)],{alignment:AlignmentType.RIGHT}),spacer(),spacer(),spacer(),
 
     // Assinaturas
     centered([run('_'.repeat(52))],{spacing:SP0}),centered([bold(propNome)],{spacing:SP0}),centered([run(`CPF: ${propCpf}`)],{spacing:SP0}),centered([run('Locador')],{spacing:{...SP0,after:680}}),
@@ -7923,95 +7939,31 @@ function openRecibo(id){
   openOverlay('recibo-overlay');
 }
 
-function buildRecibo(){
-  const t = tenants.find(x=>x.id===reciboTid);
-  if(!t) return;
-
-  const ref   = document.getElementById('rb-ref').value;
-  const data  = document.getElementById('rb-data').value;
-  const valor = R(document.getElementById('rb-valor').value);
-  const forma = document.getElementById('rb-forma').value;
-
-  // find the history entry for this ref
-  const entry = t.history.find(h=>h.ref===ref);
-
-  // breakdown lines
-  const itens = [];
-  if(entry){
-    if(R(entry.aluguel)>0) itens.push(['Aluguel', fmtBRL(R(entry.aluguel))]);
-    if(R(entry.condo)>0)   itens.push(['Condomínio (ref. '+prevMonthLabel(ref)+')', fmtBRL(R(entry.condo))]);
-    if(R(entry.iptu)>0)    itens.push(['IPTU', fmtBRL(R(entry.iptu))]);
-    if(R(entry.lixo)>0)    itens.push(['Taxa de Lixo', fmtBRL(R(entry.lixo))]);
-    const pen = R(entry.multa)+R(entry.juros)+R(entry.pendingMulta)+R(entry.pendingJuros);
-    if(pen>0)              itens.push(['Encargos (multa/juros)', fmtBRL(pen)]);
-    if(entry.extras) entry.extras.forEach(ex=>{
-      if(ex.descricao||R(ex.valor)>0) itens.push([ex.descricao||'Cobrança extra', fmtBRL(R(ex.valor))]);
-    });
+// 14/09/2026: achado real (usuário) — o prédio/endereço do cabeçalho do
+// recibo estava CRAVADO como "Residencial Santa Nonna I" sempre, pra
+// qualquer inquilino — errado pra quem é de outro condomínio, imóvel
+// autônomo, ou sala do escritório. Resolve pelo condoId/imovelId de
+// verdade do inquilino.
+function getReciboLocal(t){
+  if(t.condoId){
+    const c = condominios.find(x=>x.id===t.condoId);
+    if(c) return { nome: c.nome||'—', endereco: c.endereco||'' };
   }
-
-  const maxLbl = Math.max(...itens.map(i=>i[0].length), 20);
-  const itensTxt = itens.map(([l,v])=>
-    `  ${l.padEnd(maxLbl+2, '.')} ${v}`
-  ).join('\n');
-
-  const dataFmt = data ? fmtDate(data) : '—';
-  const reciboNum = `${ref ? ref.replace('-','') : 'XXXXXX'}-${String(t.id).padStart(2,'0')}`;
-
-  const lines = [
-    `╔${'═'.repeat(58)}╗`,
-    `║${'RECIBO DE PAGAMENTO'.padStart(38).padEnd(58)}║`,
-    `║${'Residencial Santa Nonna I'.padStart(41).padEnd(58)}║`,
-    `║${'Rua Manoel Santiago 272 · Campo Grande/MS'.padStart(49).padEnd(58)}║`,
-    `╠${'═'.repeat(58)}╣`,
-    `║  Recibo nº: ${reciboNum.padEnd(45)}║`,
-    `║  Data:      ${dataFmt.padEnd(45)}║`,
-    `╠${'═'.repeat(58)}╣`,
-    `║  Locatário: ${t.name.padEnd(45)}║`,
-    `║  Imóvel:    ${t.unit.padEnd(45)}║`,
-    `║  Referência:${monthName(ref).padEnd(45)}║`,
-    `╠${'═'.repeat(58)}╣`,
-    `║  DISCRIMINAÇÃO:${' '.repeat(42)}║`,
-    `║${' '.repeat(58)}║`,
-    ...itensTxt.split('\n').map(l=>`║${l.padEnd(58)}║`),
-    `║${' '.repeat(58)}║`,
-    `╠${'═'.repeat(58)}╣`,
-    `║  VALOR PAGO: ${fmtBRL(valor).padEnd(44)}║`,
-    `║  Forma:      ${forma.padEnd(44)}║`,
-    `╠${'═'.repeat(58)}╣`,
-    `║  Recebo a quantia acima referente ao período   ║`,
-    `║  mencionado, dando plena quitação do débito.   ║`,
-    `║${' '.repeat(58)}║`,
-    `║  Campo Grande/MS, ${dataFmt.padEnd(39)}║`,
-    `║${' '.repeat(58)}║`,
-    `║  _______________________________________________║`,
-    `║  Lucas Prado Medeiros Perin — Locador          ║`,
-    `║  CPF: 702.738.471-04                           ║`,
-    `╚${'═'.repeat(58)}╝`,
-  ];
-
-  document.getElementById('recibo-preview').textContent = lines.join('\n');
+  if(t.imovelId){
+    const im = getImovel(t.imovelId);
+    if(im) return { nome: im.nome||'—', endereco: im.endereco||'' };
+  }
+  return { nome: t.unit||'—', endereco:'' };
 }
 
-function prevMonthLabel(ref){
-  if(!ref) return '—';
-  const[y,m]=ref.split('-');
-  let pm=parseInt(m)-1,py=parseInt(y);
-  if(pm<1){pm=12;py--;}
-  return `${MN[pm]}/${py}`;
-}
-
-function copyRecibo(){
-  const txt = document.getElementById('recibo-preview').textContent;
-  navigator.clipboard.writeText(txt).then(()=>{
-    const b=document.getElementById('rb-copy');
-    b.textContent='✓ Copiado!';b.style.color='var(--green)';
-    setTimeout(()=>{b.textContent='📋 Copiar texto';b.style.color='';},2000);
-  });
-}
-
-function printRecibo(){
+// 14/09/2026: pedido do usuário — "mais detalhes" no recibo. Dados que já
+// existiam na ficha do inquilino (CPF, endereço) nunca apareciam aqui.
+// Centraliza tudo que as 3 saídas (prévia visual, mensagem WhatsApp, PDF)
+// precisam, pra não recalcular/duplicar em cada uma.
+function getReciboDados(){
   const t = tenants.find(x=>x.id===reciboTid);
-  if(!t) return;
+  if(!t) return null;
+
   const ref   = document.getElementById('rb-ref').value;
   const data  = document.getElementById('rb-data').value;
   const valor = R(document.getElementById('rb-valor').value);
@@ -8025,11 +7977,123 @@ function printRecibo(){
     if(R(entry.iptu)>0)    itens.push(['IPTU', R(entry.iptu)]);
     if(R(entry.lixo)>0)    itens.push(['Taxa de Lixo', R(entry.lixo)]);
     const pen = R(entry.multa)+R(entry.juros)+R(entry.pendingMulta)+R(entry.pendingJuros);
-    if(pen>0)              itens.push(['Encargos (multa/juros)', pen]);
-    if(entry.extras) entry.extras.forEach(ex=>{
+    if(pen>0)              itens.push(['Multa/Juros por atraso', pen]);
+    (entry.extras||[]).forEach(ex=>{
       if(ex.descricao||R(ex.valor)>0) itens.push([ex.descricao||'Cobrança extra', R(ex.valor)]);
     });
   }
+
+  const enderecoLoc = [t.endLoc, t.bairroLoc, t.cidadeUf, t.cepLoc?('CEP '+t.cepLoc):''].filter(Boolean).join(', ');
+  const local = getReciboLocal(t);
+  const reciboNum = `${ref ? ref.replace('-','') : 'XXXXXX'}-${String(t.id).padStart(2,'0')}`;
+  const dataFmt = data ? fmtDate(data) : '—';
+
+  return { t, ref, data, dataFmt, valor, forma, entry, itens, enderecoLoc, local, reciboNum };
+}
+
+function buildRecibo(){
+  const d = getReciboDados();
+  if(!d) return;
+  document.getElementById('recibo-preview').innerHTML = renderReciboFormalHTML(d, false);
+  document.getElementById('recibo-wpp-preview').textContent = buildReciboTextoWpp(d);
+}
+
+// 14/09/2026: prévia visual (dentro do app) e o PDF impresso usam o MESMO
+// HTML — antes a prévia era uma "caixa" de texto ASCII com alinhamento por
+// espaço (só funciona em fonte monoespaçada, e o container usa DM Sans,
+// proporcional — ficava torta até aqui dentro). paraImpressao=true adiciona
+// só o essencial que muda no PDF (tamanhos/cores mais destacados).
+function renderReciboFormalHTML(d, paraImpressao){
+  const { t, dataFmt, valor, forma, itens, enderecoLoc, local, reciboNum, ref } = d;
+  const itensHtml = itens.map(([l,v])=>`
+    <tr><td style="padding:5px 0;border-bottom:1px solid #eee;">${l}</td><td style="padding:5px 0;border-bottom:1px solid #eee;text-align:right;font-weight:500;">${fmtBRL(v)}</td></tr>`).join('');
+  return `
+    <div style="text-align:center;margin-bottom:10px;">
+      <div style="font-weight:700;font-size:${paraImpressao?'20px':'14px'};">RECIBO DE PAGAMENTO</div>
+      <div style="font-size:12px;color:#666;">${local.nome}${local.endereco?' · '+local.endereco:''}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:6px 0;margin-bottom:10px;">
+      <span><b>Recibo nº:</b> ${reciboNum}</span>
+      <span><b>Data:</b> ${dataFmt}</span>
+    </div>
+    <div style="font-size:12px;line-height:1.9;margin-bottom:10px;">
+      <div><b>Locatário:</b> ${t.name}${t.cpf?' — CPF '+t.cpf:''}</div>
+      ${enderecoLoc?`<div><b>Endereço:</b> ${enderecoLoc}</div>`:''}
+      <div><b>Imóvel alugado:</b> ${t.unit}</div>
+      <div><b>Referência:</b> ${monthName(ref)}</div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Discriminação</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;">${itensHtml}</table>
+    <div style="background:#eaf4ee;border:1px solid #cfe6da;border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+      <div style="font-size:14px;font-weight:700;color:#2D6A4F;">VALOR PAGO: ${fmtBRL(valor)}</div>
+      <div style="font-size:11px;color:#4a7d63;">(${valorExtensoDoc(valor)})</div>
+      <div style="font-size:12px;margin-top:4px;">Forma: ${forma}</div>
+    </div>
+    <p style="font-size:12px;color:#555;line-height:1.6;margin-bottom:10px;">Recebo a quantia acima referente ao período mencionado, dando plena quitação do débito correspondente.</p>
+    <div style="font-size:12px;color:#555;margin-bottom:${paraImpressao?'40px':'16px'};">${OWNER_CIDADE}, ${dataFmt}</div>
+    <div style="text-align:center;font-size:12px;">
+      <div style="border-top:1px solid #333;width:240px;margin:0 auto 6px;"></div>
+      <div style="font-weight:500;">Lucas Prado Medeiros Perin</div>
+      <div style="color:#666;font-size:11px;">CPF: 702.738.471-04 · Locador</div>
+    </div>`;
+}
+
+// 14/09/2026: pedido do usuário — a mensagem pra WhatsApp precisa funcionar
+// sem depender de fonte monoespaçada (WhatsApp não alinha por espaço).
+// Só *negrito* (suportado nativamente lá) e •tópicos, sem caixa nenhuma.
+function buildReciboTextoWpp(d){
+  const { t, dataFmt, valor, forma, itens, local, reciboNum, ref } = d;
+  const linhas = [
+    `🧾 *RECIBO DE PAGAMENTO*`,
+    `${local.nome}${local.endereco?' — '+local.endereco:''}`,
+    ``,
+    `*Recibo nº:* ${reciboNum}`,
+    `*Data:* ${dataFmt}`,
+    ``,
+    `*Locatário:* ${t.name}`,
+    `*Imóvel:* ${t.unit}`,
+    `*Referência:* ${monthName(ref)}`,
+    ``,
+    `*Discriminação:*`,
+    ...itens.map(([l,v])=>`• ${l}: ${fmtBRL(v)}`),
+    ``,
+    `*Valor pago:* ${fmtBRL(valor)}`,
+    `(${valorExtensoDoc(valor)})`,
+    `*Forma:* ${forma}`,
+    ``,
+    `Recebo a quantia acima referente ao período mencionado, dando plena quitação do débito correspondente.`,
+    ``,
+    `${OWNER_CIDADE}, ${dataFmt}.`,
+    ``,
+    `_Lucas Prado Medeiros Perin — Locador_`,
+    `CPF: 702.738.471-04`,
+  ];
+  return linhas.join('\n');
+}
+
+function prevMonthLabel(ref){
+  if(!ref) return '—';
+  const[y,m]=ref.split('-');
+  let pm=parseInt(m)-1,py=parseInt(y);
+  if(pm<1){pm=12;py--;}
+  return `${MN[pm]}/${py}`;
+}
+
+function copyRecibo(){
+  const d = getReciboDados();
+  if(!d) return;
+  const txt = buildReciboTextoWpp(d);
+  navigator.clipboard.writeText(txt).then(()=>{
+    const b=document.getElementById('rb-copy');
+    b.textContent='✓ Copiado!';b.style.color='var(--green)';
+    setTimeout(()=>{b.textContent='📋 Copiar mensagem';b.style.color='';},2000);
+  });
+}
+
+function printRecibo(){
+  const d = getReciboDados();
+  if(!d) return;
+  const { t, dataFmt, valor, forma, itens, enderecoLoc, local, reciboNum, ref } = d;
 
   const itensTr = itens.map(([l,v])=>`
     <tr>
@@ -8037,9 +8101,13 @@ function printRecibo(){
       <td style="padding:7px 12px;border-bottom:1px solid #e8e4dd;text-align:right;font-weight:500;">${fmtBRL(v)}</td>
     </tr>`).join('');
 
-  const reciboNum = `${ref ? ref.replace('-','') : 'XXXXXX'}-${String(t.id).padStart(2,'0')}`;
-  const dataFmt = data ? fmtDate(data) : '—';
-
+  // 14/09/2026: pedido do usuário — "mais detalhes" no recibo impresso:
+  // CPF e endereço do locatário (já cadastrados na ficha dele, nunca
+  // apareciam aqui) + valor por extenso (padrão em recibo formal no
+  // Brasil). Também corrigido: nome/endereço do prédio vinham CRAVADOS
+  // como "Residencial Santa Nonna I" sempre — agora usa local.nome/
+  // local.endereco, resolvido de verdade pelo condomínio/imóvel do
+  // inquilino (ver getReciboLocal()).
   const html = `<!DOCTYPE html><html lang="pt-BR"><head>
   <meta charset="UTF-8">
   <title>Recibo ${reciboNum} — ${t.name}</title>
@@ -8057,8 +8125,10 @@ function printRecibo(){
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
     .info-item label{font-size:10px;color:#7a7268;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;}
     .info-item span{font-size:13px;font-weight:500;}
+    .info-item.full{grid-column:1/-1;}
     table{width:100%;border-collapse:collapse;}
     .total-row td{padding:10px 12px;font-weight:600;font-size:14px;background:#eaf4ee;color:#2D6A4F;}
+    .extenso{font-size:11px;color:#4a7d63;padding:0 12px 10px;background:#eaf4ee;}
     .footer{padding:24px 32px;display:flex;justify-content:space-between;align-items:flex-end;}
     .signature{text-align:center;}
     .signature-line{border-top:1px solid #1C1A17;width:220px;margin:0 auto 6px;}
@@ -8073,14 +8143,16 @@ function printRecibo(){
   <div class="page">
     <div class="header">
       <div class="header-title">Recibo de Pagamento</div>
-      <div class="header-sub">Residencial Santa Nonna I · Rua Manoel Santiago 272, Campo Grande/MS</div>
+      <div class="header-sub">${local.nome}${local.endereco?' · '+local.endereco:''}</div>
       <div class="header-num">Nº ${reciboNum}</div>
     </div>
     <div class="section">
       <div class="section-title">Dados do locatário</div>
       <div class="info-grid">
         <div class="info-item"><label>Nome</label><span>${t.name}</span></div>
-        <div class="info-item"><label>Imóvel</label><span>${t.unit}</span></div>
+        <div class="info-item"><label>CPF</label><span>${t.cpf||'—'}</span></div>
+        ${enderecoLoc?`<div class="info-item full"><label>Endereço</label><span>${enderecoLoc}</span></div>`:''}
+        <div class="info-item"><label>Imóvel alugado</label><span>${t.unit}</span></div>
         <div class="info-item"><label>Referência</label><span>${monthName(ref)}</span></div>
         <div class="info-item"><label>Data do pagamento</label><span>${dataFmt}</span></div>
         <div class="info-item"><label>Forma de pagamento</label><span>${forma}</span></div>
@@ -8095,6 +8167,7 @@ function printRecibo(){
           <td style="text-align:right;">${fmtBRL(valor)}</td>
         </tr>
       </table>
+      <div class="extenso">(${valorExtensoDoc(valor)})</div>
     </div>
     <div class="footer">
       <div>
@@ -8102,7 +8175,7 @@ function printRecibo(){
           Recebo a quantia acima referente ao período mencionado,
           dando plena quitação do débito correspondente.
         </p>
-        <p style="font-size:11px;color:#7a7268;margin-top:8px;">Campo Grande/MS, ${dataFmt}</p>
+        <p style="font-size:11px;color:#7a7268;margin-top:8px;">${OWNER_CIDADE}, ${dataFmt}</p>
       </div>
       <div style="text-align:center;">
         <div class="stamp">

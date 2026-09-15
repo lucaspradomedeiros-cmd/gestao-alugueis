@@ -106,6 +106,11 @@ const OWNER_NAME = 'Lucas Prado Medeiros Perin';
 const OWNER_CPF = 'CPF 702.738.471-04';
 const PIX_NAME = OWNER_NAME;
 const PIX_KEY = OWNER_CPF;
+// 15/09/2026: achado real (usuário) — "Campo Grande/MS" estava cravado
+// como cidade padrão em ~15 lugares (recibo, geração de contrato, foro de
+// eleição, placeholder de cadastro de inquilino) — o escritório é em
+// Dourados/MS. Centralizado numa constante única pra nunca mais divergir.
+const OWNER_CIDADE = 'Dourados/MS';
 
 const STATUS_LABELS = {
   pago: 'Em dia',

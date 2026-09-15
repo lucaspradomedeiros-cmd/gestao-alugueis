@@ -16,7 +16,7 @@ async function gerarDocAdv(){
   const d={
     clientes:[c],
     tipoAcao:document.getElementById('gd-tipo-acao').value,
-    localAssinatura:document.getElementById('gd-local').value||'Campo Grande/MS',
+    localAssinatura:document.getElementById('gd-local').value||OWNER_CIDADE,
     dataAssinatura:document.getElementById('gd-data').value,
     poderesProcuracao:document.getElementById('gd-poderes').value,
     honorariosTotal:document.getElementById('gd-hon-total').value,
@@ -179,7 +179,7 @@ function docBuildHonorarios(d,cW){
     secao('IX — CONTRATAÇÃO DE MEIOS'),spacer(),
     cl('A presente contratação é de meio, não se obrigando o CONTRATADO a garantir resultado eventualmente esperado pelo(a) CONTRATANTE, cuja não-obtenção não implicará em qualquer infração ética ou indenização.'),spacer(),
     secao('X — DO FORO DE ELEIÇÃO'),spacer(),
-    cl('Fica eleito o foro da cidade de Campo Grande/MS para dirimir qualquer dúvida ou conflito inerente ao presente contrato.'),spacer(),
+    cl(`Fica eleito o foro da cidade de ${OWNER_CIDADE} para dirimir qualquer dúvida ou conflito inerente ao presente contrato.`),spacer(),
     secao('XI — DA FIRMA DESTE CONTRATO'),spacer(),
     cl('As partes, estando de pleno acordo com os termos e condições estabelecidos, firmam este instrumento em 2 (duas) vias de igual teor e forma.'),spacer(),
     pu('As partes reconhecem que este contrato poderá ser assinado por meio de assinatura digital, considerando-a válida e eficaz para todos os fins de direito.'),spacer(),spacer(),
@@ -291,7 +291,8 @@ async function docxBuildContrato(t,im){
 
   const garantia=t.garantia||'Sem Garantia';
   const fiadores=t.fiadores||[];
-  const cidade=im?.endereco?.split('/')?.pop()?.trim()||'Campo Grande/MS';
+  // 15/09/2026: sincronizado com index.html — variável morta removida
+  // (nunca era usada), foro/assinatura usam OWNER_CIDADE direto.
 
   const content=[
     par([new TextRun({text:'CONTRATO DE LOCAÇÃO RESIDENCIAL',font:FONT,size:SZt,bold:true})],{alignment:AlignmentType.CENTER,spacing:{before:240,after:480,line:240,lineRule:'auto'}}),
@@ -328,10 +329,10 @@ async function docxBuildContrato(t,im){
     cl(`Em caso de rescisão antecipada pelo LOCATÁRIO, será devida multa compensatória equivalente a 3 (três) aluguéis mensais, proporcional ao tempo restante do contrato, nos termos do art. 4º da Lei n.º 8.245/91.`),spacer(),
     pu(`A rescisão antecipada pelo LOCADOR, fora das hipóteses legais, sujeitá-lo-á ao pagamento de multa de igual valor em favor do LOCATÁRIO.`),spacer(),
     secao('XI — DO FORO'),spacer(),
-    cl(`Fica eleito o foro da comarca de Campo Grande/MS para dirimir quaisquer dúvidas ou litígios oriundos do presente contrato, renunciando as partes a qualquer outro, por mais privilegiado que seja.`),spacer(),
+    cl(`Fica eleito o foro da comarca de ${OWNER_CIDADE} para dirimir quaisquer dúvidas ou litígios oriundos do presente contrato, renunciando as partes a qualquer outro, por mais privilegiado que seja.`),spacer(),
     secao('XII — DAS ASSINATURAS'),spacer(),
     cl(`As partes, por si e por seus herdeiros, firmam o presente contrato em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo identificadas, obrigando-se ao fiel cumprimento de todas as cláusulas e condições aqui estabelecidas.`),spacer(),spacer(),
-    par([run(`Campo Grande/MS, ${dataHoje}.`)],{alignment:AlignmentType.RIGHT}),spacer(),spacer(),spacer(),
+    par([run(`${OWNER_CIDADE}, ${dataHoje}.`)],{alignment:AlignmentType.RIGHT}),spacer(),spacer(),spacer(),
     centered([run('_'.repeat(52))],{spacing:SP0}),centered([bold(propNome)],{spacing:SP0}),centered([run(`CPF: ${propCpf}`)],{spacing:SP0}),centered([run('Locador')],{spacing:{...SP0,after:680}}),
     centered([run('_'.repeat(52))],{spacing:SP0}),centered([bold(locNome)],{spacing:SP0}),centered([run(`CPF: ${locCpf}`)],{spacing:SP0}),centered([run('Locatário')],{spacing:{...SP0,after:680}}),
     ...fiadores.flatMap(f=>[
