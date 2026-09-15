@@ -1699,3 +1699,37 @@ git checkout v2.2.0 -- .    # traz os arquivos desta versão pro working dir
 git reset --hard v2.2.0
 git push --force origin main   # ⚠ reescreve o histórico remoto, usar com cuidado
 ```
+
+
+## 15/09/2026 — Fix: 403 "unregistered callers" ao carregar do Drive (race de inicialização)
+
+Usuário reportou erro real do console (14/09 21:36): `[DriveLoader] Erro
+ao procurar dados.json` / `gestao_alugueis_dados.json`, 403
+`PERMISSION_DENIED` — "Method doesn't allow unregistered callers".
+
+**Causa raiz:** `gapiLoaded()` e `gisLoaded()` são dois `<script>` do
+Google carregando em paralelo, sem ordem garantida entre si.
+`gapiLoaded()` chama `DRIVE_LOADER.init()` logo após
+`gapi.client.init()` — mas o token OAuth só é restaurado (do
+localStorage) ou obtido dentro de `gisLoaded()`. Se `gapiLoaded()`
+terminar primeiro, a busca no Drive saía **sem token nenhum**, o
+Google respondia 403, e o código errava a interpretação ("Nenhum
+arquivo encontrado. Primeira inicialização.") — quando na verdade o
+arquivo existe, só não deu tempo de autenticar ainda.
+
+Normalmente se autocorrigia sozinho um instante depois (`gisLoaded()`
+restaura o token → `onDriveConnected()` → novo `loadFromDrive()`,
+agora autenticado), mas dependia de timing de rede e poluía o console
+com um erro real de permissão — arriscado se a corrida um dia acontecer
+de um jeito que não se autocorrija.
+
+**Fix (commit `f211a65`):** `_doLoadFromDrive()` (`drive-loader.js`)
+agora checa `gapi.client.getToken()` antes de tentar qualquer chamada
+— sem token, nem tenta, cai pro fallback de localStorage e espera
+`onDriveConnected()` de verdade chamar de novo.
+
+Testado isolado (harness com `gapi` mockado, sem depender de
+credencial real — `test-driveloader.html` num servidor local): sem
+token, zero chamadas de rede disparadas (era exatamente aqui que saía
+o 403); com token, comportamento idêntico ao original (busca roda
+normal, achou o arquivo legado e o novo formato). Sem regressão.
