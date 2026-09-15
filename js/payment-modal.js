@@ -150,9 +150,11 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
 
   // 14/09/2026: sincronizado com index.html — inclui extras no total,
   // que antes sumiam do valorCobrado ao registrar um pagamento.
+  // 14/09/2026 (2ª parte): sincronizado com index.html — multa/juros só
+  // incidem sobre baseAluguel (sem extras), nunca sobre reparo/acordo.
   const extrasTotal = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
-  const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo)+extrasTotal;
-  const totalDue = R2(base + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
+  const baseAluguel = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo);
+  const totalDue = R2(baseAluguel + extrasTotal + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
 
   const _auditValorPagoAntes = entry.valorPago;
   const _auditStatusAntes = entry.status;
@@ -179,9 +181,9 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
     entry.status = 'pago';
     // If paid late, compute actual penalties and note them
     if(late && entry.multa===0){
-      const {multa, juros} = calcPenalties(base, daysLate, false, jurosRateDiario(t));
+      const {multa, juros} = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
       entry.multa = multa; entry.juros = juros;
-      entry.valorCobrado = R2(base+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
+      entry.valorCobrado = R2(baseAluguel+extrasTotal+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
     }
     // 14/09/2026: sincronizado com index.html — excedente vira crédito
     // automático no próximo mês em aberto (inquilino ativo).
@@ -197,10 +199,10 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   } else if(entry.valorPago > 0){
     entry.status = 'parcial';
     // Roll penalties to next month
-    _rollPenalties(t, ref, base, daysLate);
+    _rollPenalties(t, ref, baseAluguel, daysLate);
   } else {
     entry.status = dataPagamento > vencDate ? 'inadimplente' : 'pendente';
-    _rollPenalties(t, ref, base, daysLate);
+    _rollPenalties(t, ref, baseAluguel, daysLate);
   }
 
   // 14/09/2026: sincronizado com index.html.

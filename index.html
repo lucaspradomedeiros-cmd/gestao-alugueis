@@ -3066,9 +3066,18 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   // extras (cobranças extras/despesas parceladas lançadas via
   // addExtraToRef/saveExtrasToRef), então registrar um pagamento apagava
   // silenciosamente qualquer extra já lançada no mês do valorCobrado.
+  //
+  // 14/09/2026 (2ª parte): achado real (usuário, Rafael/Apto 01) — extras
+  // (reparos, ou até um aluguel lançado manualmente como extra pra fugir
+  // da criação automática de mês) entravam no `base` usado por
+  // calcPenalties(), então MULTA/JUROS eram calculados em cima deles
+  // também — o usuário explicitamente não queria isso ("não vou cobrar
+  // juros e multa dele"). Separado: baseAluguel (só aluguel+condomínio+
+  // IPTU+lixo, sujeito à multa/juros contratual do atraso do aluguel) de
+  // extrasTotal (cobrança à parte, sempre pelo valor de face, sem juros).
   const extrasTotal = (entry.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
-  const base = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo)+extrasTotal;
-  const totalDue = R2(base + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
+  const baseAluguel = R(entry.aluguel)+R(entry.condo)+R(entry.iptu)+R(entry.lixo);
+  const totalDue = R2(baseAluguel + extrasTotal + R(entry.multa) + R(entry.juros) + R(entry.pendingMulta) + R(entry.pendingJuros));
 
   const _auditValorPagoAntes = entry.valorPago;
   const _auditStatusAntes = entry.status;
@@ -3095,9 +3104,9 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
     entry.status = 'pago';
     // If paid late, compute actual penalties and note them
     if(late && entry.multa===0){
-      const {multa, juros} = calcPenalties(base, daysLate, false, jurosRateDiario(t));
+      const {multa, juros} = calcPenalties(baseAluguel, daysLate, false, jurosRateDiario(t));
       entry.multa = multa; entry.juros = juros;
-      entry.valorCobrado = R2(base+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
+      entry.valorCobrado = R2(baseAluguel+extrasTotal+multa+juros+R(entry.pendingMulta)+R(entry.pendingJuros));
     }
     // 14/09/2026: pedido do usuário — pagou A MAIS que o cobrado do mês?
     // O excedente não fica só "sobrando" dentro do valorPago deste mês —
@@ -3116,10 +3125,10 @@ function applyPayment(tenantId, ref, dataPagamento, valorPago, condoOverride, ip
   } else if(entry.valorPago > 0){
     entry.status = 'parcial';
     // Roll penalties to next month
-    _rollPenalties(t, ref, base, daysLate);
+    _rollPenalties(t, ref, baseAluguel, daysLate);
   } else {
     entry.status = dataPagamento > vencDate ? 'inadimplente' : 'pendente';
-    _rollPenalties(t, ref, base, daysLate);
+    _rollPenalties(t, ref, baseAluguel, daysLate);
   }
 
   // 14/09/2026: log de auditoria (ver js/audit-log.js) — pagamento
@@ -3166,6 +3175,9 @@ function _creditarProximoMes(t, ref, valor){
   }
 }
 
+// 14/09/2026: `base` aqui é sempre baseAluguel (aluguel+condomínio+IPTU+
+// lixo, SEM extras) — quem chama (applyPayment()) já garante isso, pra
+// multa/juros nunca incidir sobre cobrança extra (reparo, acordo etc.).
 function _rollPenalties(t, ref, base, daysLate){
   const entry = t.history.find(h=>h.ref===ref);
   if(!entry) return;
