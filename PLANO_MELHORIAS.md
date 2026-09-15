@@ -686,12 +686,14 @@ registrando:
 - [x] Cada entrada guarda o suficiente pra reconstruir "antes → depois",
       não só "aconteceu algo".
 
-⚠️ **Nota:** não existe hoje nenhuma função de UI pra excluir um mês do
-histórico direto (foi feito via console no incidente da Ana Carla) nem
-pra excluir um locatário (só `encerrarLocacao()`, que marca `vago`, não
-apaga) — então essas duas não têm um ponto de instrumentação natural
-ainda. Se um dia ganharem botão de exclusão na interface, logar lá
-também.
+⚠️ **Nota:** excluir um locatário inteiro ainda não tem função de UI
+(só `encerrarLocacao()`, que marca `vago`, não apaga) — sem ponto de
+instrumentação natural ainda. Se um dia ganhar botão de exclusão,
+logar lá também.
+
+✅ **15/09/2026: excluir um mês do histórico direto ganhou botão de UI**
+(antes era feito via console — ver "Botão Excluir mês no extrato do
+inquilino" mais abaixo) — já loga no audit log normalmente.
 
 **Uso esperado:** não precisa de tela bonita no v1 — um botão simples
 "Ver log" (lista cronológica, texto simples) ou até só incluir no
@@ -1528,3 +1530,76 @@ conectado — confirmado reabrindo Registrar Pagamento pra ele: checkbox
 já vem marcado sozinho, prévia de R$2.671,02 mostra Saldo R$0,00/Pago.
 
 `js/payment-modal.js` sincronizado com as mesmas mudanças.
+
+
+## 14/09/2026 (continuação 16) — Botão "Emitir recibo" quebrado + recibo redesenhado + cidade errada (Campo Grande → Dourados)
+
+**`6e4bdcc` — botão "Emitir recibo" não fazia nada:** `openRecibo(id)`
+tinha `if(!t||t.vago) return;` — qualquer ex-inquilino (`vago:true`)
+fazia a função sair em silêncio, sem erro nenhum. Bastou tirar o
+`t.vago` da checagem.
+
+**`88086e9` — recibo com mais detalhes + mensagem WhatsApp legível:**
+pedidos do usuário ("melhorar o recibo em PDF com mais detalhes" e "a
+prévia... sai toda desconfigurada e sem detalhes"). Achado real: a
+prévia (`buildRecibo()`) desenhava uma caixa ASCII alinhada com
+`padStart`/`padEnd` — só funciona em fonte monoespaçada, mas o app usa
+DM Sans (proporcional) e o WhatsApp também não é monoespaçado por
+padrão. Ficava torta em todo lugar.
+
+Fix — 3 saídas separadas, dados centralizados em `getReciboDados()`:
+- Prévia visual (dentro do app) virou HTML de verdade (flexbox/tabela),
+  igual ao PDF.
+- Nova mensagem em texto plano pra WhatsApp (`buildReciboTextoWpp()`),
+  sem caixa nenhuma, só `*negrito*`/bullets, com botão "📋 Copiar
+  mensagem" dedicado.
+- PDF (`printRecibo()`) ganhou CPF e endereço do locatário (já
+  cadastrados na ficha, nunca apareciam) e valor por extenso
+  (`fmtBRLDoc()` já existia, só não era usado aqui).
+
+Achado extra no meio do trabalho: nome/endereço do prédio no cabeçalho
+do recibo vinham cravados como "Residencial Santa Nonna I" sempre, pra
+qualquer inquilino — errado pra quem é de outro condomínio/imóvel/sala.
+Nova `getReciboLocal(t)` resolve pelo condomínio/imóvel real do
+inquilino.
+
+**Achado do usuário no meio da revisão ("O local é Dourados-MS e não
+Campo Grande"):** varredura completa achou "Campo Grande/MS" cravado em
+~15 lugares (recibo, geração de contrato — honorários e locação, foro
+de eleição, placeholder de cadastro de inquilino) — o escritório é em
+Dourados/MS. Um desses lugares tinha até uma variável `cidade` morta no
+gerador de contrato de locação: calculava a cidade certa e nunca usava,
+o texto final vinha hardcoded mesmo assim. Fix: nova constante
+`OWNER_CIDADE = 'Dourados/MS'` em `js/state.js`, usada em todo lugar —
+elimina a chance de divergir de novo.
+
+`js/recibo.js` reescrito por completo pra espelhar a implementação nova
+do recibo; `js/doc-gen.js` ajustado nos mesmos pontos de cidade/foro.
+
+
+## 15/09/2026 — Botão "Excluir mês" no extrato do inquilino
+
+Sugestão feita ao usuário depois de excluir Abril/Maio da Gabrielly via
+console (2ª vez no mês, depois da Ana Carla) — não existia um jeito de
+fazer isso pela interface, só eu abrindo o navegador e rodando script.
+
+Nova `excluirMesHistorico(tenantId, ref)`, com botão "🗑 Excluir mês" na
+visão expandida de um mês no extrato:
+- bloqueia a exclusão se o mês já teve pagamento real
+  (`dataPagamento`/`valorPago`/`pagamentos[]`), orientando a desfazer o
+  pagamento primeiro — evita apagar histórico de dinheiro que realmente
+  entrou;
+- pede confirmação mostrando o mês e o valor cobrado;
+- registra no log de auditoria (`logAudit`), igual às exclusões feitas
+  manualmente antes;
+- some do histórico e atualiza o extrato na hora, com um toast de
+  confirmação.
+
+Testado isolado (servidor local, dados sintéticos, sem tocar Drive
+real): bloqueio confirmado num mês pago (alerta explicando o motivo,
+histórico intacto) e exclusão bem-sucedida num mês nunca pago (histórico
+atualizado, log de auditoria gravado, extrato voltando pro total
+correto) — nos dois casos via chamada direta da função E via clique
+real do botão na interface.
+
+`js/detail-panel.js` sincronizado com as mesmas mudanças.
