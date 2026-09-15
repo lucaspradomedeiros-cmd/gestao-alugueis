@@ -18,6 +18,13 @@ let condoHistories = {};
 let activeCondoId = 'c1';
 let editingCondoId = null;
 
+// Despesas do condomínio NÃO rateadas (15/09/2026) — manutenção, reforma,
+// equipamento etc. por conta do proprietário; nunca entram no rateio da
+// aba "Lançamento de Condomínio" nem viram cobrança pro inquilino. Uma
+// lista por condoId, igual condoHistories.
+let despesasCondo = {};
+let editingDespCondoId = null;
+
 // Condo units and history
 let CONDO_UNITS = [];
 let condoHistory = [];

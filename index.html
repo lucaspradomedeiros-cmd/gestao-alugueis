@@ -924,6 +924,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
         <!-- HISTÓRICO CONDOMÍNIO -->
         <div class="section-header"><div class="section-title" style="font-size:15px;">Histórico de lançamentos</div></div>
         <div class="rtable-wrap"><div id="condo-hist-body"></div></div>
+
+        <!-- DESPESAS DO CONDOMÍNIO NÃO RATEADAS (15/09/2026) -->
+        <div class="section-header" style="margin-top:24px;">
+          <div class="section-title" style="font-size:15px;">Despesas do condomínio (não rateadas)</div>
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="btn" onclick="printDespesasCondo()" style="font-size:12px;">🖨 Relatório</button>
+            <button class="btn btn-primary" onclick="openAddDespesaCondo()" style="font-size:12px;">+ Nova despesa</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin:-8px 0 12px;">Gastos por conta do proprietário — manutenção, reforma, equipamento etc. Nunca entram no rateio acima nem geram cobrança pro inquilino.</div>
+        <div id="despcondo-resumo" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;"></div>
+        <div class="rtable-wrap"><div id="despcondo-lista"></div></div>
       </div>
       <!-- RESULTADO -->
       <div class="res-card">
@@ -1426,6 +1438,40 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     <div class="mfooter">
       <button class="btn" onclick="closeOverlay('desp-modal-overlay')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveDespesa()">Salvar despesa</button>
+    </div>
+  </div>
+</div>
+
+<!-- DESPESA CONDOMÍNIO (NÃO RATEADA) MODAL -->
+<div class="overlay" id="despcondo-modal-overlay" onclick="if(event.target===this)closeOverlay('despcondo-modal-overlay')">
+  <div class="modal wide" onclick="event.stopPropagation()" style="max-width:520px;">
+    <div class="modal-title" id="despcondo-modal-title">Nova Despesa do Condomínio</div>
+    <div class="mrow">
+      <div class="mfield"><label>Descrição</label>
+        <input type="text" id="dc-desc" placeholder="Ex: Troca do motor do portão, Material de limpeza...">
+      </div>
+      <div class="mfield"><label>Categoria</label>
+        <select id="dc-cat" style="width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);">
+          <option value="manutencao">🔧 Manutenção</option>
+          <option value="reforma">🏗 Reforma</option>
+          <option value="equipamento">⚙️ Equipamento</option>
+          <option value="seguranca">🔒 Segurança</option>
+          <option value="jardinagem">🌳 Jardinagem</option>
+          <option value="limpeza">🧹 Material de limpeza</option>
+          <option value="outra">📌 Outra</option>
+        </select>
+      </div>
+    </div>
+    <div class="mrow">
+      <div class="mfield"><label>Valor (R$)</label><input type="number" id="dc-valor" step="0.01" placeholder="0,00"></div>
+      <div class="mfield"><label>Data</label><input type="date" id="dc-data"></div>
+    </div>
+    <div class="mfield"><label>Observação (opcional)</label>
+      <textarea id="dc-obs" rows="2" style="width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);resize:vertical;"></textarea>
+    </div>
+    <div class="mfooter">
+      <button class="btn" onclick="closeOverlay('despcondo-modal-overlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDespesaCondo()">Salvar</button>
     </div>
   </div>
 </div>
@@ -5259,7 +5305,158 @@ function initCondoPage(){
     const d=new Date(TODAY);d.setMonth(d.getMonth()-1);
     document.getElementById('condo-month').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   }
-  loadCondoMonth();renderCondoHistory();
+  loadCondoMonth();renderCondoHistory();renderDespesasCondo();
+}
+
+// ============================================================
+// DESPESAS DO CONDOMÍNIO NÃO RATEADAS (15/09/2026)
+// Pedido do usuário: um jeito de registrar gasto de manutenção do prédio
+// (motor do portão, material de limpeza fora do rateio etc.) que fica
+// só pra controle do proprietário — nunca entra no "Lançamento de
+// Condomínio" acima nem vira cobrança pro inquilino.
+// ============================================================
+function getDespesasCondoAtivo(){ return despesasCondo[activeCondoId]||(despesasCondo[activeCondoId]=[]); }
+function despCondoCatInfo(cat){
+  return {
+    manutencao:{icon:'🔧',label:'Manutenção'}, reforma:{icon:'🏗',label:'Reforma'},
+    equipamento:{icon:'⚙️',label:'Equipamento'}, seguranca:{icon:'🔒',label:'Segurança'},
+    jardinagem:{icon:'🌳',label:'Jardinagem'}, limpeza:{icon:'🧹',label:'Material de limpeza'},
+    outra:{icon:'📌',label:'Outra'}
+  }[cat] || {icon:'📌',label:'Outra'};
+}
+function openAddDespesaCondo(){
+  editingDespCondoId = null;
+  document.getElementById('despcondo-modal-title').textContent = 'Nova Despesa do Condomínio';
+  document.getElementById('dc-desc').value = '';
+  document.getElementById('dc-cat').value = 'manutencao';
+  document.getElementById('dc-valor').value = '';
+  document.getElementById('dc-data').value = new Date().toISOString().slice(0,10);
+  document.getElementById('dc-obs').value = '';
+  openOverlay('despcondo-modal-overlay');
+}
+function openEditDespesaCondo(despId){
+  const d = getDespesasCondoAtivo().find(x=>x.id===despId); if(!d) return;
+  editingDespCondoId = despId;
+  document.getElementById('despcondo-modal-title').textContent = 'Editar Despesa do Condomínio';
+  document.getElementById('dc-desc').value = d.descricao;
+  document.getElementById('dc-cat').value  = d.categoria;
+  document.getElementById('dc-valor').value = d.valor;
+  document.getElementById('dc-data').value = d.data;
+  document.getElementById('dc-obs').value = d.obs||'';
+  openOverlay('despcondo-modal-overlay');
+}
+function saveDespesaCondo(){
+  const descricao = document.getElementById('dc-desc').value.trim();
+  const categoria = document.getElementById('dc-cat').value;
+  const valor = R(document.getElementById('dc-valor').value);
+  const data = document.getElementById('dc-data').value;
+  const obs = document.getElementById('dc-obs').value.trim();
+  if(!descricao||!valor||!data){ alert('Preencha descrição, valor e data.'); return; }
+  const lista = getDespesasCondoAtivo();
+  const _c = getActiveCondo();
+  if(editingDespCondoId){
+    const d = lista.find(x=>x.id===editingDespCondoId);
+    if(d){
+      logAudit(`Despesa do condomínio EDITADA — ${_c?.nome||activeCondoId} — "${d.descricao}" ${fmtBRL(d.valor)} → "${descricao}" ${fmtBRL(valor)}`, {tipo:'ajuste_manual', ref:data});
+      Object.assign(d, {descricao, categoria, valor, data, obs});
+    }
+  } else {
+    lista.push({id:'dc'+Date.now(), descricao, categoria, valor, data, obs});
+    logAudit(`Despesa do condomínio LANÇADA — ${_c?.nome||activeCondoId} — "${descricao}" ${fmtBRL(valor)} (não rateada, por conta do proprietário)`, {tipo:'ajuste_manual', ref:data});
+  }
+  lista.sort((a,b)=>b.data.localeCompare(a.data));
+  closeOverlay('despcondo-modal-overlay');
+  saveToStorage();
+  renderDespesasCondo();
+}
+function deleteDespesaCondo(despId){
+  const lista = getDespesasCondoAtivo();
+  const d = lista.find(x=>x.id===despId); if(!d) return;
+  if(!confirm(`Excluir "${d.descricao}" (${fmtBRL(d.valor)})?`)) return;
+  const _c = getActiveCondo();
+  logAudit(`Despesa do condomínio EXCLUÍDA — ${_c?.nome||activeCondoId} — "${d.descricao}" ${fmtBRL(d.valor)}`, {tipo:'exclusao', ref:d.data});
+  lista.splice(lista.indexOf(d),1);
+  saveToStorage();
+  renderDespesasCondo();
+}
+function renderDespesasCondo(){
+  const resumoEl = document.getElementById('despcondo-resumo');
+  const listaEl = document.getElementById('despcondo-lista');
+  if(!resumoEl||!listaEl) return;
+  const lista = getDespesasCondoAtivo();
+  const anoAtual = String(TODAY.getFullYear());
+  const totalAno = lista.filter(d=>d.data.slice(0,4)===anoAtual).reduce((s,d)=>s+R(d.valor),0);
+  const totalGeral = lista.reduce((s,d)=>s+R(d.valor),0);
+  const porCategoria = {};
+  lista.forEach(d=>{ porCategoria[d.categoria] = (porCategoria[d.categoria]||0) + R(d.valor); });
+
+  resumoEl.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
+      <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Total em ${anoAtual}</div>
+      <div style="font-size:16px;font-weight:700;">${fmtBRL(totalAno)}</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
+      <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">Total geral</div>
+      <div style="font-size:16px;font-weight:700;">${fmtBRL(totalGeral)}</div>
+    </div>
+    ${Object.keys(porCategoria).map(cat=>{
+      const info = despCondoCatInfo(cat);
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
+        <div style="font-size:10px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">${info.icon} ${info.label}</div>
+        <div style="font-size:14px;font-weight:600;">${fmtBRL(porCategoria[cat])}</div>
+      </div>`;
+    }).join('')}
+  `;
+
+  if(!lista.length){
+    listaEl.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;">Nenhuma despesa lançada ainda pra este condomínio.</div>`;
+    return;
+  }
+  const hdr = `<div class="rrow rhdr"><div style="flex:1">Data</div><div style="flex:2">Descrição</div><div style="flex:1.2">Categoria</div><div style="flex:1;text-align:right">Valor</div><div style="flex:.6"></div></div>`;
+  const rows = lista.map(d=>{
+    const info = despCondoCatInfo(d.categoria);
+    return `<div class="rrow" style="cursor:pointer;" onclick="openEditDespesaCondo('${d.id}')">
+      <div style="flex:1;font-size:12px;">${fmtDate(d.data)}</div>
+      <div style="flex:2;font-size:12px;">${d.descricao}${d.obs?` <span title="${d.obs}" style="cursor:help;color:var(--amber)">💬</span>`:''}</div>
+      <div style="flex:1.2;font-size:12px;color:var(--text-muted);">${info.icon} ${info.label}</div>
+      <div style="flex:1;text-align:right;font-size:12px;font-weight:600;">${fmtBRL(d.valor)}</div>
+      <div style="flex:.6;text-align:right;">
+        <button onclick="event.stopPropagation();deleteDespesaCondo('${d.id}')" title="Excluir" style="background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:14px;padding:2px 4px;border-radius:4px;line-height:1;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-faint)'">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  listaEl.innerHTML = hdr+rows;
+}
+function printDespesasCondo(){
+  const _c = getActiveCondo();
+  const lista = getDespesasCondoAtivo();
+  const total = lista.reduce((s,d)=>s+R(d.valor),0);
+  const linhas = lista.map(d=>{
+    const info = despCondoCatInfo(d.categoria);
+    return `<tr><td>${fmtDate(d.data)}</td><td>${d.descricao}</td><td>${info.icon} ${info.label}</td><td style="text-align:right;">${fmtBRL(d.valor)}</td></tr>`;
+  }).join('');
+  const w = window.open('', '_blank', 'width=900,height=700');
+  if(!w) return;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Despesas do condomínio — ${_c?.nome||''}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:24px;color:#1a1a1a;}
+      h1{font-size:18px;margin-bottom:4px;}
+      .sub{color:#666;font-size:12px;margin-top:0;margin-bottom:16px;}
+      table{width:100%;border-collapse:collapse;font-size:12.5px;}
+      th{text-align:left;background:#f5f5f5;padding:6px 8px;border-bottom:2px solid #ddd;}
+      td{padding:6px 8px;border-bottom:1px solid #eee;}
+      tfoot td{font-weight:700;border-top:2px solid #ddd;border-bottom:none;}
+      button{margin-bottom:16px;padding:8px 16px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+      @media print{button{display:none;}}
+    </style></head><body>
+    <button onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+    <h1>Despesas do condomínio (não rateadas) — ${_c?.nome||''}</h1>
+    <p class="sub">Gerado em ${new Date().toLocaleString('pt-BR')} — ${lista.length} registro(s) — por conta do proprietário, não cobradas do inquilino</p>
+    <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th style="text-align:right;">Valor</th></tr></thead>
+    <tbody>${linhas}</tbody>
+    <tfoot><tr><td colspan="3">Total</td><td style="text-align:right;">${fmtBRL(total)}</td></tr></tfoot></table>
+    </body></html>`);
+  w.document.close();
 }
 
 // ============================================================

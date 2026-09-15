@@ -7,7 +7,7 @@ const STORAGE_KEY = 'gestao_alugueis_v1';
 // ── localStorage ──────────────────────────────────────────────
 function getPayload(){
   condoHistories[activeCondoId] = [...condoHistory];
-  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, despesasEscritorio, receitasEscritorio, clientesAdv, auditLog, savedAt: new Date().toISOString(), version: 5 };
+  return { tenants, condoHistory, condominios, condoHistories, activeCondoId, imoveis, despesasEscritorio, receitasEscritorio, clientesAdv, auditLog, despesasCondo, savedAt: new Date().toISOString(), version: 6 };
 }
 
 function applyPayload(data){
@@ -22,6 +22,9 @@ function applyPayload(data){
   // (version<5) não tem o campo, então mantém auditLog=[] já inicializado
   // em vez de virar undefined.
   if(Array.isArray(data.auditLog)) auditLog = data.auditLog;
+  // 15/09/2026: despesas do condomínio não rateadas (ver js/state.js) —
+  // payload antigo (version<6) não tem o campo, mantém {} já inicializado.
+  if(data.despesasCondo) despesasCondo = data.despesasCondo;
   if(data.condominios && data.condominios.length) condominios = data.condominios;
   if(data.condoHistories){
     condoHistories = data.condoHistories;
