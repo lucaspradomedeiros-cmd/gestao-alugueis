@@ -1001,17 +1001,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   </div>
 
   <!-- REPORT -->
+  <!-- 15/09/2026: abas "Despesas por Imóvel" e "Repasse Proprietário"
+       escondidas — hoje só existe 1 imóvel cadastrado no modelo "Imóvel
+       autônomo" (Casa 02) e o proprietário dele é o próprio Lucas, então
+       as duas ficavam mostrando quase tudo vazio ou numa pilha genérica
+       "Proprietário não identificado" (os outros 11 inquilinos ativos
+       são de condomínio, não de "Imóvel"). Funções (renderReportImovel,
+       renderReportRepasse, showReportTab, printRepasse) mantidas no JS
+       intactas — é só religar as abas aqui se um dia passar a administrar
+       imóvel de terceiro. -->
   <div id="page-report" class="page content">
     <div class="section-header">
-      <div class="section-title">Relatórios</div>
-      <div style="margin-left:auto;display:flex;gap:8px;">
-        <button class="btn" onclick="printRelatorioImovel()" id="btn-print-report" style="font-size:12px;display:none;">🖨 Imprimir</button>
-      </div>
-    </div>
-    <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;">
-      <button class="det-tab active" id="rtab-receitas" onclick="showReportTab('receitas')">Receitas por Imóvel</button>
-      <button class="det-tab" id="rtab-imovel" onclick="showReportTab('imovel')">Despesas por Imóvel</button>
-      <button class="det-tab" id="rtab-repasse" onclick="showReportTab('repasse')">Repasse Proprietário</button>
+      <div class="section-title">Receitas por Imóvel</div>
     </div>
     <div id="report-tab-receitas"><div class="rtable-wrap" id="report-table"></div></div>
     <div id="report-tab-imovel" style="display:none;"></div>
