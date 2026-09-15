@@ -1390,3 +1390,61 @@ confirmado que Erivan (ativo) manteve o resumo inalterado; Ana Carla
 mostrar "Mês selecionado (Maio) / Total devido (todos os meses)"
 corretamente, e que a forma de pagamento ficou gravada e pré-selecionada
 corretamente numa segunda abertura do modal. Sem erro no console.
+
+
+## 14/09/2026 (continuação 13) — Multa/juros sobre cobrança extra + Service Worker órfão (Rafael/Apto 01)
+
+**1) Multa/juros incidindo sobre cobrança extra, não só o aluguel**
+(commit `0099886`). Usuário ia lançar em Maio/2026 do Rafael 4 cobranças
+extras (Aluguel de Junho R$853,02 lançado manualmente pra fugir da
+criação automática de mês + reparos: Pintura R$1.700, Instalação Porta
+R$150, Porta e Fechadura R$478 = R$3.181,02) e reportou: "eu não vou
+cobrar juros e multa dele... mas o sistema cobra". Causa: `applyPayment()`
+montava um único `base` já somando `extrasTotal`, passado direto pra
+`calcPenalties()` e `_rollPenalties()` — multa (10%) e juros incidiam
+sobre TUDO, extras incluídas. Fix: separado `baseAluguel` (só
+aluguel+condomínio+IPTU+lixo, sujeito à multa/juros contratual) de
+`extrasTotal` (cobrança à parte, sempre pelo valor de face). Testado
+isolado com os números reais dele antes do deploy.
+
+**2) Achado MAIOR no meio do processo: dados desatualizados por cache.**
+Ao calcular o total real do Rafael pra decidir o tratamento de
+multa/juros, os dados vistos (via navegador do lucas-linux, Drive
+desconectado) mostravam Abril e Maio como "pendente, nunca pago" —
+levando a um cálculo de R$4.525,48 com multa/juros sobre 88 dias de
+atraso. Depois de conectar o Drive de verdade (no navegador do Asus,
+via `switch_browser` — ver abaixo), os dados REAIS mostravam Abril e
+Maio **pagos integralmente e em dia**. O cálculo correto, sem nenhuma
+multa/juros (aluguel-base nunca esteve atrasado), bateu exato com o que
+o usuário tinha calculado de cabeça: **saldo devedor R$2.671,02**.
+Lição: nunca confiar em dados de uma aba com Drive desconectado pra
+decisão financeira — só o cache local, que pode estar dias/semanas
+atrasado.
+
+**3) Achado técnico sério: Service Worker órfão congelando o site.**
+Ao finalmente conectar o Drive no navegador do Asus, funções de dias
+recentes (`logAudit`, `_recalcEntryTotal`, `debugMode`) simplesmente não
+existiam — sem erro nenhum, tudo parecia normal, só rodando código
+velho. Causa: um Service Worker de uma tentativa antiga de PWA (nunca
+adotada — ver seção 12) ficou registrado nesse navegador, cacheando
+(`ga-v1-assets`/`ga-v1-api`) uma versão congelada do site. O código de
+registro do SW já não existe mais no app atual — mas quem já tinha
+instalado o SW antes fica preso nele pra sempre, sem nenhum aviso de
+desatualização. Já existia um `clear-cache.html` avulso (não
+versionado, não publicado, achado no repositório) feito numa sessão
+anterior pra esse mesmo problema, mas exigia abrir uma URL separada
+manualmente. **Fix (commit `0901d7d`):** o próprio `index.html` agora
+resolve sozinho — um script no topo do `<head>`, antes de qualquer
+outro, desregistra qualquer SW leftover + limpa os caches, e recarrega
+uma vez automaticamente. Sem SW registrado (caso comum), é um no-op
+silencioso. Confirmado ao vivo no navegador real do Asus que tinha o
+problema: 0 Service Workers depois do fix, `_recalcEntryTotal` passou a
+existir.
+
+**Detalhe de processo:** pra alcançar o navegador do Asus a partir desta
+sessão (rodando no lucas-linux), foi usado `switch_browser` da extensão
+Claude in Chrome — o usuário instalou a extensão no Chrome do Asus,
+clicou em "Conectar" quando o pedido chegou, e a partir daí as ações
+de browser desta sessão passaram a mirar o Chrome do Asus em vez do
+lucas-linux. Útil pra qualquer situação futura em que o usuário estiver
+numa máquina diferente da que a sessão de terminal está rodando.
