@@ -1602,4 +1602,34 @@ atualizado, log de auditoria gravado, extrato voltando pro total
 correto) — nos dois casos via chamada direta da função E via clique
 real do botão na interface.
 
+
+## 15/09/2026 (continuação) — Avaliação do menu Receitas: 2 abas escondidas por não terem uso hoje
+
+Usuário pediu avaliação do menu "Receitas". Achado real (código +
+dados de produção, só leitura): a página é "Relatórios" com 3 abas
+(Receitas por Imóvel / Despesas por Imóvel / Repasse Proprietário), mas
+as duas últimas só funcionam pra imóveis cadastrados no modelo "Imóvel
+autônomo" (`imoveis[]`) — hoje só existe **1** (Casa 02). Os outros 11
+inquilinos ativos (Res. Santa Nonna I, Escritório Salas, 3º prédio) são
+de condomínio, sem esse vínculo, então:
+- "Despesas por Imóvel" só mostrava Casa 02 — os outros 11 nem
+  apareciam;
+- "Repasse Proprietário" jogava todos esses 11 numa pilha genérica
+  "🔑 Proprietário não identificado", e o único identificado (Casa 02)
+  também é o próprio usuário — ou seja, nenhum caso real de repasse pra
+  terceiro existe hoje.
+
+**Fix (commit `07800db`):** abas removidas da navegação (barra de abas
++ botão "Imprimir" que só servia pra elas), página simplificada pra só
+"Receitas por Imóvel" direto, título corrigido pra bater com o
+conteúdo (era "Relatórios"). Funções JS mantidas intactas
+(`renderReportImovel`, `renderReportRepasse`, `showReportTab`,
+`printRepasse`) — é só religar as abas se um dia o usuário passar a
+administrar imóvel de terceiro de verdade.
+
+Achado extra, registrado mas não mexido: a tabela "Receitas por
+Imóvel" repete números de unidade entre prédios diferentes (3
+"Apto 1", "Apto 3" e "Apto 5" diferentes, um em cada prédio) sem coluna
+indicando o prédio — só dá pra diferenciar pelo nome do inquilino.
+
 `js/detail-panel.js` sincronizado com as mesmas mudanças.
