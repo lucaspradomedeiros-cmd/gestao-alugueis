@@ -189,6 +189,7 @@ function buildDetHistory(t, filtered, filteredRev){
               <button class="btn" style="font-size:11px;padding:5px 10px;color:var(--amber);border-color:var(--amber-light);" onclick="openEditPayModal(${t.id},'${h.ref}')">✏️ Editar pagamento</button>
               <button class="btn" style="font-size:11px;padding:5px 10px;color:var(--red);border-color:var(--red-light);" onclick="desfazerPagamento(${t.id},'${h.ref}')">↩ Desfazer pagamento</button>`:''}
               <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="setDetPeriod('todos')">← Voltar ao extrato completo</button>
+              <button class="btn" style="font-size:11px;padding:5px 10px;color:var(--red);border-color:var(--red-light);margin-left:auto;" onclick="event.stopPropagation();excluirMesHistorico(${t.id},'${h.ref}')" title="Excluir este mês do histórico (só se nunca foi pago)">🗑 Excluir mês</button>
             </div>
           </div>
         </td>
@@ -233,6 +234,34 @@ function buildDetHistory(t, filtered, filteredRev){
   </tr>` : '';
 
   return { rows, footerRow };
+}
+
+// 15/09/2026: excluir um mês inteiro do histórico direto pela interface.
+// Antes não existia botão pra isso — a exclusão de meses lançados por
+// engano (ex: Ana Carla, Gabrielly) era feita manualmente via console.
+// Bloqueia mês com pagamento real (pra apagar um mês pago, desfaz o
+// pagamento primeiro — fica registrado no log) e sempre pede confirmação.
+function excluirMesHistorico(tenantId, ref){
+  const t=tenants.find(x=>x.id===tenantId); if(!t) return;
+  const h=t.history.find(x=>x.ref===ref); if(!h) return;
+
+  const temPagamento = !!h.dataPagamento || R(h.valorPago)>0 || (h.pagamentos && h.pagamentos.length>0);
+  if(temPagamento){
+    alert(`Não é possível excluir ${monthName(ref)}: esse mês já teve pagamento registrado.\n\nSe foi lançado por engano, primeiro desfaça o pagamento ("↩ Desfazer pagamento") e depois exclua o mês.`);
+    return;
+  }
+
+  if(!confirm(`Excluir ${monthName(ref)} do histórico de ${t.name} (${t.unit})?\n\nValor cobrado: ${fmtBRL(h.valorCobrado)}\n\nEssa ação não pode ser desfeita.`)) return;
+
+  logAudit(`Mês EXCLUÍDO do histórico — ${t.unit} (${t.name}) — ${ref} — ${fmtBRL(h.valorCobrado)} nunca pago`, { tipo:'exclusao', tenantId, ref });
+
+  const idx=t.history.findIndex(x=>x.ref===ref);
+  t.history.splice(idx,1);
+
+  if(detHighRef===ref){ detHighRef=null; detPeriod='todos'; }
+  saveToStorage();
+  renderDet();
+  gaToast(`Mês de ${monthName(ref)} excluído.`);
 }
 
 function filterDetHistory(t){
