@@ -1602,6 +1602,8 @@ atualizado, log de auditoria gravado, extrato voltando pro total
 correto) — nos dois casos via chamada direta da função E via clique
 real do botão na interface.
 
+`js/detail-panel.js` sincronizado com as mesmas mudanças.
+
 
 ## 15/09/2026 (continuação) — Avaliação do menu Receitas: 2 abas escondidas por não terem uso hoje
 
@@ -1669,4 +1671,31 @@ recomeçando o teste com o override antes de qualquer clique de exclusão.
 
 `js/condo.js` sincronizado com as mesmas funções.
 
-`js/detail-panel.js` sincronizado com as mesmas mudanças.
+
+## 15/09/2026 — v2.2.0 marcada como versão estável
+
+A pedido do usuário, `v2.2.0` (commit `ddcadd4`) foi marcada como o novo
+checkpoint estável, substituindo `v2.1.0`. Número corrigido no app
+(sidebar e rodapé — de quebra, corrigida uma inconsistência antiga
+entre os dois: sidebar dizia v2.1.0, rodapé dizia v2.0.1). Tag git
+anotada criada e publicada:
+
+```
+git tag -a v2.2.0 ddcadd4
+git push origin v2.2.0
+```
+
+51 commits desde a última estável, incluindo: log de auditoria,
+crédito automático de excedente, extrato com detalhe de extras, modal
+de Registrar Pagamento redesenhado, fix do mês isento de multa/juros,
+recibo redesenhado (PDF + WhatsApp), fix da cidade (Campo Grande →
+Dourados via `OWNER_CIDADE`), botão Excluir mês no extrato, limpeza do
+menu Receitas, e despesas do condomínio não rateadas.
+
+**Para reverter pra esta versão**, se algo quebrar depois:
+```
+git checkout v2.2.0 -- .    # traz os arquivos desta versão pro working dir
+# ou, pra descartar tudo que veio depois dela:
+git reset --hard v2.2.0
+git push --force origin main   # ⚠ reescreve o histórico remoto, usar com cuidado
+```
