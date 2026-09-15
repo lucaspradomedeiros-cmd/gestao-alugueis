@@ -1489,3 +1489,42 @@ verdade). Corrigido replicando o mesmo `calcPenalties()` na prévia
 bateram idênticos.
 
 `js/payment-modal.js` sincronizado com as mesmas mudanças.
+
+
+## 14/09/2026 (continuação 15) — Mês isento de multa/juros por acordo perdia a isenção
+
+✅ **CONCLUÍDO (commit `deaf403`).** Achado do usuário usando o modal
+novo: no card do Rafael, "saldo devedor acumulado" mostrava R$2.671,02
+certinho, mas digitar esse mesmo valor em Registrar Pagamento mostrava
+um saldo sobrando de R$117,05 — exatamente 10% de multa + juros sobre
+o aluguel-base (873,54), reaparecendo do nada.
+
+**Causa raiz:** o mês de Maio dele tinha `multa=0`/`juros=0` porque
+foram zerados manualmente na "continuação 13" (acordo negociado sem
+penalidade) — mas `applyPayment()` (branch "pago") e `_rollPenalties()`
+usam `entry.multa===0` como sinal de "penalidade nunca avaliada ainda"
+pra calcular do zero quando o pagamento é tardio. Um mês
+deliberadamente isento também fica com `multa===0` — pagar esse mês
+reativava a penalidade. **O mesmo bug aconteceria de verdade ao
+confirmar**, não só na prévia — a prévia só revelou um bug que já
+existia no motor de pagamento.
+
+**Fix:** nova flag `entry.semMultaJuros`, com checkbox "Isentar este
+mês de multa/juros (acordo negociado)" no painel avançado do modal —
+antes só dava pra fazer isso via console (como fizemos pro Rafael antes
+de essa opção existir). `applyPayment()`/`_rollPenalties()`/
+`onRegValueChange()` checam essa flag antes de recalcular qualquer
+penalidade; isento fica sempre em 0, sem rolar nada pro mês seguinte.
+
+Testado ao vivo isolado: reproduziu o bug exato (R$117,05 sobrando sem
+a flag) e confirmou a correção (R$0,00, status Pago, flag persistida)
+com os números reais do Rafael. Regressão testada: mês normal atrasado
+sem isenção continua calculando multa/juros certinho.
+
+✅ **Aplicado em produção no mesmo dia:** o Maio real do Rafael (que
+tinha sido zerado via console antes dessa opção existir) recebeu
+`semMultaJuros=true` diretamente pelo navegador do Asus com Drive
+conectado — confirmado reabrindo Registrar Pagamento pra ele: checkbox
+já vem marcado sozinho, prévia de R$2.671,02 mostra Saldo R$0,00/Pago.
+
+`js/payment-modal.js` sincronizado com as mesmas mudanças.
