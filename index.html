@@ -4649,16 +4649,36 @@ function printExtrato(){
   if(!filtered.length) return;
   const periodLabel = getDetPeriodLabel();
 
+  // 14/09/2026: achado real (usuário, Rafael/Apto 01) — o extrato impresso
+  // mostrava só Aluguel+Encargos+Multa/Juros+Total, então um mês com
+  // cobrança extra lançada (reparo, acordo etc.) aparecia com um Total
+  // muito maior que Aluguel+Encargos sem NENHUMA explicação visível de
+  // onde vinha a diferença. E "Pagamento" só mostrava a ÚLTIMA data com o
+  // valor PAGO ACUMULADO do mês (ex: "01/09/2026 — R$1.383,54"), escondendo
+  // que na verdade foram 2 pagamentos em datas bem diferentes. Corrigido:
+  // coluna "Extras" com o total + uma linha abaixo detalhando cada item
+  // (descrição e valor) quando houver; "Pagamento" agora lista cada
+  // pagamento individual (h.pagamentos) em vez de só o último/acumulado —
+  // com fallback pro formato antigo se o mês não tiver esse campo (dados
+  // de antes de 13/09/2026).
   const rows = filtered.map(h=>{
     const stTxt = {pago:'Pago',parcial:'Parcial',inadimplente:'Inadimplente',pendente:'Pendente',futuro:'A vencer'}[h.status]||h.status;
     const encargos = R(h.condo)+R(h.iptu)+R(h.lixo);
     const penalties = R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros);
-    const pagamento = h.dataPagamento ? `${fmtDate(h.dataPagamento)} — ${fmtBRL(h.valorPago)}` : '—';
-    return `<tr><td>${monthName(h.ref)}</td><td>${fmtDate(h.venc)}</td><td class="r">${fmtBRL(h.aluguel)}</td><td class="r">${encargos>0?fmtBRL(encargos):'—'}</td><td class="r">${penalties>0?fmtBRL(penalties):'—'}</td><td class="r">${fmtBRL(h.valorCobrado)}</td><td>${pagamento}</td><td>${stTxt}</td></tr>`;
+    const extrasTotal = (h.extras||[]).reduce((s,ex)=>s+R(ex.valor),0);
+    const pagamento = (h.pagamentos && h.pagamentos.length)
+      ? h.pagamentos.map(p=>`${fmtDate(p.data)} — ${fmtBRL(p.valor)}${p.credito?' (crédito)':''}`).join('<br>')
+      : (h.dataPagamento ? `${fmtDate(h.dataPagamento)} — ${fmtBRL(h.valorPago)}` : '—');
+    const linhaPrincipal = `<tr><td>${monthName(h.ref)}</td><td>${fmtDate(h.venc)}</td><td class="r">${fmtBRL(h.aluguel)}</td><td class="r">${encargos>0?fmtBRL(encargos):'—'}</td><td class="r">${extrasTotal>0?fmtBRL(extrasTotal):'—'}</td><td class="r">${penalties>0?fmtBRL(penalties):'—'}</td><td class="r">${fmtBRL(h.valorCobrado)}</td><td>${pagamento}</td><td>${stTxt}</td></tr>`;
+    const linhaExtras = extrasTotal>0
+      ? `<tr class="extras-detail"><td colspan="9">↳ Outras cobranças: ${(h.extras||[]).map(ex=>`${ex.descricao||'(sem descrição)'} ${fmtBRL(ex.valor)}`).join(' · ')}</td></tr>`
+      : '';
+    return linhaPrincipal + linhaExtras;
   }).join('');
 
   const totAluguel   = filtered.reduce((s,h)=>s+R(h.aluguel),0);
   const totEncargos  = filtered.reduce((s,h)=>s+R(h.condo)+R(h.iptu)+R(h.lixo),0);
+  const totExtras    = filtered.reduce((s,h)=>s+(h.extras||[]).reduce((s2,ex)=>s2+R(ex.valor),0),0);
   const totPenalties = filtered.reduce((s,h)=>s+R(h.multa)+R(h.juros)+R(h.pendingMulta)+R(h.pendingJuros),0);
   const totCobrado   = filtered.reduce((s,h)=>s+R(h.valorCobrado),0);
   const totPago      = filtered.reduce((s,h)=>s+R(h.valorPago),0);
@@ -4676,6 +4696,7 @@ function printExtrato(){
       td{padding:6px 8px;border-bottom:1px solid #eee;}
       td.r, th.r{text-align:right;}
       tfoot td{font-weight:700;background:#fafafa;border-top:2px solid #ddd;}
+      tr.extras-detail td{background:#fffbea;color:#7a5c00;font-size:11px;padding:4px 8px;border-bottom:1px solid #eee;}
       .resumo{display:flex;gap:24px;margin-top:16px;font-size:12.5px;}
       .resumo b{display:block;font-size:16px;margin-top:2px;}
       button{margin-bottom:16px;padding:8px 16px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
@@ -4689,9 +4710,9 @@ function printExtrato(){
       <div>Pago<b style="color:#1a7f37;">${fmtBRL(totPago)}</b></div>
       <div>Saldo<b style="color:${totSaldo>0?'#c0392b':'#1a7f37'};">${fmtBRL(totSaldo)}</b></div>
     </div>
-    <table><thead><tr><th>Mês</th><th>Vencimento</th><th class="r">Aluguel</th><th class="r">Encargos</th><th class="r">Multa/Juros</th><th class="r">Total</th><th>Pagamento</th><th>Status</th></tr></thead>
+    <table><thead><tr><th>Mês</th><th>Vencimento</th><th class="r">Aluguel</th><th class="r">Encargos</th><th class="r">Extras</th><th class="r">Multa/Juros</th><th class="r">Total</th><th>Pagamento</th><th>Status</th></tr></thead>
     <tbody>${rows}</tbody>
-    <tfoot><tr><td colspan="2">Totais (${filtered.length} meses)</td><td class="r">${fmtBRL(totAluguel)}</td><td class="r">${totEncargos>0?fmtBRL(totEncargos):'—'}</td><td class="r">${totPenalties>0?fmtBRL(totPenalties):'—'}</td><td class="r">${fmtBRL(totCobrado)}</td><td colspan="2"></td></tr></tfoot>
+    <tfoot><tr><td colspan="2">Totais (${filtered.length} meses)</td><td class="r">${fmtBRL(totAluguel)}</td><td class="r">${totEncargos>0?fmtBRL(totEncargos):'—'}</td><td class="r">${totExtras>0?fmtBRL(totExtras):'—'}</td><td class="r">${totPenalties>0?fmtBRL(totPenalties):'—'}</td><td class="r">${fmtBRL(totCobrado)}</td><td colspan="2"></td></tr></tfoot>
     </table>
     </body></html>`);
   w.document.close();
