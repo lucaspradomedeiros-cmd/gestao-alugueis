@@ -1632,4 +1632,41 @@ Imóvel" repete números de unidade entre prédios diferentes (3
 "Apto 1", "Apto 3" e "Apto 5" diferentes, um em cada prédio) sem coluna
 indicando o prédio — só dá pra diferenciar pelo nome do inquilino.
 
+
+## 15/09/2026 (continuação) — Despesas do condomínio não rateadas (manutenção, reforma etc.) + relatório
+
+Pedido do usuário: registrar gasto do prédio que fica por conta do
+proprietário (motor do portão eletrônico, material de limpeza fora do
+rateio etc.) só pra controle próprio, sem virar cobrança pro inquilino
+— e um relatório desses gastos.
+
+**Achado ao investigar:** o campo "Outras despesas" que já existia no
+lançamento mensal do condomínio parecia servir pra isso, mas faz o
+**oposto** — é rateado entre todas as unidades junto com água/energia/
+limpeza (`condoCalc()`: `subRateavel = agua+energia+limpeza+outras`).
+Não existia nenhum campo realmente não-rateado. Achado bônus: esse tipo
+de controle já existia no sistema, só que só pro módulo "Imóvel
+autônomo" (formulário de despesa com categoria/responsável/
+parcelamento) — nunca ligado ao modelo "Condomínio".
+
+**Fix (commit `619d758`):** novo `despesasCondo{}` (por condoId, igual
+`condoHistories`), nova seção "Despesas do condomínio (não rateadas)"
+na página de Condomínio, logo abaixo do Histórico de lançamentos —
+form (descrição/categoria/valor/data/obs), resumo com total do ano
+atual + total geral + breakdown por categoria, lista editável/
+excluível, botão de relatório pra impressão/PDF. Tudo logado via
+`logAudit`. Persistência: `despesasCondo` entra no payload do Drive
+(version 5→6, com fallback pro payload antigo).
+
+Testado isolado (servidor local, dados sintéticos): adicionar/editar/
+excluir via clique real na UI, resumo e categoria atualizando certo,
+confirmado que não entra no cálculo de rateio (Subtotal rateável
+intacto), round-trip completo de save/load preserva os dados. Achado
+durante o teste: clicar o botão de excluir sem sobrescrever
+`window.confirm` primeiro travou a aba de teste no diálogo nativo —
+lição já conhecida (ver seção de testes no topo do arquivo), corrigido
+recomeçando o teste com o override antes de qualquer clique de exclusão.
+
+`js/condo.js` sincronizado com as mesmas funções.
+
 `js/detail-panel.js` sincronizado com as mesmas mudanças.
